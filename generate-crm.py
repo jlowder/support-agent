@@ -8,7 +8,7 @@ from typing import List, Literal
 
 from pydantic import BaseModel, Field, RootModel, field_validator
 
-# example usage: python generate_crm.py --seed 42 --validate --export-crm
+# example usage: python generate_crm.py --seed 42 --validate --export-csv
 #
 # ==========================================
 # 🔐 Pydantic Schema for Validation
@@ -248,11 +248,6 @@ def main():
         "--validate",
         action="store_true",
         help="Validate output against Pydantic schema",
-    )
-    parser.add_argument(
-        "--export-crm",
-        action="store_true",
-        help="Alias for --export-csv",
     )
     parser.add_argument(
         "--export-csv",
