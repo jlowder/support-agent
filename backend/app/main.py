@@ -261,6 +261,7 @@ def build_agent():
 
         if not order_id:
             state["context"]["policy_check_required"] = True
+            state["context"]["next_node"] = "generate_response"
             return state
 
         # Get user profile for context
@@ -301,7 +302,7 @@ Please analyze this refund request against the policy rules and provide:
 2. Specific reasons based on policy violations or exceptions
 3. Any applicable fees or conditions
 
-Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons"], "recommended_action": "approve"|"deny"|"conditional"}}"""
+Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons"], "next_node": "process_refund"|"generate_response"}}"""
 
         try:
             llm = load_llm()
@@ -312,8 +313,8 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
             state["context"]["policy_result"] = policy_result
             state["context"]["time_valid"] = policy_result.get("valid", False)
             state["context"]["reasons"] = policy_result.get("reasons", [])
-            state["context"]["action"] = policy_result.get(
-                "recommended_action", "unknown"
+            state["context"]["next_node"] = policy_result.get(
+                "next_node", "generate_response"
             )
 
         except Exception as e:
@@ -321,31 +322,11 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
             state["context"]["policy_result"] = {
                 "valid": False,
                 "reasons": [f"LLM validation failed: {str(e)}"],
-                "recommended_action": "deny",
+                "next_node": "generate_response",
             }
             state["context"]["time_valid"] = False
             state["context"]["reasons"] = [f"Validation error: {str(e)}"]
-            state["context"]["action"] = "deny_refund_policy_violation"
-
-        return state
-
-    def evaluate_policy(state: AgentState) -> AgentState:
-        """Use LLM's policy evaluation result to determine action."""
-        policy_result = state["context"].get("policy_result", {})
-
-        action = policy_result.get("recommended_action", "unknown")
-
-        if action == "deny":
-            state["context"]["action"] = "deny_refund_policy_violation"
-            state["context"]["deny_reason"] = ", ".join(
-                policy_result.get("reasons", ["Policy violation"])
-            )
-        elif action == "conditional":
-            state["context"]["action"] = "process_refund"
-            # Conditional approvals still count as valid, may need additional processing
-            state["context"]["conditional_fees"] = policy_result.get("reasons", [])
-        else:  # approve or valid
-            state["context"]["action"] = "process_refund"
+            state["context"]["next_node"] = "generate_response"
 
         return state
 
@@ -372,43 +353,146 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
         return state
 
     def generate_response(state: AgentState) -> AgentState:
+        """Use LLM to generate natural language response based on action and context."""
         action = state["context"].get("action")
         policy_result = state["context"].get("policy_result", {})
+        customer_id = state["context"].get("customer_id")
+        order_id = state.get("current_order_id")
+        refund_amount = state.get("refund_amount")
+        order_details = state["context"].get("order_details", {})
+
+        # Build context for LLM response generation
+        context_info = f"""
+ACTION: {action}
+
+"""
 
         if action == "refund_success":
-            response = f"I've successfully processed your refund for order {state.get('current_order_id')}. "
-            response += (
-                f"A refund of ${state.get('refund_amount'):.2f} has been issued. "
-            )
-            response += f"Transaction ID: {state['context'].get('transaction_id')}. "
-            response += (
-                "You should see the credit on your statement within 3-5 business days."
-            )
-        elif action == "deny_refund_policy_violation":
-            # Use the LLM's detailed policy explanation
-            reasons = policy_result.get("reasons", [])
-            if reasons:
-                response = "I've reviewed your request, and unfortunately I cannot process a refund for this order. "
-                response += " ".join(reasons)
-            else:
-                response = "I've reviewed your request, and according to our policy analysis, this refund request does not meet the required criteria. "
-                response += "Could you please review our return policy or let me know if you'd like to speak with a human agent?"
-        elif action == "request_missing_info":
-            response = (
-                "I need a bit more information to help you with your refund request. "
-            )
-            response += "Could you please provide the order ID and the amount you'd like refunded?"
-        elif action == "refund_failed":
-            response = "I apologize, but I encountered an issue processing your refund transaction. "
-            response += (
-                f"Error: {state['context'].get('failure_reason', 'Unknown error')}. "
-            )
-            response += "Please try again or let me know if you'd like to speak with a human agent."
-        else:
-            response = "I apologize, but I encountered an issue processing your refund request. "
-            response += "Could you please try again or let me know if you'd like to speak with a human agent?"
+            transaction_id = state["context"].get("transaction_id", "N/A")
+            context_info += f"""
+ORDER DETAILS:
+- Order ID: {order_id}
+- Refund Amount: ${refund_amount:.2f}
+- Transaction ID: {transaction_id}
 
-        state["messages"].append(AIMessage(content=response))
+CUSTOMER CONTEXT:
+- Customer ID: {customer_id}
+- Loyalty Tier: {state["context"].get("loyalty_tier", "Unknown")}
+"""
+            prompt = f"""Generate a friendly, professional response to a customer whose refund has been successfully processed.
+
+{context_info}
+
+Instructions:
+- Thank the customer for their patience
+- Clearly state the refund amount and order ID
+- Provide the transaction ID
+- Mention the timeline (3-5 business days)
+- Keep it conversational and empathetic
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        elif action == "deny_refund_policy_violation":
+            reasons = policy_result.get("reasons", ["Policy violation"])
+            context_info += f"""
+POLICY VIOLATION REASONS:
+{chr(10).join(f"- {r}" for r in reasons)}
+
+ORDER DETAILS:
+{json.dumps(order_details, indent=2) if order_details else "Not available"}
+
+CUSTOMER CONTEXT:
+- Customer ID: {customer_id}
+- Loyalty Tier: {state["context"].get("loyalty_tier", "Unknown")}
+"""
+            prompt = f"""Generate a polite, empathetic response explaining why a refund was denied due to policy violations.
+
+{context_info}
+
+Instructions:
+- Start with empathy and appreciation for the customer's request
+- Clearly explain which policy was violated using the provided reasons
+- Be specific but professional
+- Avoid technical jargon
+- Offer alternative options if applicable (e.g., speak with human agent)
+- Keep it conversational and kind
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        elif action == "request_missing_info":
+            context_info += """
+CURRENT INFORMATION:
+- Customer has not provided sufficient details yet
+
+Need to request: Order ID and refund amount
+"""
+            prompt = f"""Generate a friendly request for additional information from a customer who hasn't provided enough details for their refund request.
+
+{context_info}
+
+Instructions:
+- Be polite and understanding
+- Clearly specify what information is needed (order ID and amount)
+- Make it easy for the customer to provide the information
+- Keep it conversational and helpful
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        elif action == "refund_failed":
+            failure_reason = state["context"].get("failure_reason", "Unknown error")
+            context_info += f"""
+ERROR DETAILS:
+- Failure Reason: {failure_reason}
+- Order ID: {order_id}
+- Refund Amount: ${refund_amount:.2f} if provided
+
+CUSTOMER CONTEXT:
+- Customer ID: {customer_id}
+"""
+            prompt = f"""Generate an apology and explanation for a refund that failed to process.
+
+{context_info}
+
+Instructions:
+- Apologize sincerely for the inconvenience
+- Explain that an error occurred (without overly technical details)
+- Provide the error reason if appropriate
+- Suggest retrying or speaking with a human agent
+- Keep it empathetic and professional
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        else:
+            context_info += """
+NOTE: Unrecognized action type - this may indicate an unexpected state.
+"""
+            prompt = f"""Generate a generic error response for an unexpected issue.
+
+{context_info}
+
+Instructions:
+- Apologize for the confusion
+- Explain that an unexpected issue occurred
+- Suggest trying again or speaking with a human agent
+- Keep it simple and helpful
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        try:
+            llm = load_llm()
+            response = llm.invoke(prompt)
+            final_response = response.content.strip()
+
+        except Exception as e:
+            # Fallback to simple message if LLM fails
+            final_response = f"I apologize, but I encountered an issue generating a response: {str(e)}. Please try again or let me know if you'd like to speak with a human agent."
+
+        state["messages"].append(AIMessage(content=final_response))
         return state
 
     workflow = StateGraph(AgentState)
@@ -417,7 +501,6 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
     workflow.add_node("authenticate", authenticate_customer)
     workflow.add_node("extract", extract_refund_request)
     workflow.add_node("check_policy", check_policy)
-    workflow.add_node("evaluate", evaluate_policy)
     workflow.add_node("process", process_refund)
     workflow.add_node("generate_response", generate_response)
 
@@ -451,15 +534,9 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
         ["check_policy", "generate_response"],
     )
 
-    workflow.add_conditional_edges("check_policy", evaluate_policy, ["evaluate"])
-
     workflow.add_conditional_edges(
-        "evaluate",
-        lambda s: (
-            "process"
-            if s["context"].get("action") == "process_refund"
-            else "generate_response"
-        ),
+        "check_policy",
+        lambda s: s["context"].get("next_node", "generate_response"),
         ["process", "generate_response"],
     )
 
