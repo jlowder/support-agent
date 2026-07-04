@@ -1,10 +1,10 @@
 import argparse
 import csv
 import json
+import os
 import random
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List, Literal
+from typing import List, Literal, cast
 
 from pydantic import BaseModel, Field, RootModel, field_validator
 
@@ -86,23 +86,258 @@ PRODUCTS = [
     ("E-Book Bundle", "digital", 29.99, False),
 ]
 
-NAMES = [
-    "Alice Thompson",
-    "Marcus Chen",
-    "Priya Patel",
-    "David Kim",
-    "Emma Williams",
-    "James Rodriguez",
-    "Linda Martinez",
-    "Robert Taylor",
-    "Sarah Johnson",
-    "Michael Lee",
-    "Olivia Brown",
-    "William Garcia",
-    "Sophia Davis",
-    "Daniel Miller",
-    "Isabella Wilson",
-]
+
+def generate_customer_names(num_customers: int, seed: int) -> List[str]:
+    """Generate customer names using an LLM."""
+    llm_url = os.environ.get("LLM_URL")
+    llm_api_key = os.environ.get("LLM_API_KEY")
+
+    if not llm_url or not llm_api_key:
+        # Fallback to deterministic names if environment variables not set
+        base_names = [
+            "Alice Thompson",
+            "Marcus Chen",
+            "Priya Patel",
+            "David Kim",
+            "Emma Williams",
+            "James Rodriguez",
+            "Linda Martinez",
+            "Robert Taylor",
+            "Sarah Johnson",
+            "Michael Lee",
+            "Olivia Brown",
+            "William Garcia",
+            "Sophia Davis",
+            "Daniel Miller",
+            "Isabella Wilson",
+        ]
+        return (base_names * ((num_customers // len(base_names)) + 1))[:num_customers]
+
+    random.seed(seed)
+
+    # Generate diverse names with the requested seed
+    first_names_pool = [
+        "Alice",
+        "Marcus",
+        "Priya",
+        "David",
+        "Emma",
+        "James",
+        "Linda",
+        "Robert",
+        "Sarah",
+        "Michael",
+        "Olivia",
+        "William",
+        "Sophia",
+        "Daniel",
+        "Isabella",
+        "Ethan",
+        "Mia",
+        "Noah",
+        "Charlotte",
+        "Logan",
+        "Ava",
+        "Liam",
+        "Amelia",
+        "Mason",
+        "Harper",
+    ]
+    last_names_pool = [
+        "Thompson",
+        "Chen",
+        "Patel",
+        "Kim",
+        "Williams",
+        "Rodriguez",
+        "Martinez",
+        "Taylor",
+        "Johnson",
+        "Lee",
+        "Brown",
+        "Garcia",
+        "Davis",
+        "Miller",
+        "Wilson",
+        "Moore",
+        "Anderson",
+        "Thomas",
+        "Jackson",
+        "White",
+        "Harris",
+        "Martin",
+        "Garcia",
+        "Martinez",
+        "Robinson",
+        "Clark",
+        "Lewis",
+        "Walker",
+        "Hall",
+        "Allen",
+    ]
+
+    # Deterministic selection based on seed
+    names = []
+    for i in range(num_customers):
+        first_idx = (i * 7 + seed) % len(first_names_pool)
+        last_idx = (i * 13 + seed) % len(last_names_pool)
+        names.append(f"{first_names_pool[first_idx]} {last_names_pool[last_idx]}")
+
+    return names
+
+
+def generate_customer_names_llm(num_customers: int, seed: int) -> List[str]:
+    """Generate customer names using an LLM."""
+    llm_url = os.environ.get("LLM_URL")
+    llm_api_key = os.environ.get("LLM_API_KEY")
+
+    # Fallback if environment variables not set
+    if not llm_url or not llm_api_key:
+        return generate_customer_names_fallback(num_customers, seed)
+
+    # Try to import requests only when LLM is configured
+    # Ensure LLM_URL has the correct endpoint
+    if not llm_url.endswith("/chat/completions"):
+        llm_url = llm_url.rstrip("/") + "/chat/completions"
+
+    try:
+        import requests
+    except ImportError:
+        print("⚠️  'requests' module not installed. Using fallback names.")
+        return generate_customer_names_fallback(num_customers, seed)
+
+    random.seed(seed)
+
+    # Build prompt for name generation
+    prompt = f"""Generate a list of {num_customers} unique, diverse customer names.
+Return only the names, one per line, with no numbering or extra text.
+Names should be realistic and culturally diverse."""
+
+    try:
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {llm_api_key}",
+        }
+        payload = {
+            "model": os.environ.get("LLM_MODEL", "default"),
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a data generation assistant. Output only the requested data without any additional text, formatting, or numbering.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.7 + (seed % 100) / 1000,  # Slight variation based on seed
+        }
+
+        response = requests.post(llm_url, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+
+        result = response.json()
+
+        # Try to extract names from response
+        content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        # Parse names from content (one per line, strip numbers if present)
+        names = []
+        for line in content.strip().split("\n"):
+            # Remove leading numbers/periods
+            cleaned = line.strip()
+            if cleaned:
+                # Remove "1. ", "2. ", etc. patterns
+                import re
+
+                cleaned = re.sub(r"^\d+[\.\)]\s*", "", cleaned)
+                if cleaned and len(cleaned) > 2:
+                    names.append(cleaned)
+            if len(names) >= num_customers:
+                break
+
+        # If we didn't get enough names from LLM, pad with fallback
+        if len(names) < num_customers:
+            fallback = generate_customer_names_fallback(
+                num_customers - len(names), seed + 1
+            )
+            names.extend(fallback)
+
+        return names[:num_customers]
+
+    except Exception as e:
+        print(f"⚠️  LLM name generation failed: {e}. Using fallback names.")
+        return generate_customer_names_fallback(num_customers, seed)
+
+
+def generate_customer_names_fallback(num_customers: int, seed: int) -> List[str]:
+    """Generate deterministic fallback names when LLM is unavailable."""
+    random.seed(seed)
+
+    first_names_pool = [
+        "Alice",
+        "Marcus",
+        "Priya",
+        "David",
+        "Emma",
+        "James",
+        "Linda",
+        "Robert",
+        "Sarah",
+        "Michael",
+        "Olivia",
+        "William",
+        "Sophia",
+        "Daniel",
+        "Isabella",
+        "Ethan",
+        "Mia",
+        "Noah",
+        "Charlotte",
+        "Logan",
+        "Ava",
+        "Liam",
+        "Amelia",
+        "Mason",
+        "Harper",
+    ]
+    last_names_pool = [
+        "Thompson",
+        "Chen",
+        "Patel",
+        "Kim",
+        "Williams",
+        "Rodriguez",
+        "Martinez",
+        "Taylor",
+        "Johnson",
+        "Lee",
+        "Brown",
+        "Garcia",
+        "Davis",
+        "Miller",
+        "Wilson",
+        "Moore",
+        "Anderson",
+        "Thomas",
+        "Jackson",
+        "White",
+        "Harris",
+        "Martin",
+        "Garcia",
+        "Martinez",
+        "Robinson",
+        "Clark",
+        "Lewis",
+        "Walker",
+        "Hall",
+        "Allen",
+    ]
+
+    names = []
+    for i in range(num_customers):
+        first_idx = (i * 7 + seed) % len(first_names_pool)
+        last_idx = (i * 13 + seed) % len(last_names_pool)
+        names.append(f"{first_names_pool[first_idx]} {last_names_pool[last_idx]}")
+
+    return names
 
 
 def random_past_date(max_days_old: int = 60) -> datetime:
@@ -111,15 +346,21 @@ def random_past_date(max_days_old: int = 60) -> datetime:
     return REFERENCE_DATE - timedelta(days=days_ago)
 
 
-def generate_crm(seed: int = 42) -> CRM:
+def generate_crm(seed: int = 42, num_customers: int = 15) -> CRM:
     """Generate a deterministic CRM dataset."""
     random.seed(seed)
 
+    # Generate customer names using LLM or fallback
+    names = generate_customer_names_llm(num_customers, seed)
+
     users = []
-    for i, name in enumerate(NAMES, 1):
+    for i, name in enumerate(names, 1):
         user_id = f"usr_{i:03d}"
         email = f"{name.lower().replace(' ', '.')}@example.com"
-        tier = random.choice(["Standard", "Silver", "Gold"])
+        tier = cast(
+            Literal["Standard", "Silver", "Gold"],
+            random.choice(["Standard", "Silver", "Gold"]),
+        )
 
         # 60% chance of 2 orders, 40% chance of 1
         num_orders = 2 if random.random() < 0.6 else 1
@@ -135,7 +376,13 @@ def generate_crm(seed: int = 42) -> CRM:
             total = 0.0
 
             for _ in range(num_items):
-                name_, type_, price, opened = random.choice(PRODUCTS)
+                product = random.choice(PRODUCTS)
+                name_, type_, price, opened = (
+                    product[0],
+                    cast(Literal["physical", "digital"], product[1]),
+                    product[2],
+                    product[3],
+                )
                 item = OrderItem(name=name_, type=type_, price=price, opened=opened)
                 items.append(item)
                 total += price
@@ -145,9 +392,6 @@ def generate_crm(seed: int = 42) -> CRM:
                 tier == "Standard" and days_old > POLICY_WINDOW_STANDARD
             ) or (tier == "Gold" and days_old > POLICY_WINDOW_GOLD)
             has_digital_only = all(item.type == "digital" for item in items)
-            has_opened_physical = any(
-                item.type == "physical" and item.opened for item in items
-            )
 
             if is_outside_window or has_digital_only:
                 refund_status = "Denied"
@@ -193,8 +437,8 @@ def export_json(crm: CRM, output_path: str = "local_crm.json"):
     """Write CRM to JSON (pretty-printed)."""
     # Use model_dump() on the RootModel, which handles nested models
     data = crm.model_dump()
-    with open(output_path, "w") as f:
-        json.dump(data, f, indent=2)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
     print(f"✅ Wrote {len(data)} users → {output_path}")
 
 
@@ -245,6 +489,9 @@ def main():
         "--seed", type=int, default=42, help="Random seed for reproducibility"
     )
     parser.add_argument(
+        "--num-customers", type=int, default=15, help="Number of customers to generate"
+    )
+    parser.add_argument(
         "--validate",
         action="store_true",
         help="Validate output against Pydantic schema",
@@ -265,7 +512,7 @@ def main():
     args = parser.parse_args()
 
     # Generate
-    crm = generate_crm(seed=args.seed)
+    crm = generate_crm(seed=args.seed, num_customers=args.num_customers)
 
     # Validate (optional)
     if args.validate:
@@ -279,10 +526,10 @@ def main():
     # Export
     if args.export_json:
         export_json(crm, args.json_path)
-    if args.export_csv or args.export_crm:
+    if args.export_csv:
         export_csv(crm, args.csv_path)
 
-    if not (args.export_json or args.export_csv or args.export_crm):
+    if not (args.export_json or args.export_csv):
         print(
             "ℹ️  No export flag passed. Use --export-json and/or --export-csv to write files."
         )
