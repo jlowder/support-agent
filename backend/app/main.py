@@ -102,79 +102,6 @@ def get_user_profile_fn(customer_id: str) -> str:
 get_user_profile = tool(get_user_profile_fn)
 
 
-def check_policy_validity_fn(order_id: str, clause: str) -> str:
-    """Check if a refund request matches policy rules."""
-    for user in CRM_DATA:
-        for order in user.get("order_history", []):
-            if order.get("order_id") == order_id:
-                order_date = datetime.fromisoformat(
-                    order["date"].replace("Z", "+00:00")
-                )
-                now = datetime.now(order_date.tzinfo)
-                days_since_purchase = (now - order_date).days
-
-                items = order.get("items", [])
-                loyalty_tier = user.get("loyalty_tier", "Standard")
-
-                result = {
-                    "order_id": order_id,
-                    "order_date": order["date"],
-                    "days_since_purchase": days_since_purchase,
-                    "loyalty_tier": loyalty_tier,
-                    "items": items,
-                    "refund_status": order.get("refund_status", "None"),
-                    "valid": True,
-                    "reasons": [],
-                }
-
-                if clause == "time_window":
-                    if loyalty_tier == "Gold":
-                        eligible_days = 45
-                    else:
-                        eligible_days = 30
-
-                    if days_since_purchase > eligible_days:
-                        result["valid"] = False
-                        result["reasons"].append(
-                            f"Order is {days_since_purchase} days old, exceeds {eligible_days}-day limit for {loyalty_tier} tier"
-                        )
-
-                elif clause == "condition":
-                    has_opened_items = any(item.get("opened", False) for item in items)
-                    if has_opened_items:
-                        result["reasons"].append(
-                            "Some items in order have been opened (15% restocking fee applies)"
-                        )
-
-                elif clause == "non_refundable":
-                    non_refundable_items = [
-                        item
-                        for item in items
-                        if item.get("type") in ["digital", "subscription"]
-                    ]
-                    if non_refundable_items:
-                        result["valid"] = False
-                        result["reasons"].append(
-                            f"Order contains non-refundable items: {[item['name'] for item in non_refundable_items]}"
-                        )
-
-                elif clause == "defective":
-                    defective_items = [
-                        item for item in items if item.get("defective", False)
-                    ]
-                    if defective_items:
-                        result["reasons"].append(
-                            f"Defective items detected: {[item['name'] for item in defective_items]} - 15% fee waived"
-                        )
-
-                return json.dumps(result, indent=2)
-
-    return json.dumps({"error": f"Order {order_id} not found"})
-
-
-check_policy_validity = tool(check_policy_validity_fn)
-
-
 def process_refund_transaction_fn(order_id: str, amount: float) -> str:
     """Process a refund transaction for an order."""
     key = f"refund_{order_id}"
@@ -329,37 +256,95 @@ def build_agent():
         return state
 
     def check_policy(state: AgentState) -> AgentState:
+        """Use LLM to check refund policy compliance."""
         order_id = state.get("current_order_id")
 
         if not order_id:
             state["context"]["policy_check_required"] = True
             return state
 
-        policy_result = json.loads(check_policy_validity_fn(order_id, "time_window"))
+        # Get user profile for context
+        customer_id = state["context"].get("customer_id")
+        user_profile = {}
+        if customer_id:
+            try:
+                user_profile = json.loads(get_user_profile_fn(customer_id))
+            except:
+                pass
 
-        if "error" not in policy_result:
-            state["context"]["order_details"] = policy_result
+        # Get order details for context
+        order_details = {}
+        if customer_id and "error" not in user_profile:
+            for order in user_profile.get("order_history", []):
+                if order.get("order_id") == order_id:
+                    order_details = order
+                    break
+
+        # Build policy check prompt for LLM
+        prompt = f"""You are a policy validation assistant. Review the refund request against the policy rules and customer context.
+
+POLICY RULES:
+{POLICY_RULES}
+
+CUSTOMER CONTEXT:
+- Customer ID: {customer_id}
+- Loyalty Tier: {user_profile.get("loyalty_tier", "Unknown")}
+
+ORDER DETAILS:
+{json.dumps(order_details, indent=2) if order_details else "Order not found"}
+
+REQUEST:
+Customer is requesting a refund for order {order_id}.
+
+Please analyze this refund request against the policy rules and provide:
+1. Whether the refund is VALID or INVALID
+2. Specific reasons based on policy violations or exceptions
+3. Any applicable fees or conditions
+
+Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons"], "recommended_action": "approve"|"deny"|"conditional"}}"""
+
+        try:
+            llm = load_llm()
+            response = llm.invoke(prompt)
+            policy_result = json.loads(response.content)
+
+            state["context"]["order_details"] = order_details
+            state["context"]["policy_result"] = policy_result
             state["context"]["time_valid"] = policy_result.get("valid", False)
             state["context"]["reasons"] = policy_result.get("reasons", [])
-        else:
-            # If order not found, it's a policy violation of sorts
+            state["context"]["action"] = policy_result.get(
+                "recommended_action", "unknown"
+            )
+
+        except Exception as e:
+            # Fallback if LLM fails
+            state["context"]["policy_result"] = {
+                "valid": False,
+                "reasons": [f"LLM validation failed: {str(e)}"],
+                "recommended_action": "deny",
+            }
             state["context"]["time_valid"] = False
-            state["context"]["reasons"] = [policy_result["error"]]
+            state["context"]["reasons"] = [f"Validation error: {str(e)}"]
+            state["context"]["action"] = "deny_refund_policy_violation"
 
         return state
 
     def evaluate_policy(state: AgentState) -> AgentState:
-        # Use the reasons gathered in check_policy to determine the action
-        reasons = state["context"].get("reasons", [])
-        if reasons:
+        """Use LLM's policy evaluation result to determine action."""
+        policy_result = state["context"].get("policy_result", {})
+
+        action = policy_result.get("recommended_action", "unknown")
+
+        if action == "deny":
             state["context"]["action"] = "deny_refund_policy_violation"
-            state["context"]["deny_reason"] = reasons[0]
-        elif state["context"].get("time_valid") is False:
-            state["context"]["action"] = "deny_refund_policy_violation"
-            state["context"]["deny_reason"] = (
-                "Refund request outside eligible time window"
+            state["context"]["deny_reason"] = ", ".join(
+                policy_result.get("reasons", ["Policy violation"])
             )
-        else:
+        elif action == "conditional":
+            state["context"]["action"] = "process_refund"
+            # Conditional approvals still count as valid, may need additional processing
+            state["context"]["conditional_fees"] = policy_result.get("reasons", [])
+        else:  # approve or valid
             state["context"]["action"] = "process_refund"
 
         return state
@@ -387,7 +372,8 @@ def build_agent():
         return state
 
     def generate_response(state: AgentState) -> AgentState:
-        action = state["context"].get("action", "unknown")
+        action = state["context"].get("action")
+        policy_result = state["context"].get("policy_result", {})
 
         if action == "refund_success":
             response = f"I've successfully processed your refund for order {state.get('current_order_id')}. "
@@ -399,9 +385,14 @@ def build_agent():
                 "You should see the credit on your statement within 3-5 business days."
             )
         elif action == "deny_refund_policy_violation":
-            response = "I've reviewed your request, and unfortunately I cannot process a refund for this order. "
-            response += f"Your order is {state['context'].get('order_details', {}).get('days_since_purchase', 'unknown')} days old. "
-            response += "Our policy requires refund requests within 30 days (or 45 days for Gold tier members)."
+            # Use the LLM's detailed policy explanation
+            reasons = policy_result.get("reasons", [])
+            if reasons:
+                response = "I've reviewed your request, and unfortunately I cannot process a refund for this order. "
+                response += " ".join(reasons)
+            else:
+                response = "I've reviewed your request, and according to our policy analysis, this refund request does not meet the required criteria. "
+                response += "Could you please review our return policy or let me know if you'd like to speak with a human agent?"
         elif action == "request_missing_info":
             response = (
                 "I need a bit more information to help you with your refund request. "
