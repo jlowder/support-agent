@@ -489,7 +489,11 @@ def main():
         "--seed", type=int, default=42, help="Random seed for reproducibility"
     )
     parser.add_argument(
-        "--num-customers", type=int, default=15, help="Number of customers to generate"
+        "-n",
+        "--num-customers",
+        type=int,
+        default=15,
+        help="Number of customers to generate",
     )
     parser.add_argument(
         "--validate",
