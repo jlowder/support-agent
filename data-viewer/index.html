@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Data Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .customer-list {
+            padding: 20px;
+        }
+
+        .customer-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .customer-item:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .customer-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.3s ease;
+        }
+
+        .customer-header:hover {
+            background: #e9ecef;
+        }
+
+        .customer-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .loyalty-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .loyalty-Gold {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            color: #fff;
+        }
+
+        .loyalty-Silver {
+            background: linear-gradient(135deg, #bdc3c7 0%, #ecf0f1 100%);
+            color: #333;
+        }
+
+        .loyalty-Standard {
+            background: linear-gradient(135deg, #95a5a6 0%, #bdc3c7 100%);
+            color: #fff;
+        }
+
+        .expand-icon {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+            color: #667eea;
+        }
+
+        .customer-item.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .customer-details {
+            padding: 20px;
+            display: none;
+        }
+
+        .customer-item.expanded .customer-details {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-row {
+            margin-bottom: 15px;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .detail-value {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .orders-section {
+            margin-top: 25px;
+            border-top: 2px solid #e9ecef;
+            padding-top: 20px;
+        }
+
+        .orders-section h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .order-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .order-id {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .order-date {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .order-total {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .order-refund {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .refund-Denied { background: #f8d7da; color: #721c24; }
+        .refund-Pending { background: #fff3cd; color: #856404; }
+        .refund-Refunded { background: #d1ecf1; color: #0c5460; }
+        .refund-None { background: #e2e3e5; color: #383d41; }
+
+        .order-items {
+            padding-left: 20px;
+            display: none;
+            margin-top: 10px;
+        }
+
+        .order-item.expanded .order-items {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .order-item.expanded .expand-icon-small {
+            transform: rotate(180deg);
+        }
+
+        .order-item.expanded .expand-icon-small::before {
+            content: '▲';
+        }
+
+        .expand-icon-small {
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+            color: #667eea;
+            cursor: pointer;
+        }
+
+        .order-item.expanded .expand-icon-small::before {
+            content: '▼';
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-type {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .type-physical { background: #e8f5e9; color: #2e7d32; }
+        .type-digital { background: #e3f2fd; color: #1565c0; }
+
+        .item-price {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Customer Data Viewer</h1>
+            <p>Click on customers and orders to expand details</p>
+        </div>
+        
+        <div class="customer-list" id="customer-list">
+            <div class="empty-state">
+                <p>Loading customer data...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Customer data
+        const customers = [
+            {
+                "id": "usr_001",
+                "name": "James Thompson",
+                "email": "james.thompson@example.com",
+                "loyalty_tier": "Gold",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-06-001",
+                        "date": "2025-03-06T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Digital Access Pass",
+                                "type": "digital",
+                                "price": 49.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 49.99,
+                        "refund_status": "Denied"
+                    }
+                ]
+            },
+            {
+                "id": "usr_002",
+                "name": "Sophia Miller",
+                "email": "sophia.miller@example.com",
+                "loyalty_tier": "Gold",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-29-001",
+                        "date": "2025-03-29T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Monitor Light Bar",
+                                "type": "physical",
+                                "price": 34.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 34.99,
+                        "refund_status": "Pending"
+                    }
+                ]
+            },
+            {
+                "id": "usr_003",
+                "name": "Logan Lewis",
+                "email": "logan.lewis@example.com",
+                "loyalty_tier": "Standard",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-16-001",
+                        "date": "2025-03-16T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Charging Pad",
+                                "type": "physical",
+                                "price": 24.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 24.99,
+                        "refund_status": "Refunded"
+                    }
+                ]
+            },
+            {
+                "id": "usr_004",
+                "name": "Marcus Lee",
+                "email": "marcus.lee@example.com",
+                "loyalty_tier": "Standard",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-04-04-001",
+                        "date": "2025-04-04T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Charging Pad",
+                                "type": "physical",
+                                "price": 24.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Monitor Light Bar",
+                                "type": "physical",
+                                "price": 34.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "E-Book Bundle",
+                                "type": "digital",
+                                "price": 29.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 89.97,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-04-10-002",
+                        "date": "2025-04-10T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Headphones",
+                                "type": "physical",
+                                "price": 89.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Smart Home Hub",
+                                "type": "physical",
+                                "price": 119.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 209.98,
+                        "refund_status": "Refunded"
+                    }
+                ]
+            },
+            {
+                "id": "usr_005",
+                "name": "Sarah Garcia",
+                "email": "sarah.garcia@example.com",
+                "loyalty_tier": "Gold",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-02-25-001",
+                        "date": "2025-02-25T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Subscription Monthly",
+                                "type": "digital",
+                                "price": 9.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Digital Guidebook",
+                                "type": "digital",
+                                "price": 19.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 29.98,
+                        "refund_status": "Denied"
+                    }
+                ]
+            },
+            {
+                "id": "usr_006",
+                "name": "Ethan Rodriguez",
+                "email": "ethan.rodriguez@example.com",
+                "loyalty_tier": "Gold",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-10-001",
+                        "date": "2025-03-10T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Digital Access Pass",
+                                "type": "digital",
+                                "price": 49.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 49.99,
+                        "refund_status": "Denied"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-14-002",
+                        "date": "2025-03-14T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Ergonomic Keyboard",
+                                "type": "physical",
+                                "price": 129.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Mechanical Keyboard",
+                                "type": "physical",
+                                "price": 149.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 279.98,
+                        "refund_status": "Refunded",
+                        "refund_transaction_id": "TXN-1D0C33A87965",
+                        "refund_amount": 2025.0,
+                        "refund_date": "2026-07-05T05:04:08.226615"
+                    }
+                ]
+            },
+            {
+                "id": "usr_007",
+                "name": "Amelia Jackson",
+                "email": "amelia.jackson@example.com",
+                "loyalty_tier": "Silver",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-04-06-001",
+                        "date": "2025-04-06T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Webcam HD",
+                                "type": "physical",
+                                "price": 69.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 69.99,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-04-13-002",
+                        "date": "2025-04-13T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Charging Pad",
+                                "type": "physical",
+                                "price": 24.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Mechanical Keyboard",
+                                "type": "physical",
+                                "price": 149.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 174.98,
+                        "refund_status": "Refunded"
+                    }
+                ]
+            },
+            {
+                "id": "usr_008",
+                "name": "Emma Chen",
+                "email": "emma.chen@example.com",
+                "loyalty_tier": "Standard",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-04-03-001",
+                        "date": "2025-04-03T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "E-Book Bundle",
+                                "type": "digital",
+                                "price": 29.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Webcam HD",
+                                "type": "physical",
+                                "price": 69.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 99.98,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-03-002",
+                        "date": "2025-03-03T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Charging Pad",
+                                "type": "physical",
+                                "price": 24.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Webcam HD",
+                                "type": "physical",
+                                "price": 69.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 94.98,
+                        "refund_status": "Denied"
+                    }
+                ]
+            },
+            {
+                "id": "usr_009",
+                "name": "William Wilson",
+                "email": "william.wilson@example.com",
+                "loyalty_tier": "Standard",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-04-001",
+                        "date": "2025-03-04T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Gaming Headset",
+                                "type": "physical",
+                                "price": 59.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 59.99,
+                        "refund_status": "Denied"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-14-002",
+                        "date": "2025-03-14T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Gaming Headset",
+                                "type": "physical",
+                                "price": 59.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Gaming Mouse",
+                                "type": "physical",
+                                "price": 79.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 139.98,
+                        "refund_status": "Denied"
+                    }
+                ]
+            },
+            {
+                "id": "usr_010",
+                "name": "Charlotte Walker",
+                "email": "charlotte.walker@example.com",
+                "loyalty_tier": "Gold",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-01-001",
+                        "date": "2025-03-01T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Noise-Canceling Earbuds",
+                                "type": "physical",
+                                "price": 159.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Noise-Canceling Earbuds",
+                                "type": "physical",
+                                "price": 159.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Noise-Canceling Earbuds",
+                                "type": "physical",
+                                "price": 159.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 479.97,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-19-002",
+                        "date": "2025-03-19T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Smart Home Hub",
+                                "type": "physical",
+                                "price": 119.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Laptop Stand",
+                                "type": "physical",
+                                "price": 39.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Gaming Headset",
+                                "type": "physical",
+                                "price": 59.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 219.97,
+                        "refund_status": "Pending"
+                    }
+                ]
+            },
+            {
+                "id": "usr_011",
+                "name": "Alice Brown",
+                "email": "alice.brown@example.com",
+                "loyalty_tier": "Silver",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-06-001",
+                        "date": "2025-03-06T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Charging Pad",
+                                "type": "physical",
+                                "price": 24.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Monitor Light Bar",
+                                "type": "physical",
+                                "price": 34.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 59.98,
+                        "refund_status": "None"
+                    }
+                ]
+            },
+            {
+                "id": "usr_012",
+                "name": "Robert Martinez",
+                "email": "robert.martinez@example.com",
+                "loyalty_tier": "Silver",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-04-001",
+                        "date": "2025-03-04T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Gaming Headset",
+                                "type": "physical",
+                                "price": 59.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "USB-C Docking Station",
+                                "type": "physical",
+                                "price": 99.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Mechanical Keyboard",
+                                "type": "physical",
+                                "price": 149.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 309.97,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-02-27-002",
+                        "date": "2025-02-27T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Mechanical Keyboard",
+                                "type": "physical",
+                                "price": 149.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 149.99,
+                        "refund_status": "Pending"
+                    }
+                ]
+            },
+            {
+                "id": "usr_013",
+                "name": "Isabella Martinez",
+                "email": "isabella.martinez@example.com",
+                "loyalty_tier": "Silver",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-04-02-001",
+                        "date": "2025-04-02T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Webcam HD",
+                                "type": "physical",
+                                "price": 69.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 69.99,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-08-002",
+                        "date": "2025-03-08T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Gaming Mouse",
+                                "type": "physical",
+                                "price": 79.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Monitor Light Bar",
+                                "type": "physical",
+                                "price": 34.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "E-Book Bundle",
+                                "type": "digital",
+                                "price": 29.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 144.97,
+                        "refund_status": "Pending"
+                    }
+                ]
+            },
+            {
+                "id": "usr_014",
+                "name": "Liam White",
+                "email": "liam.white@example.com",
+                "loyalty_tier": "Gold",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-04-14-001",
+                        "date": "2025-04-14T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Digital Access Pass",
+                                "type": "digital",
+                                "price": 49.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 49.99,
+                        "refund_status": "Denied"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-14-002",
+                        "date": "2025-03-14T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "USB-C Docking Station",
+                                "type": "physical",
+                                "price": 99.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Gaming Mouse",
+                                "type": "physical",
+                                "price": 79.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "External SSD 1TB",
+                                "type": "physical",
+                                "price": 129.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 309.97,
+                        "refund_status": "None"
+                    }
+                ]
+            },
+            {
+                "id": "usr_015",
+                "name": "David Patel",
+                "email": "david.patel@example.com",
+                "loyalty_tier": "Standard",
+                "order_history": [
+                    {
+                        "order_id": "ORD-2025-03-21-001",
+                        "date": "2025-03-21T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Organic Coffee Beans",
+                                "type": "physical",
+                                "price": 24.5,
+                                "opened": true
+                            },
+                            {
+                                "name": "Webcam HD",
+                                "type": "physical",
+                                "price": 69.99,
+                                "opened": false
+                            },
+                            {
+                                "name": "Wireless Headphones",
+                                "type": "physical",
+                                "price": 89.99,
+                                "opened": true
+                            }
+                        ],
+                        "total": 184.48,
+                        "refund_status": "Pending"
+                    },
+                    {
+                        "order_id": "ORD-2025-03-09-002",
+                        "date": "2025-03-09T00:00:00Z",
+                        "items": [
+                            {
+                                "name": "Wireless Headphones",
+                                "type": "physical",
+                                "price": 89.99,
+                                "opened": true
+                            },
+                            {
+                                "name": "Ergonomic Keyboard",
+                                "type": "physical",
+                                "price": 129.99,
+                                "opened": false
+                            }
+                        ],
+                        "total": 219.98,
+                        "refund_status": "Denied"
+                    }
+                ]
+            }
+        ];
+
+        // Format date to readable format
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Format price
+        function formatPrice(price) {
+            return '$' + price.toFixed(2);
+        }
+
+        // Create customer HTML
+        function createCustomerHTML(customer) {
+            const loyaltyClass = `loyalty-${customer.loyalty_tier}`;
+            let ordersHTML = '';
+
+            if (customer.order_history.length > 0) {
+                ordersHTML = `
+                    <div class="orders-section">
+                        <h3>🛒 Order History (${customer.order_history.length} order${customer.order_history.length !== 1 ? 's' : ''})</h3>
+                `;
+
+                customer.order_history.forEach(order => {
+                    const refundClass = `refund-${order.refund_status}`;
+                    let itemsHTML = '';
+
+                    if (order.items.length > 0) {
+                        itemsHTML = order.items.map(item => `
+                            <div class="item-row">
+                                <div class="item-name">
+                                    <span class="item-type type-${item.type}">${item.type}</span>
+                                    ${item.name}
+                                    ${item.opened ? '✅' : ''}
+                                </div>
+                                <div class="item-price">${formatPrice(item.price)}</div>
+                            </div>
+                        `).join('');
+                    }
+
+                    ordersHTML += `
+                        <div class="order-item" onclick="toggleOrder(event, this)">
+                            <div class="order-header">
+                                <span class="order-id">Order #${order.order_id}</span>
+                                <span class="order-date">${formatDate(order.date)}</span>
+                            </div>
+                            <div class="order-header">
+                                <span class="order-total">${formatPrice(order.total)}</span>
+                                <span class="order-refund ${refundClass}">${order.refund_status}</span>
+                            </div>
+                            <div class="order-items" id="order-items-${customer.id}-${order.order_id}">
+                                ${itemsHTML}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                ordersHTML += '</div>';
+            }
+
+            return `
+                <div class="customer-item">
+                    <div class="customer-header" onclick="toggleCustomer(event, this)">
+                        <div class="customer-name">
+                            ${customer.name}
+                            <span class="loyalty-badge ${loyaltyClass}">${customer.loyalty_tier}</span>
+                        </div>
+                        <div class="customer-info">
+                            <span>📧 ${customer.email}</span>
+                            <span>👤 ${customer.id}</span>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="customer-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Customer ID</span>
+                            <span class="detail-value">${customer.id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email Address</span>
+                            <span class="detail-value">${customer.email}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Loyalty Tier</span>
+                            <span class="detail-value">${customer.loyalty_tier}</span>
+                        </div>
+                        ${ordersHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Toggle customer expansion
+        function toggleCustomer(event, element) {
+            // Don't toggle if clicking on the expand icon directly
+            if (event.target.classList.contains('expand-icon')) {
+                return;
+            }
+            element.parentElement.classList.toggle('expanded');
+        }
+
+        // Toggle order expansion
+        function toggleOrder(event, element) {
+            const orderItems = element.querySelector('.order-items');
+            const expanded = orderItems.style.display === 'block';
+            
+            // Collapse all other order items
+            document.querySelectorAll('.order-items').forEach(item => {
+                if (item !== orderItems) {
+                    item.style.display = 'none';
+                    item.parentElement.classList.remove('expanded');
+                }
+            });
+            
+            orderItems.style.display = expanded ? 'none' : 'block';
+            element.classList.toggle('expanded');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const customerList = document.getElementById('customer-list');
+            
+            if (customers.length === 0) {
+                customerList.innerHTML = '<div class="empty-state"><p>No customers found</p></div>';
+            } else {
+                customerList.innerHTML = customers.map(createCustomerHTML).join('');
+            }
+        });
+    </script>
+</body>
+</html>
