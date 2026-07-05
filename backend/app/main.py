@@ -250,7 +250,7 @@ def build_agent():
 
             matches = re.findall(r"usr_\d+", content.lower())
             if matches:
-                customer_id = matches[0].upper()
+                customer_id = matches[0]  # Keep as lowercase to match CRM data
 
         # If still no customer_id, try to find by email
         if not customer_id:
@@ -320,6 +320,9 @@ def build_agent():
                         },
                     )
                 )
+        else:
+            # User is NOT authenticated. Signal to generate a response asking for ID/Email.
+            state["context"]["action"] = "request_authentication"
 
         broadcast_trace_sync(
             TraceEvent(
@@ -732,6 +735,28 @@ Instructions:
 
 Your response:"""
 
+        elif action == "request_authentication":
+            context_info += """
+CURRENT INFORMATION:
+- Customer has not provided their customer ID or email address
+
+Need to request: Customer ID (e.g., 'USR-123') or email address to locate account
+"""
+            prompt = f"""Generate a friendly, professional response asking the customer to provide their customer ID (like 'USR-123') or email address so that we can locate their account and help with their refund request.
+
+{context_info}
+
+Instructions:
+- Be polite and understanding
+- Explain why we need this information (to locate their account)
+- Provide examples of what customer ID looks like (e.g., 'USR-123' or 'USR_123')
+- Also mention they can provide their email address instead
+- Make it easy for the customer to provide this information
+- Keep it conversational and helpful
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
         elif action == "refund_failed":
             failure_reason = state["context"].get("failure_reason", "Unknown error")
             context_info += f"""
@@ -786,10 +811,120 @@ Your response:"""
         state["messages"].append(AIMessage(content=final_response))
         return state
 
+    def request_auth_info_node(state: AgentState) -> AgentState:
+        """Generate a response asking for customer ID or email."""
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="request_auth_info",
+                message="request_auth_info node started",
+                payload={},
+            )
+        )
+
+        prompt = """Generate a friendly, professional response asking the customer to provide their customer ID (like 'USR-123') or email address so that we can locate their account and help with their refund request.
+
+Instructions:
+- Be polite and understanding
+- Explain why we need this information (to locate their account)
+- Provide examples of what customer ID looks like (e.g., 'USR-123' or 'USR_123')
+- Also mention they can provide their email address instead
+- Make it easy for the customer to provide this information
+- Keep it conversational and helpful
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        try:
+            llm = load_llm()
+            response = llm.invoke(prompt)
+            final_response = response.content.strip()
+
+        except Exception as e:
+            # Fallback to simple message if LLM fails
+            final_response = "I apologize, but I need some additional information to help you. Could you please provide your customer ID or email address so I can locate your account?"
+
+        state["messages"].append(AIMessage(content=final_response))
+        return state
+
+    def list_orders_node(state: AgentState) -> AgentState:
+        """Generate a list of orders for the authenticated customer to choose from."""
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="list_orders",
+                message="list_orders node started",
+                payload={
+                    "customer_id": state["context"].get("customer_id"),
+                    "current_order_id": state.get("current_order_id"),
+                },
+            )
+        )
+
+        customer_id = state["context"].get("customer_id")
+        user_profile = {}
+        if customer_id:
+            try:
+                user_profile = json.loads(get_user_profile_fn(customer_id))
+            except:
+                pass
+
+        order_history = user_profile.get("order_history", [])
+
+        # If customer already provided order ID, skip this node
+        if state.get("current_order_id"):
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="list_orders",
+                    message="Order ID already provided, skipping list",
+                    payload={"current_order_id": state.get("current_order_id")},
+                )
+            )
+            return state
+
+        # Build order list for LLM prompt
+        order_list = ""
+        for i, order in enumerate(order_history, 1):
+            order_list += f"{i}. Order ID: {order.get('order_id')} - Total: ${order.get('total', 0):.2f} - Status: {order.get('refund_status', 'Unknown')}\n"
+
+        if not order_list:
+            order_list = "No orders found in your history."
+
+        prompt = f"""Generate a friendly message that lists the customer's orders and asks them to choose which one they'd like to request a refund for.
+
+CUSTOMER ORDER HISTORY:
+{order_list}
+
+Instructions:
+- List all orders clearly with order ID, total amount, and refund status
+- Ask the customer to provide the order number (e.g., "1", "2", etc.) or the order ID
+- Keep it conversational and helpful
+- Do not include any XML tags or markdown formatting
+
+Your response:"""
+
+        try:
+            llm = load_llm()
+            response = llm.invoke(prompt)
+            final_response = response.content.strip()
+
+        except Exception as e:
+            # Fallback to simple message if LLM fails
+            final_response = "I found your account. Could you please tell me which order you'd like to request a refund for? Here are your recent orders: " + order_list.replace("\n", " ")
+
+        state["messages"].append(AIMessage(content=final_response))
+        return state
+
     workflow = StateGraph(AgentState)
 
     workflow.add_node("init", init_state)
     workflow.add_node("authenticate", authenticate_customer)
+    workflow.add_node("request_auth_info", request_auth_info_node)
+    workflow.add_node("list_orders", list_orders_node)
     workflow.add_node("extract", extract_refund_request)
     workflow.add_node("check_policy", check_policy)
     workflow.add_node("process", process_refund)
@@ -810,9 +945,58 @@ Your response:"""
     workflow.add_conditional_edges(
         "authenticate",
         lambda s: (
-            "extract"
-            if not s.get("current_order_id")
-            else "check_policy"  # Fix: check state level
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="workflow",
+                    message="Conditional edge: authenticate -> ?",
+                    payload={
+                        "customer_authenticated": s["context"].get(
+                            "customer_authenticated", False
+                        ),
+                        "action": s["context"].get("action"),
+                        "route": "request_auth_info"
+                        if not s["context"].get("customer_authenticated")
+                        else "list_orders"
+                        if not s.get("current_order_id")
+                        else "check_policy",
+                    },
+                )
+            )
+            or (
+                "request_auth_info"
+                if not s["context"].get("customer_authenticated")
+                else "list_orders"
+                if not s.get("current_order_id")
+                else "check_policy"
+            )
+        ),
+        ["request_auth_info", "list_orders", "check_policy"],
+    )
+
+    workflow.add_conditional_edges(
+        "list_orders",
+        lambda s: (
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="workflow",
+                    message="Conditional edge: list_orders -> ?",
+                    payload={
+                        "current_order_id": s.get("current_order_id"),
+                        "route": "extract"
+                        if not s.get("current_order_id")
+                        else "check_policy",
+                    },
+                )
+            )
+            or (
+                "extract"
+                if not s.get("current_order_id")
+                else "check_policy"
+            )
         ),
         ["extract", "check_policy"],
     )
