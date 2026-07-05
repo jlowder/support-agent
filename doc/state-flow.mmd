@@ -1,0 +1,18 @@
+graph TD
+    A([User message via /chat]) --> B[init: Initialize State]
+    B --> C[authenticate: Extract Customer ID]
+    
+    C -->|Authentication Fails| D[request_auth_info: Request ID/Email]
+    C -->|Authenticated| E{Has Order ID?}
+    
+    E -->|No| F[list_orders: Show Order History]
+    E -->|Yes| G[extract: Parse Order ID & Amount]
+    
+    F --> G
+    G --> H[check_policy: Validate Policy via LLM]
+    
+    H -->|Valid| I[process: Execute Refund Transaction]
+    H -->|Invalid| J[generate_response: Generate Final Response]
+    
+    I --> J
+    J --> K([Response Returned to Client])
