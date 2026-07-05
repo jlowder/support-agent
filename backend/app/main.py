@@ -176,6 +176,18 @@ async def broadcast_trace(event: TraceEvent) -> None:
     await broadcast.broadcast(event)
 
 
+def broadcast_trace_sync(event: TraceEvent) -> None:
+    """Broadcast a trace event to all SSE clients (sync version)."""
+    try:
+        # Try to get the running event loop (FastAPI context)
+        loop = asyncio.get_running_loop()
+        # Schedule the broadcast in the running loop
+        loop.create_task(broadcast.broadcast(event))
+    except RuntimeError:
+        # No running loop, create a new one
+        asyncio.run(broadcast.broadcast(event))
+
+
 # Build the LangGraph agent
 
 
@@ -189,6 +201,15 @@ def build_agent():
         refund_amount: Optional[float]
 
     def init_state(state: AgentState) -> AgentState:
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="init",
+                message="init node started",
+                payload={"message_count": len(state["messages"])},
+            )
+        )
         return {
             **state,
             "context": {
@@ -203,6 +224,21 @@ def build_agent():
         latest_msg = messages[-1]
         content = latest_msg.content
 
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="authenticate",
+                message="authenticate node started",
+                payload={
+                    "latest_message": content[:100],
+                    "has_customer_id_in_context": bool(
+                        state["context"].get("customer_id")
+                    ),
+                },
+            )
+        )
+
         customer_id = None
 
         # Check if customer_id is already provided in context (from chat_endpoint)
@@ -216,15 +252,89 @@ def build_agent():
             if matches:
                 customer_id = matches[0].upper()
 
+        # If still no customer_id, try to find by email
+        if not customer_id:
+            import re
+
+            email_match = re.search(
+                r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content
+            )
+            if email_match:
+                email = email_match.group()
+                broadcast_trace_sync(
+                    TraceEvent(
+                        timestamp=datetime.now().isoformat(),
+                        type="trace",
+                        component="authenticate",
+                        message="Found email in message",
+                        payload={"email": email},
+                    )
+                )
+                for user in CRM_DATA:
+                    if user.get("email", "").lower() == email.lower():
+                        customer_id = user["id"]
+                        broadcast_trace_sync(
+                            TraceEvent(
+                                timestamp=datetime.now().isoformat(),
+                                type="trace",
+                                component="authenticate",
+                                message="Found user by email",
+                                payload={
+                                    "email": email,
+                                    "customer_id": customer_id,
+                                    "name": user.get("name"),
+                                },
+                            )
+                        )
+                        break
+
         if customer_id:
             user_data = json.loads(get_user_profile_fn(customer_id))
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="authenticate",
+                    message="User profile retrieved",
+                    payload={
+                        "customer_id": customer_id,
+                        "has_user_data": "error" not in user_data,
+                    },
+                )
+            )
             if "error" not in user_data:
                 state["context"]["customer_authenticated"] = True
                 state["context"]["customer_id"] = customer_id
                 state["context"]["loyalty_tier"] = user_data.get(
                     "loyalty_tier", "Standard"
                 )
-                state["context"]["user_profile"] = user_data
+                broadcast_trace_sync(
+                    TraceEvent(
+                        timestamp=datetime.now().isoformat(),
+                        type="trace",
+                        component="authenticate",
+                        message="Customer authenticated",
+                        payload={
+                            "customer_id": customer_id,
+                            "loyalty_tier": user_data.get("loyalty_tier", "Standard"),
+                        },
+                    )
+                )
+
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="authenticate",
+                message="authenticate node complete",
+                payload={
+                    "customer_authenticated": state["context"].get(
+                        "customer_authenticated", False
+                    ),
+                    "customer_id": state["context"].get("customer_id"),
+                },
+            )
+        )
 
         return state
 
@@ -233,8 +343,34 @@ def build_agent():
         # Process ALL messages to find the request, not just the last one
         full_content = " ".join([m.content for m in messages]).lower()
 
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="extract",
+                message="extract node started",
+                payload={
+                    "message_count": len(messages),
+                    "full_content_sample": full_content[:200],
+                },
+            )
+        )
+
         refund_keywords = ["refund", "return", "back money", "cancel order"]
         is_refund_request = any(kw in full_content for kw in refund_keywords)
+
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="extract",
+                message=f"Refund request detection",
+                payload={
+                    "is_refund_request": is_refund_request,
+                    "full_content": full_content,
+                },
+            )
+        )
 
         if is_refund_request:
             state["context"]["refund_requested"] = True
@@ -247,11 +383,29 @@ def build_agent():
             )
             if order_matches:
                 state["current_order_id"] = order_matches[0]
+                broadcast_trace_sync(
+                    TraceEvent(
+                        timestamp=datetime.now().isoformat(),
+                        type="trace",
+                        component="extract",
+                        message="Order ID found",
+                        payload={"order_id": order_matches[0]},
+                    )
+                )
 
             # Use full_content to find amount
             amount_matches = re.findall(r"\$?(\d+\.?\d*)", full_content)
             if amount_matches:
                 state["refund_amount"] = float(amount_matches[0])
+                broadcast_trace_sync(
+                    TraceEvent(
+                        timestamp=datetime.now().isoformat(),
+                        type="trace",
+                        component="extract",
+                        message="Amount found",
+                        payload={"amount": amount_matches[0]},
+                    )
+                )
 
         return state
 
@@ -259,9 +413,30 @@ def build_agent():
         """Use LLM to check refund policy compliance."""
         order_id = state.get("current_order_id")
 
+        broadcast_trace_sync(
+            TraceEvent(
+                timestamp=datetime.now().isoformat(),
+                type="trace",
+                component="check_policy",
+                message="check_policy node started",
+                payload={
+                    "order_id": order_id,
+                    "has_customer_id": bool(state["context"].get("customer_id")),
+                },
+            )
+        )
+
         if not order_id:
             state["context"]["policy_check_required"] = True
             state["context"]["next_node"] = "generate_response"
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="check_policy",
+                    message="No order_id - skipping policy check",
+                )
+            )
             return state
 
         # Get user profile for context
@@ -282,7 +457,7 @@ def build_agent():
                     break
 
         # Build policy check prompt for LLM
-        prompt = f"""You are a policy validation assistant. Review the refund request against the policy rules and customer context.
+        prompt_text = f"""You are a policy validation assistant. Review the refund request against the policy rules and customer context.
 
 POLICY RULES:
 {POLICY_RULES}
@@ -302,12 +477,68 @@ Please analyze this refund request against the policy rules and provide:
 2. Specific reasons based on policy violations or exceptions
 3. Any applicable fees or conditions
 
-Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons"], "next_node": "process_refund"|"generate_response"}}"""
+Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons"], "next_node": "process"|"generate_response"}}"""
 
         try:
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="debug",
+                    component="check_policy",
+                    message="Invoking LLM for policy check",
+                    payload={
+                        "order_id": order_id,
+                        "customer_id": customer_id,
+                        "user_profile_keys": list(user_profile.keys())
+                        if user_profile
+                        else [],
+                        "order_found": bool(order_details),
+                        "prompt_length": len(prompt_text),
+                    },
+                )
+            )
+
             llm = load_llm()
-            response = llm.invoke(prompt)
-            policy_result = json.loads(response.content)
+            response = llm.invoke(prompt_text)
+
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="debug",
+                    component="check_policy",
+                    message="LLM response received",
+                    payload={
+                        "raw_response": response.content,
+                        "response_type": type(response.content).__name__,
+                    },
+                )
+            )
+
+            # Check if response is JSON or natural language
+            import re
+
+            raw_content = (
+                response.content if hasattr(response, "content") else str(response)
+            )
+            json_match = re.search(r"\{.*\}", raw_content, re.DOTALL)
+            if json_match:
+                json_str = json_match.group()
+                policy_result = json.loads(json_str)
+                broadcast_trace_sync(
+                    TraceEvent(
+                        timestamp=datetime.now().isoformat(),
+                        type="debug",
+                        component="check_policy",
+                        message="JSON extracted from LLM response",
+                        payload={
+                            "extracted_json": json_str[:500],
+                            "parsed_valid": policy_result.get("valid"),
+                            "parsed_next_node": policy_result.get("next_node"),
+                        },
+                    )
+                )
+            else:
+                raise ValueError(f"LLM did not return valid JSON: {raw_content[:200]}")
 
             state["context"]["order_details"] = order_details
             state["context"]["policy_result"] = policy_result
@@ -317,7 +548,45 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
                 "next_node", "generate_response"
             )
 
+        except json.JSONDecodeError as e:
+            raw_content_str = (
+                response.content if hasattr(response, "content") else str(response)
+            )
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="error",
+                    component="check_policy",
+                    message=f"Failed to parse LLM response as JSON",
+                    payload={
+                        "error": str(e),
+                        "raw_response": raw_content_str[:500],
+                    },
+                )
+            )
+            # Fallback if LLM fails
+            state["context"]["policy_result"] = {
+                "valid": False,
+                "reasons": [f"Failed to parse LLM response: {str(e)}"],
+                "next_node": "generate_response",
+            }
+            state["context"]["time_valid"] = False
+            state["context"]["reasons"] = [f"JSON parsing error: {str(e)}"]
+            state["context"]["next_node"] = "generate_response"
+
         except Exception as e:
+            raw_content_str = (
+                response.content if hasattr(response, "content") else str(response)
+            )
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="error",
+                    component="check_policy",
+                    message=f"Policy check failed",
+                    payload={"error": str(e), "raw_response": raw_content_str[:500]},
+                )
+            )
             # Fallback if LLM fails
             state["context"]["policy_result"] = {
                 "valid": False,
@@ -519,7 +788,9 @@ Your response:"""
     workflow.add_conditional_edges(
         "authenticate",
         lambda s: (
-            "extract" if not s["context"].get("current_order_id") else "check_policy"
+            "extract"
+            if not s.get("current_order_id")
+            else "check_policy"  # Fix: check state level
         ),
         ["extract", "check_policy"],
     )
@@ -527,9 +798,26 @@ Your response:"""
     workflow.add_conditional_edges(
         "extract",
         lambda s: (
-            "check_policy"
-            if s["context"].get("current_order_id")
-            else "generate_response"
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="workflow",
+                    message="Conditional edge: extract -> ?",
+                    payload={
+                        "current_order_id": s.get("current_order_id"),
+                        "context_order_id": s["context"].get("current_order_id"),
+                        "route": "check_policy"
+                        if s.get("current_order_id")
+                        else "generate_response",
+                    },
+                )
+            )
+            or (
+                "check_policy"
+                if s.get("current_order_id")  # Fix: check state level, not context
+                else "generate_response"
+            )
         ),
         ["check_policy", "generate_response"],
     )
@@ -542,7 +830,18 @@ Your response:"""
 
     workflow.add_conditional_edges(
         "process",
-        lambda s: "generate_response" if s["context"].get("action") else "process",
+        lambda s: (
+            broadcast_trace_sync(
+                TraceEvent(
+                    timestamp=datetime.now().isoformat(),
+                    type="trace",
+                    component="workflow",
+                    message="Conditional edge: process -> generate_response",
+                    payload={},
+                )
+            )
+            or "generate_response"
+        ),
         ["generate_response"],
     )
 
@@ -581,6 +880,15 @@ async def chat_endpoint(request: ChatRequest):
             )
         elif request.email:
             messages.append(HumanMessage(content=f"My email is {request.email}"))
+
+        # Also search for email in message to help with user lookup
+        import re
+
+        email_match = re.search(
+            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", request.message
+        )
+        if email_match and not request.customer_id and not request.email:
+            messages.append(HumanMessage(content=f"My email is {email_match.group()}"))
 
         config = {"configurable": {"thread_id": f"chat_{datetime.now().timestamp()}"}}
 

@@ -185,7 +185,10 @@
           }
         ],
         "total": 279.98,
-        "refund_status": "None"
+        "refund_status": "Refunded",
+        "refund_transaction_id": "TXN-1D0C33A87965",
+        "refund_amount": 2025.0,
+        "refund_date": "2026-07-05T05:04:08.226615"
       }
     ]
   },
