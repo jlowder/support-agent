@@ -393,19 +393,38 @@ def build_agent():
                     )
                 )
 
-            # Use full_content to find amount
-            amount_matches = re.findall(r"\$?(\d+\.?\d*)", full_content)
-            if amount_matches:
-                state["refund_amount"] = float(amount_matches[0])
-                broadcast_trace_sync(
-                    TraceEvent(
-                        timestamp=datetime.now().isoformat(),
-                        type="trace",
-                        component="extract",
-                        message="Amount found",
-                        payload={"amount": amount_matches[0]},
-                    )
+            # Use full_content to find amount - be more specific about what constitutes a refund amount
+            # Look for amounts mentioned WITHIN the context of "refund for [amount]" or "refund [amount]"
+            # This avoids matching order years like "2025" from "ORD-2025"
+            # Only match if the amount appears near "refund" keyword
+            amount_matches = re.findall(
+                r"refund\s+(?:for\s+)?(\$?(?:\d+,)?\d+\.\d{2})",
+                full_content,
+                re.IGNORECASE,
+            )
+            if not amount_matches:
+                amount_matches = re.findall(
+                    r"(\$?(?:\d+,)?\d+\.\d{2})\s+for\s+refund",
+                    full_content,
+                    re.IGNORECASE,
                 )
+            if amount_matches:
+                # Filter out obvious false positives like years (4-digit numbers starting with 20)
+                filtered_matches = [
+                    m for m in amount_matches if not re.match(r"^20\d{2}$", m)
+                ]
+                if filtered_matches:
+                    amount_matches = filtered_matches
+                    state["refund_amount"] = float(amount_matches[0].replace("$", ""))
+                    broadcast_trace_sync(
+                        TraceEvent(
+                            timestamp=datetime.now().isoformat(),
+                            type="trace",
+                            component="extract",
+                            message="Amount found",
+                            payload={"amount": amount_matches[0].replace("$", "")},
+                        )
+                    )
 
         return state
 
@@ -547,6 +566,9 @@ Respond in JSON format with: {{"valid": true/false, "reasons": ["list of reasons
             state["context"]["next_node"] = policy_result.get(
                 "next_node", "generate_response"
             )
+            # Set action for generate_response to use
+            if not policy_result.get("valid"):
+                state["context"]["action"] = "deny_refund_policy_violation"
 
         except json.JSONDecodeError as e:
             raw_content_str = (
