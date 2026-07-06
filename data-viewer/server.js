@@ -6,6 +6,13 @@ const PORT = 3200;
 const CRM_PATH = path.resolve(__dirname, '../local_crm.json');
 
 const server = http.createServer((req, res) => {
+    // Add CORS headers to all JSON responses
+    const addCorsHeaders = () => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    };
+    
     if (req.url === '/' || req.url === '/index.html') {
         const filePath = path.join(__dirname, 'index.html');
         fs.readFile(filePath, 'utf8', (err, data) => {
@@ -18,6 +25,7 @@ const server = http.createServer((req, res) => {
             res.end(data);
         });
     } else if (req.url === '/local_crm.json') {
+        addCorsHeaders();
         fs.readFile(CRM_PATH, 'utf8', (err, data) => {
             if (err) {
                 res.writeHead(500);

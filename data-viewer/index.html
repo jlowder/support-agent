@@ -3,484 +3,845 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Data Viewer</title>
+    <title>CRM Data Viewer</title>
     <style>
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
         }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
+        
+        header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
-            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 600;
+        
+        header h1 {
+            font-size: 2rem;
             margin-bottom: 10px;
         }
-
-        .header p {
+        
+        header p {
             opacity: 0.9;
-            font-size: 14px;
+            font-size: 1.1rem;
         }
-
-        .customer-list {
-            padding: 20px;
-        }
-
-        .customer-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .customer-item:hover {
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .customer-header {
-            padding: 15px 20px;
-            cursor: pointer;
+        
+        .controls {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e9ecef;
-            transition: background 0.3s ease;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-
-        .customer-header:hover {
-            background: #e9ecef;
-        }
-
-        .customer-name {
-            font-weight: 600;
-            font-size: 18px;
-            color: #333;
+        
+        .control-group {
             display: flex;
             align-items: center;
             gap: 10px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
+        
+        select, button {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        select:hover {
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5a6fd6;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .stat-card .value.small {
+            font-size: 1.8rem;
+        }
+        
+        .customers-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .customer-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .customer-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .customer-header:hover {
+            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+        }
+        
         .customer-info {
             display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 14px;
-            color: #666;
+            flex-direction: column;
+            gap: 5px;
         }
-
-        .loyalty-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
+        
+        .customer-name {
+            font-size: 1.3rem;
+            font-weight: 700;
         }
-
-        .loyalty-Gold {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-            color: #fff;
+        
+        .customer-contact {
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
-
-        .loyalty-Silver {
-            background: linear-gradient(135deg, #bdc3c7 0%, #ecf0f1 100%);
-            color: #333;
+        
+        .toggle-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+            pointer-events: none;
         }
-
-        .loyalty-Standard {
-            background: linear-gradient(135deg, #95a5a6 0%, #bdc3c7 100%);
-            color: #fff;
-        }
-
-        .expand-icon {
-            font-size: 16px;
-            transition: transform 0.3s ease;
-            color: #667eea;
-        }
-
-        .customer-item.expanded .expand-icon {
+        
+        .customer-section.expanded .toggle-icon {
             transform: rotate(180deg);
         }
-
-        .customer-details {
+        
+        .customer-content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+        }
+        
+        .customer-section.expanded .customer-content {
+            max-height: 5000px;
             padding: 20px;
-            display: none;
         }
-
-        .customer-item.expanded .customer-details {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .detail-row {
-            margin-bottom: 15px;
-        }
-
-        .detail-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: #667eea;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .detail-value {
-            color: #333;
-            font-size: 16px;
-            line-height: 1.5;
-        }
-
-        .orders-section {
-            margin-top: 25px;
-            border-top: 2px solid #e9ecef;
-            padding-top: 20px;
-        }
-
-        .orders-section h3 {
-            color: #667eea;
-            font-size: 16px;
-            margin-bottom: 15px;
+        
+        .orders-list {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
         }
-
-        .order-item {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        
+        .order-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s;
+            overflow: hidden;
         }
-
-        .order-item:hover {
-            border-color: #667eea;
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+        
+        .order-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-
+        
         .order-header {
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
         }
-
+        
+        .order-header:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
         .order-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .order-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .meta-item .label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .meta-item .value {
             font-weight: 600;
             color: #333;
-            font-size: 14px;
         }
-
-        .order-date {
-            font-size: 13px;
-            color: #666;
+        
+        .status-pending {
+            background: #ffc107;
+            color: #333;
         }
-
-        .order-total {
-            font-weight: 700;
-            color: #667eea;
-            font-size: 16px;
+        
+        .status-processing {
+            background: #17a2b8;
+            color: white;
         }
-
-        .order-refund {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
+        
+        .status-shipped {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-delivered {
+            background: #6f42c1;
+            color: white;
+        }
+        
+        .status-cancelled {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .order-content {
+            display: block;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            visibility: hidden;
+        }
+        
+        .order-card.expanded .order-content {
+            max-height: 5000px;
+            padding: 20px;
+            visibility: visible;
+        }
+        
+        .order-card.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        .items-container {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        
+        .item-card {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+        
+        .item-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .item-card.expanded {
+            border-color: #667eea;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .item-card.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        .item-card.digital {
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .item-card.physical {
+            border-left: 4px solid #28a745;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .item-header:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+        }
+        
+        .item-name {
+            font-size: 1rem;
             font-weight: 600;
         }
-
-        .refund-Denied { background: #f8d7da; color: #721c24; }
-        .refund-Pending { background: #fff3cd; color: #856404; }
-        .refund-Refunded { background: #d1ecf1; color: #0c5460; }
-        .refund-None { background: #e2e3e5; color: #383d41; }
-
-        .order-items {
-            padding-left: 20px;
-            display: none;
+        
+        .item-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
             margin-top: 10px;
         }
-
-        .order-item.expanded .order-items {
-            display: block;
-            animation: fadeIn 0.3s ease;
+        
+        .item-card.expanded .item-content {
+            max-height: 5000px;
         }
-
-        .order-item.expanded .expand-icon-small {
-            transform: rotate(180deg);
+        
+        .item-meta {
+            font-size: 0.85rem;
+            color: #666;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-
-        .order-item.expanded .expand-icon-small::before {
-            content: '▲';
+        
+        .item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
         }
-
-        .expand-icon-small {
-            display: inline-block;
-            margin-right: 8px;
-            font-size: 12px;
-            transition: transform 0.3s ease;
-            color: #667eea;
-            cursor: pointer;
-        }
-
-        .order-item.expanded .expand-icon-small::before {
-            content: '▼';
-        }
-
-        .item-row {
+        
+        .detail-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
+            flex-direction: column;
+            gap: 3px;
         }
-
-        .item-row:last-child {
-            border-bottom: none;
-        }
-
-        .item-name {
-            color: #555;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .item-type {
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 3px;
+        
+        .detail-item .label {
+            font-size: 0.75rem;
+            color: #999;
             text-transform: uppercase;
         }
-
-        .type-physical { background: #e8f5e9; color: #2e7d32; }
-        .type-digital { background: #e3f2fd; color: #1565c0; }
-
-        .item-price {
+        
+        .detail-item .value {
             font-weight: 600;
-            color: #667eea;
+            color: #333;
         }
-
+        
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             color: #666;
         }
-
-        .empty-state p {
-            font-size: 16px;
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .search-container {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 12px 16px;
+            padding-right: 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .search-container input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        
+        .cors-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .order-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .order-meta {
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📦 Customer Data Viewer</h1>
-            <p>Click on customers and orders to expand details</p>
+        <header>
+            <h1>CRM Data Viewer</h1>
+            <p>Customer Orders & Items - Read-Only Access</p>
+        </header>
+        
+        <div class="cors-warning" id="cors-warning">
+            <strong>⚠️ CORS Warning:</strong> The data viewer is running in a browser context. 
+            For best results, open this file via a local web server.
         </div>
         
-        <div class="customer-list" id="customer-list">
-            <div class="empty-state">
-                <p>Loading customer data...</p>
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Customers</h3>
+                <div class="value" id="total-customers">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <div class="value" id="total-orders">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Items</h3>
+                <div class="value" id="total-items">0</div>
             </div>
         </div>
-    </div>
-
-    <script>
-        // Format date to readable format
-        function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
-
-        // Format price
-        function formatPrice(price) {
-            return '$' + price.toFixed(2);
-        }
-
-        // Create customer HTML
-        function createCustomerHTML(customer) {
-            const loyaltyClass = `loyalty-${customer.loyalty_tier}`;
-            let ordersHTML = '';
-
-            if (customer.order_history.length > 0) {
-                ordersHTML = `
-                    <div class="orders-section">
-                        <h3>🛒 Order History (${customer.order_history.length} order${customer.order_history.length !== 1 ? 's' : ''})</h3>
-                `;
-
-                customer.order_history.forEach(order => {
-                    const refundClass = `refund-${order.refund_status}`;
-                    let itemsHTML = '';
-
-                    if (order.items.length > 0) {
-                        itemsHTML = order.items.map(item => `
-                            <div class="item-row">
-                                <div class="item-name">
-                                    <span class="item-type type-${item.type}">${item.type}</span>
-                                    ${item.name}
-                                    ${item.opened ? '✅' : ''}
-                                </div>
-                                <div class="item-price">${formatPrice(item.price)}</div>
-                            </div>
-                        `).join('');
-                    }
-
-                    ordersHTML += `
-                        <div class="order-item" onclick="toggleOrder(event, this)">
-                            <div class="order-header">
-                                <span class="order-id">Order #${order.order_id}</span>
-                                <span class="order-date">${formatDate(order.date)}</span>
-                            </div>
-                            <div class="order-header">
-                                <span class="order-total">${formatPrice(order.total)}</span>
-                                <span class="order-refund ${refundClass}">${order.refund_status}</span>
-                            </div>
-                            <div class="order-items" id="order-items-${customer.id}-${order.order_id}">
-                                ${itemsHTML}
-                            </div>
-                        </div>
-                    `;
-                });
-
-                ordersHTML += '</div>';
-            }
-
-            return `
-                <div class="customer-item">
-                    <div class="customer-header" onclick="toggleCustomer(event, this)">
-                        <div class="customer-name">
-                            ${customer.name}
-                            <span class="loyalty-badge ${loyaltyClass}">${customer.loyalty_tier}</span>
-                        </div>
-                        <div class="customer-info">
-                            <span>📧 ${customer.email}</span>
-                            <span>👤 ${customer.id}</span>
-                            <span class="expand-icon">▼</span>
-                        </div>
-                    </div>
-                    <div class="customer-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Customer ID</span>
-                            <span class="detail-value">${customer.id}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Email Address</span>
-                            <span class="detail-value">${customer.email}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Loyalty Tier</span>
-                            <span class="detail-value">${customer.loyalty_tier}</span>
-                        </div>
-                        ${ordersHTML}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Toggle customer expansion
-        function toggleCustomer(event, element) {
-            // Don't toggle if clicking on the expand icon directly
-            if (event.target.classList.contains('expand-icon')) {
-                return;
-            }
-            element.parentElement.classList.toggle('expanded');
-        }
-
-        // Toggle order expansion
-        function toggleOrder(event, element) {
-            const orderItems = element.querySelector('.order-items');
-            const expanded = orderItems.style.display === 'block';
+        
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search customers, orders, or items...">
+                <span class="search-icon">🔍</span>
+            </div>
             
-            // Collapse all other order items
-            document.querySelectorAll('.order-items').forEach(item => {
-                if (item !== orderItems) {
-                    item.style.display = 'none';
-                    item.parentElement.classList.remove('expanded');
+            <div class="control-group">
+                <label for="status-filter">Order Status:</label>
+                <select id="status-filter">
+                    <option value="all">All Orders</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            
+            <button id="load-data-btn">🔄 Load Data</button>
+        </div>
+        
+        <div id="customers-tree" class="customers-tree">
+            <div class="loading">Loading data...</div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let customers = [];
+        let filteredCustomers = [];
+        
+        // DOM Elements
+        const customersTreeEl = document.getElementById('customers-tree');
+        const searchInput = document.getElementById('search-input');
+        const statusFilter = document.getElementById('status-filter');
+        const loadBtn = document.getElementById('load-data-btn');
+        const corsWarning = document.getElementById('cors-warning');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Try to detect if we're running via file:// protocol
+            if (window.location.protocol === 'file:') {
+                corsWarning.style.display = 'block';
+            }
+            
+            loadFromPossibleLocations();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            searchInput.addEventListener('input', filterCustomers);
+            statusFilter.addEventListener('change', filterCustomers);
+            loadBtn.addEventListener('click', loadFromPossibleLocations);
+            
+            // Global delegated click listener for hierarchical expansion
+            document.addEventListener('click', (e) => {
+                const header = e.target.closest('.customer-header, .order-header, .item-header');
+                if (!header) return;
+                
+                const section = header.closest('.customer-section, .order-card, .item-card');
+                if (section) {
+                    section.classList.toggle('expanded');
                 }
             });
-            
-            orderItems.style.display = expanded ? 'none' : 'block';
-            element.classList.toggle('expanded');
         }
-
-        // Load CRM data from JSON file
-        async function loadCRMData() {
-            const customerList = document.getElementById('customer-list');
+        
+        async function loadFromPossibleLocations() {
+            const locations = [
+                'local_crm.json',
+                '../local_crm.json',
+                './data-viewer/local_crm.json',
+                'data-viewer/local_crm.json'
+            ];
             
-            try {
-                const response = await fetch('local_crm.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+            let loaded = false;
+            
+            for (const location of locations) {
+                try {
+                    console.log(`Attempting to load from: ${location}`);
+                    const response = await fetch(location);
+                    if (response.ok) {
+                        const data = await response.json();
+                        customers = data.customers || [];
+                        filteredCustomers = [...customers];
+                        updateStats();
+                        renderCustomers();
+                        corsWarning.style.display = 'none';
+                        loaded = true;
+                        console.log(`Successfully loaded data from: ${location}`);
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`Failed to load from ${location}: ${error.message}`);
+                    continue;
                 }
-                const data = await response.json();
-                // Data is either a direct array or wrapped in 'root'
-                const customers = Array.isArray(data) ? data : (data.root || []);
-                
-                if (customers.length === 0) {
-                    customerList.innerHTML = '<div class="empty-state"><p>No customers found</p></div>';
-                } else {
-                    customerList.innerHTML = customers.map(createCustomerHTML).join('');
-                }
-            } catch (error) {
-                console.error('Error loading CRM data:', error);
-                customerList.innerHTML = `
-                    <div class="empty-state">
-                        <p>Error loading customer data: ${error.message}</p>
-                        <p style="margin-top: 10px; font-size: 14px; color: #888;">
-                            Make sure you've generated data first by running:<br>
-                            <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">python generate-crm.py --export-json</code>
-                        </p>
+            }
+            
+            if (!loaded) {
+                customersTreeEl.innerHTML = `
+                    <div class="cors-warning">
+                        <h3>Cannot Load Data</h3>
+                        <p>The local_crm.json file could not be loaded.</p>
+                        <p><strong>Solution:</strong> Open this HTML file via a local web server.</p>
                     </div>
                 `;
             }
         }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', loadCRMData);
+        
+        function updateStats() {
+            const totalCustomers = customers.length;
+            const totalOrders = customers.reduce((sum, customer) => sum + customer.order_history.length, 0);
+            const totalItems = customers.reduce((sum, customer) => 
+                sum + customer.order_history.reduce((orderSum, order) => 
+                    orderSum + order.items.length, 0), 0);
+            
+            document.getElementById('total-customers').textContent = totalCustomers.toLocaleString();
+            document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
+            document.getElementById('total-items').textContent = totalItems.toLocaleString();
+        }
+        
+        function filterCustomers() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            
+            filteredCustomers = customers.filter(customer => {
+                // Search filter - check customer info
+                if (searchTerm) {
+                    const customerMatch = 
+                        customer.name.toLowerCase().includes(searchTerm) ||
+                        customer.email.toLowerCase().includes(searchTerm) ||
+                        customer.id.toLowerCase().includes(searchTerm) ||
+                        customer.loyalty_tier.toLowerCase().includes(searchTerm);
+                    
+                    // Check if any orders match
+                    const orderMatch = customer.order_history.some(order => {
+                        if (statusValue !== 'all' && order.status !== statusValue) {
+                            return false;
+                        }
+                        
+                        const orderMatch = order.order_id.toLowerCase().includes(searchTerm);
+                        const itemMatch = order.items.some(item =>
+                            item.name.toLowerCase().includes(searchTerm) ||
+                            item.category.toLowerCase().includes(searchTerm)
+                        );
+                        
+                        return orderMatch || itemMatch;
+                    });
+                    
+                    if (!customerMatch && !orderMatch) {
+                        return false;
+                    }
+                } else {
+                    // Apply status filter if no search term
+                    if (statusValue !== 'all') {
+                        const hasMatchingOrders = customer.order_history.some(order => 
+                            order.status === statusValue
+                        );
+                        return hasMatchingOrders;
+                    }
+                }
+                
+                return true;
+            });
+            
+            renderCustomers();
+        }
+        
+        function renderCustomers() {
+            customersTreeEl.innerHTML = '';
+            
+            if (filteredCustomers.length === 0) {
+                customersTreeEl.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No customers found</h3>
+                        <p>Try adjusting your filters or search terms</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render each customer
+            filteredCustomers.forEach(customer => {
+                const customerSection = createCustomerSection(customer);
+                customersTreeEl.appendChild(customerSection);
+            });
+        }
+        
+        function createCustomerSection(customer) {
+            const section = document.createElement('div');
+            section.className = 'customer-section';
+            section.dataset.id = customer.id;
+            
+            const customerContent = document.createElement('div');
+            customerContent.className = 'customer-content';
+            customerContent.innerHTML = createOrdersList(customer.order_history || []);
+            
+            section.innerHTML = `
+                <div class="customer-header">
+                    <div class="customer-info">
+                        <div class="customer-name">👤 ${escapeHtml(customer.name)}</div>
+                        <div class="customer-contact">${escapeHtml(customer.email)} | ${escapeHtml(customer.id)}</div>
+                        <div class="customer-contact">${escapeHtml(customer.loyalty_tier || 'Standard')} ${getLoyaltyIcon(customer.loyalty_tier)} | ${escapeHtml(customer.address)}</div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+            `;
+            section.appendChild(customerContent);
+            
+            return section;
+        }
+        
+        function getLoyaltyIcon(tier) {
+            const icons = {
+                'Gold': '🥇',
+                'Silver': '🥈',
+                'Bronze': '🥉',
+                'Standard': '⭐'
+            };
+            return icons[tier] || '⭐';
+        }
+        
+        function createOrdersList(ordersList) {
+            if (ordersList.length === 0) {
+                return '<p class="empty-state" style="margin: 20px;">No orders</p>';
+            }
+            
+            const list = document.createElement('ul');
+            list.className = 'orders-list';
+            
+            ordersList.forEach(order => {
+                const li = document.createElement('li');
+                li.className = 'order-card';
+                li.dataset.id = order.order_id;
+                
+                li.innerHTML = `
+                    <div class="order-header">
+                        <div>
+                            <span class="order-id">${order.order_id}</span>
+                        </div>
+                        <div class="order-meta">
+                            <div class="meta-item">
+                                <span class="label">Date</span>
+                                <span class="value">${formatDate(order.order_date)}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Total</span>
+                                <span class="value">${formatCurrency(order.total_amount)}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Status</span>
+                                <span class="value status-${order.status.toLowerCase()}">${order.status}</span>
+                            </div>
+                        </div>
+                        <div class="toggle-icon">▼</div>
+                    </div>
+                    <div class="order-content">
+                        ${createItemsList(order.items)}
+                    </div>
+                `;
+                
+                // Add click handler to header
+                list.appendChild(li);
+            });
+            
+            return list.outerHTML;
+        }
+        
+        function createItemsList(items) {
+            if (items.length === 0) {
+                return '<p class="empty-state" style="margin: 15px;">No items</p>';
+            }
+            
+            const list = document.createElement('ul');
+            list.className = 'items-container';
+            
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `item-card ${item.item_type === 'Digital' ? 'digital' : 'physical'}`;
+                li.dataset.id = item.item_id;
+                
+                li.innerHTML = `
+                    <div class="item-header">
+                        <div class="item-name">
+                            ${escapeHtml(item.name)} ${item.item_type === 'Digital' ? '💻' : '📦'}
+                        </div>
+                        <div class="toggle-icon">▼</div>
+                    </div>
+                    <div class="item-content">
+                        <div class="item-meta">
+                            <span>Category: ${escapeHtml(item.category)}</span> • 
+                            <span>Qty: ${item.quantity}</span> • 
+                            <span>Price: ${formatCurrency(item.price)}</span> •
+                            <span>${item.is_opened ? 'Open' : 'Unopened'}</span>
+                        </div>
+                        <div class="item-details">
+                            <div class="detail-item">
+                                <span class="label">Item Total</span>
+                                <span class="value">${formatCurrency(item.price * item.quantity)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Refund Eligible</span>
+                                <span class="value">
+                                    ${item.item_type === 'Digital' ? '❌ No (Digital)' : (item.is_opened ? '85%' : '100%')}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add click handler to toggle item details
+                list.appendChild(li);
+            });
+            
+            return list.outerHTML;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        
+        function escapeSelector(text) {
+            if (!text) return '';
+            return text.replace(/[^a-zA-Z0-9_-]/g, '_');
+        }
+        
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
     </script>
 </body>
 </html>

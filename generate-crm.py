@@ -1,556 +1,458 @@
-import argparse
-import csv
+#!/usr/bin/env python3
+"""
+CRM Data Generator with Item-Level Returns Support (Hierarchical)
+
+This script generates realistic CRM data with hierarchical structure:
+Customers -> Orders -> Items.
+
+Each customer has a profile with loyalty tier, and their order history
+is nested directly under them. Each item can have multiple return requests.
+"""
+
 import json
-import os
 import random
 from datetime import datetime, timedelta
-from typing import List, Literal, cast
+from dataclasses import dataclass, field, asdict
+from typing import List, Optional, Literal
+import uuid
 
-from pydantic import BaseModel, Field, RootModel, field_validator
+# Order status constants
+OrderStatus = Literal["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]
+ReturnRequestStatus = Literal["Pending", "Approved", "Denied", "Processing", "Completed"]
+ItemType = Literal["Physical", "Digital"]
+LoyaltyTier = Literal["Bronze", "Silver", "Gold", "Standard"]
 
-# example usage: python generate_crm.py --seed 42 --validate --export-csv
-#
-# ==========================================
-# 🔐 Pydantic Schema for Validation
-# ==========================================
-
-
-class OrderItem(BaseModel):
-    name: str
-    type: Literal["physical", "digital"]
-    price: float = Field(gt=0)
-    opened: bool = False
-
-
-class Order(BaseModel):
-    order_id: str
-    date: str  # ISO 8601 string (e.g., "2025-04-10T16:00:00Z")
-    items: List[OrderItem]
-    total: float = Field(gt=0)
-    refund_status: Literal["None", "Pending", "Refunded", "Denied", "Escalated"]
-
-    @field_validator("total")
-    @classmethod
-    def validate_total(cls, v: float, info) -> float:
-        items = info.data.get("items")
-        if items:
-            computed = sum(item.price for item in items)
-            # Allow small floating-point tolerance
-            if abs(v - round(computed, 2)) > 0.01:
-                raise ValueError(f"total {v} != computed {round(computed, 2)}")
-        return v
-
-
-class User(BaseModel):
+@dataclass
+class Customer:
+    """Represents a customer profile with loyalty tier."""
     id: str
     name: str
     email: str
-    loyalty_tier: Literal["Standard", "Silver", "Gold"]
-    order_history: List[Order]
+    address: str
+    loyalty_tier: LoyaltyTier
+    order_history: List[dict] = field(default_factory=list)
+    
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "address": self.address,
+            "loyalty_tier": self.loyalty_tier,
+            "order_history": self.order_history
+        }
 
+@dataclass
+class ReturnRequest:
+    """Represents a return request for a specific item."""
+    item_index: int
+    request_date: str
+    reason: str
+    status: ReturnRequestStatus
+    refund_amount: float
+    refund_date: Optional[str] = None
+    transaction_id: Optional[str] = None
+    restocking_fee_applied: bool = False
 
-class CRM(RootModel):
-    root: List[User]
+@dataclass
+class OrderItem:
+    """Represents a single item in an order."""
+    item_id: str
+    name: str
+    category: str
+    quantity: int
+    price: float
+    item_type: ItemType
+    is_opened: bool = False
+    return_requests: List[ReturnRequest] = field(default_factory=list)
+    
+    def to_dict(self) -> dict:
+        return asdict(self)
 
+@dataclass
+class Order:
+    """Represents a customer order with multiple items."""
+    order_id: str
+    customer_name: str
+    customer_email: str
+    order_date: str
+    total_amount: float
+    shipping_address: str
+    status: OrderStatus
+    items: List[OrderItem] = field(default_factory=list)
+    refund_status: str = "Not Refunded"
+    refund_amount: float = 0.0
+    
+    def to_dict(self) -> dict:
+        return {
+            "order_id": self.order_id,
+            "order_date": self.order_date,
+            "total_amount": self.total_amount,
+            "shipping_address": self.shipping_address,
+            "status": self.status,
+            "refund_status": self.refund_status,
+            "refund_amount": self.refund_amount,
+            "items": [item.to_dict() for item in self.items]
+        }
 
-# ==========================================
-# 🛠️ CRM Generator Logic
-# ==========================================
-
-POLICY_WINDOW_STANDARD = 30
-POLICY_WINDOW_GOLD = 45
-REFERENCE_DATE = datetime(2026, 7, 6)  # Current date
-
-# Product catalog: (name, type, price, opened_default)
-PRODUCTS = [
-    ("Wireless Headphones", "physical", 89.99, True),
-    ("Smart Watch Pro", "physical", 249.99, False),
-    ("Organic Coffee Beans", "physical", 24.50, True),
-    ("Digital Guidebook", "digital", 19.99, False),
-    ("Ergonomic Keyboard", "physical", 129.99, False),
-    ("Noise-Canceling Earbuds", "physical", 159.99, True),
-    ("Laptop Stand", "physical", 39.99, False),
-    ("Smart Home Hub", "physical", 119.99, True),
-    ("Gaming Mouse", "physical", 79.99, False),
-    ("Mechanical Keyboard", "physical", 149.99, True),
-    ("Webcam HD", "physical", 69.99, False),
-    ("USB-C Docking Station", "physical", 99.99, True),
-    ("Monitor Light Bar", "physical", 34.99, False),
-    ("Ergonomic Chair", "physical", 299.99, False),
-    ("External SSD 1TB", "physical", 129.99, False),
-    ("Gaming Headset", "physical", 59.99, True),
-    ("Wireless Charging Pad", "physical", 24.99, False),
-    ("Online Course Access", "digital", 149.99, False),
-    ("Subscription Monthly", "digital", 9.99, False),
-    ("Digital Access Pass", "digital", 49.99, False),
-    ("E-Book Bundle", "digital", 29.99, False),
-]
-
-
-def generate_customer_names(num_customers: int, seed: int) -> List[str]:
-    """Generate customer names using an LLM."""
-    llm_url = os.environ.get("LLM_URL")
-    llm_api_key = os.environ.get("LLM_API_KEY")
-
-    if not llm_url or not llm_api_key:
-        # Fallback to deterministic names if environment variables not set
-        base_names = [
-            "Alice Thompson",
-            "Marcus Chen",
-            "Priya Patel",
-            "David Kim",
-            "Emma Williams",
-            "James Rodriguez",
-            "Linda Martinez",
-            "Robert Taylor",
-            "Sarah Johnson",
-            "Michael Lee",
-            "Olivia Brown",
-            "William Garcia",
-            "Sophia Davis",
-            "Daniel Miller",
-            "Isabella Wilson",
+class CRMDataGenerator:
+    """Generates realistic CRM data with hierarchical structure:
+    Customers -> Orders -> Items."""
+    
+    # All 8 customers with IDs and loyalty tiers
+    ALL_CUSTOMERS = [
+        ("usr_001", "John Smith", "john.smith@email.com", "123 Main St, Springfield"),
+        ("usr_002", "Jane Doe", "jane.doe@email.com", "456 Oak Ave, Portland"),
+        ("usr_003", "Bob Johnson", "bob.j@email.com", "789 Pine Rd, Austin"),
+        ("usr_004", "Alice Williams", "alice.w@email.com", "321 Elm St, Denver"),
+        ("usr_005", "Charlie Brown", "charlie.b@email.com", "654 Maple Dr, Seattle"),
+        ("usr_006", "Diana Prince", "diana.p@email.com", "987 Cedar Ln, Boston"),
+        ("usr_007", "Eve Wilson", "eve.w@email.com", "147 Birch Way, Chicago"),
+        ("usr_008", "Frank Miller", "frank.m@email.com", "258 Spruce Ct, Miami"),
+    ]
+    
+    LOYALTY_TIERS: List[LoyaltyTier] = ["Bronze", "Silver", "Gold", "Standard"]
+    
+    def __init__(self, num_orders: int = 50):
+        self.num_orders = num_orders
+        self.customers: List[Customer] = []
+        self.physical_items = [
+            ("Wireless Headphones", "Electronics"),
+            ("Bluetooth Speaker", "Electronics"),
+            ("Kitchen Blender", "Home & Kitchen"),
+            ("Yoga Mat", "Fitness"),
+            ("Desk Lamp", "Home & Kitchen"),
+            ("Running Shoes", "Apparel"),
+            ("Coffee Maker", "Home & Kitchen"),
+            ("Backpack", "Apparel"),
+            ("Water Bottle", "Fitness"),
+            ("Tablet Stand", "Electronics"),
         ]
-        return (base_names * ((num_customers // len(base_names)) + 1))[:num_customers]
-
-    random.seed(seed)
-
-    # Generate diverse names with the requested seed
-    first_names_pool = [
-        "Alice",
-        "Marcus",
-        "Priya",
-        "David",
-        "Emma",
-        "James",
-        "Linda",
-        "Robert",
-        "Sarah",
-        "Michael",
-        "Olivia",
-        "William",
-        "Sophia",
-        "Daniel",
-        "Isabella",
-        "Ethan",
-        "Mia",
-        "Noah",
-        "Charlotte",
-        "Logan",
-        "Ava",
-        "Liam",
-        "Amelia",
-        "Mason",
-        "Harper",
-    ]
-    last_names_pool = [
-        "Thompson",
-        "Chen",
-        "Patel",
-        "Kim",
-        "Williams",
-        "Rodriguez",
-        "Martinez",
-        "Taylor",
-        "Johnson",
-        "Lee",
-        "Brown",
-        "Garcia",
-        "Davis",
-        "Miller",
-        "Wilson",
-        "Moore",
-        "Anderson",
-        "Thomas",
-        "Jackson",
-        "White",
-        "Harris",
-        "Martin",
-        "Garcia",
-        "Martinez",
-        "Robinson",
-        "Clark",
-        "Lewis",
-        "Walker",
-        "Hall",
-        "Allen",
-    ]
-
-    # Deterministic selection based on seed
-    names = []
-    for i in range(num_customers):
-        first_idx = (i * 7 + seed) % len(first_names_pool)
-        last_idx = (i * 13 + seed) % len(last_names_pool)
-        names.append(f"{first_names_pool[first_idx]} {last_names_pool[last_idx]}")
-
-    return names
-
-
-def generate_customer_names_llm(num_customers: int, seed: int) -> List[str]:
-    """Generate customer names using an LLM."""
-    llm_url = os.environ.get("LLM_URL")
-    llm_api_key = os.environ.get("LLM_API_KEY")
-
-    # Fallback if environment variables not set
-    if not llm_url or not llm_api_key:
-        return generate_customer_names_fallback(num_customers, seed)
-
-    # Try to import requests only when LLM is configured
-    # Ensure LLM_URL has the correct endpoint
-    if not llm_url.endswith("/chat/completions"):
-        llm_url = llm_url.rstrip("/") + "/chat/completions"
-
-    try:
-        import requests
-    except ImportError:
-        print("⚠️  'requests' module not installed. Using fallback names.")
-        return generate_customer_names_fallback(num_customers, seed)
-
-    random.seed(seed)
-
-    # Build prompt for name generation
-    prompt = f"""Generate a list of {num_customers} unique, diverse customer names.
-Return only the names, one per line, with no numbering or extra text.
-Names should be realistic and culturally diverse."""
-
-    try:
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {llm_api_key}",
-        }
-        payload = {
-            "model": os.environ.get("LLM_MODEL", "default"),
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a data generation assistant. Output only the requested data without any additional text, formatting, or numbering.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.7 + (seed % 100) / 1000,  # Slight variation based on seed
-        }
-
-        response = requests.post(llm_url, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-
-        result = response.json()
-
-        # Try to extract names from response
-        content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
-
-        # Parse names from content (one per line, strip numbers if present)
-        names = []
-        for line in content.strip().split("\n"):
-            # Remove leading numbers/periods
-            cleaned = line.strip()
-            if cleaned:
-                # Remove "1. ", "2. ", etc. patterns
-                import re
-
-                cleaned = re.sub(r"^\d+[\.\)]\s*", "", cleaned)
-                if cleaned and len(cleaned) > 2:
-                    names.append(cleaned)
-            if len(names) >= num_customers:
-                break
-
-        # If we didn't get enough names from LLM, pad with fallback
-        if len(names) < num_customers:
-            fallback = generate_customer_names_fallback(
-                num_customers - len(names), seed + 1
-            )
-            names.extend(fallback)
-
-        return names[:num_customers]
-
-    except Exception as e:
-        print(f"⚠️  LLM name generation failed: {e}. Using fallback names.")
-        return generate_customer_names_fallback(num_customers, seed)
-
-
-def generate_customer_names_fallback(num_customers: int, seed: int) -> List[str]:
-    """Generate deterministic fallback names when LLM is unavailable."""
-    random.seed(seed)
-
-    first_names_pool = [
-        "Alice",
-        "Marcus",
-        "Priya",
-        "David",
-        "Emma",
-        "James",
-        "Linda",
-        "Robert",
-        "Sarah",
-        "Michael",
-        "Olivia",
-        "William",
-        "Sophia",
-        "Daniel",
-        "Isabella",
-        "Ethan",
-        "Mia",
-        "Noah",
-        "Charlotte",
-        "Logan",
-        "Ava",
-        "Liam",
-        "Amelia",
-        "Mason",
-        "Harper",
-    ]
-    last_names_pool = [
-        "Thompson",
-        "Chen",
-        "Patel",
-        "Kim",
-        "Williams",
-        "Rodriguez",
-        "Martinez",
-        "Taylor",
-        "Johnson",
-        "Lee",
-        "Brown",
-        "Garcia",
-        "Davis",
-        "Miller",
-        "Wilson",
-        "Moore",
-        "Anderson",
-        "Thomas",
-        "Jackson",
-        "White",
-        "Harris",
-        "Martin",
-        "Garcia",
-        "Martinez",
-        "Robinson",
-        "Clark",
-        "Lewis",
-        "Walker",
-        "Hall",
-        "Allen",
-    ]
-
-    names = []
-    for i in range(num_customers):
-        first_idx = (i * 7 + seed) % len(first_names_pool)
-        last_idx = (i * 13 + seed) % len(last_names_pool)
-        names.append(f"{first_names_pool[first_idx]} {last_names_pool[last_idx]}")
-
-    return names
-
-
-def random_past_date(max_days_old: int = 120) -> datetime:
-    """Generate a random date in the past, within `max_days_old` days from REFERENCE_DATE."""
-    days_ago = random.randint(1, max_days_old)
-    return REFERENCE_DATE - timedelta(days=days_ago)
-
-
-def generate_crm(seed: int = 42, num_customers: int = 15) -> CRM:
-    """Generate a deterministic CRM dataset."""
-    random.seed(seed)
-
-    # Generate customer names using LLM or fallback
-    names = generate_customer_names_llm(num_customers, seed)
-
-    users = []
-    for i, name in enumerate(names, 1):
-        user_id = f"usr_{i:03d}"
-        email = f"{name.lower().replace(' ', '.')}@example.com"
-        tier = cast(
-            Literal["Standard", "Silver", "Gold"],
-            random.choice(["Standard", "Silver", "Gold"]),
-        )
-
-        # 60% chance of 2 orders, 40% chance of 1
-        num_orders = 2 if random.random() < 0.6 else 1
-        order_history = []
-
-        for j in range(num_orders):
-            order_date = random_past_date(50)
-            days_old = (REFERENCE_DATE - order_date).days
-
-            # Select 1–3 items
-            num_items = random.randint(1, 3)
-            items = []
-            total = 0.0
-
-            for _ in range(num_items):
-                product = random.choice(PRODUCTS)
-                name_, type_, price, opened = (
-                    product[0],
-                    cast(Literal["physical", "digital"], product[1]),
-                    product[2],
-                    product[3],
-                )
-                item = OrderItem(name=name_, type=type_, price=price, opened=opened)
-                items.append(item)
-                total += price
-
-            # Determine refund_status deterministically
-            # Most orders should have no return request ("None")
-            is_outside_window = (
-                tier == "Standard" and days_old > POLICY_WINDOW_STANDARD
-            ) or (tier == "Gold" and days_old > POLICY_WINDOW_GOLD)
-            has_digital_only = all(item.type == "digital" for item in items)
-
-            if is_outside_window or has_digital_only:
-                refund_status = "Denied"
-            elif days_old <= 7:
-                # Orders returned within 7 days are refunded
-                refund_status = "Refunded"
-            else:
-                # For orders outside the early return window:
-                # ~75% have no return request (None), ~15% pending, ~10% refunded
-                r = random.random()
-                if r < 0.75:
-                    refund_status = "None"  # No return request (most common)
-                elif r < 0.90:
-                    refund_status = "Pending"  # Active refund request
-                else:
-                    refund_status = "Refunded"
-
-            order = Order(
-                order_id=f"ORD-2025-{order_date.strftime('%m-%d')}-{j + 1:03d}",
-                date=order_date.isoformat() + "Z",
-                items=items,
-                total=round(total, 2),
-                refund_status=refund_status,
-            )
-            order_history.append(order)
-
-        users.append(
-            User(
-                id=user_id,
+        self.digital_items = [
+            ("E-book: Python Programming", "Books"),
+            ("Online Course: Web Development", "Education"),
+            ("Software License: Design Tool", "Software"),
+            ("Music Album: Best Hits", "Entertainment"),
+            ("E-book: Data Science", "Books"),
+            ("Video Course: AI Fundamentals", "Education"),
+        ]
+        self.return_reasons = [
+            "Defective product",
+            "Wrong size",
+            "Not as described",
+            "Changed mind",
+            "Better price elsewhere",
+            "Received duplicate",
+            "Item damaged in shipping",
+            "Not working as expected",
+        ]
+    
+    def generate_customer_profiles(self) -> List[Customer]:
+        """Generate customer profiles with IDs and random loyalty tiers."""
+        customers = []
+        for i, (cid, name, email, address) in enumerate(self.ALL_CUSTOMERS):
+            tier = random.choice(self.LOYALTY_TIERS)
+            customers.append(Customer(
+                id=f"usr_{i+1:03d}",
                 name=name,
                 email=email,
+                address=address,
                 loyalty_tier=tier,
-                order_history=order_history,
-            )
+                order_history=[]
+            ))
+        self.customers = customers
+        return customers
+    
+    def get_customer_for_order(self) -> tuple:
+        """Get a random customer as (name, email, address, customer)."""
+        customer = random.choice(self.customers)
+        return customer.name, customer.email, customer.address, customer
+    
+    def generate_item(self, item_index: int, is_digital: bool = False) -> OrderItem:
+        """Generate a single order item."""
+        item_id = str(uuid.uuid4())[:8]
+        
+        if is_digital:
+            name, category = random.choice(self.digital_items)
+            price = round(random.uniform(9.99, 199.99), 2)
+            item_type: ItemType = "Digital"
+        else:
+            name, category = random.choice(self.physical_items)
+            price = round(random.uniform(19.99, 499.99), 2)
+            item_type: ItemType = "Physical"
+        
+        quantity = random.randint(1, 3)
+        is_opened = random.random() < 0.3  # 30% chance item was opened
+        
+        return OrderItem(
+            item_id=item_id,
+            name=name,
+            category=category,
+            quantity=quantity,
+            price=price,
+            item_type=item_type,
+            is_opened=is_opened,
+            return_requests=[]
         )
-
-    return CRM(root=users)
-
-
-# ==========================================
-# 📤 Export Functions
-# ==========================================
-
-
-def export_json(crm: CRM, output_path: str = "local_crm.json"):
-    """Write CRM to JSON (pretty-printed)."""
-    # Use model_dump() on the RootModel, which handles nested models
-    data = crm.model_dump()
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"✅ Wrote {len(data)} users → {output_path}")
-
-
-def export_csv(crm: CRM, output_path: str = "crm_orders.csv"):
-    """Export flattened order-level data to CSV."""
-    rows = []
-    for user in crm.root:
-        for order in user.order_history:
-            for item in order.items:
-                rows.append(
-                    {
-                        "user_id": user.id,
-                        "user_name": user.name,
-                        "user_email": user.email,
-                        "user_tier": user.loyalty_tier,
-                        "order_id": order.order_id,
-                        "order_date": order.date,
-                        "order_total": order.total,
-                        "order_refund_status": order.refund_status,
-                        "item_name": item.name,
-                        "item_type": item.type,
-                        "item_price": item.price,
-                        "item_opened": item.opened,
-                    }
-                )
-
-    if rows:
-        fieldnames = list(rows[0].keys())
-        with open(output_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
-        print(f"✅ Wrote {len(rows)} order items → {output_path}")
-    else:
-        print("⚠️  No orders to export.")
-
-
-# ==========================================
-# 🖥️ CLI Entry Point
-# ==========================================
+    
+    def generate_return_request(self, item_index: int, item: OrderItem) -> Optional[ReturnRequest]:
+        """Generate a return request for an item."""
+        # Only generate return requests for some items
+        if random.random() > 0.4:  # 40% chance
+            return None
+        
+        # Digital items are non-refundable
+        if item.item_type == "Digital":
+            return None
+        
+        # Determine reason
+        reason = random.choice(self.return_reasons)
+        
+        # Determine status
+        status_options = ["Pending", "Processing", "Approved", "Completed", "Denied"]
+        weights = [0.3, 0.2, 0.2, 0.2, 0.1]  # More pending/processing
+        status = random.choices(status_options, weights=weights)[0]
+        
+        # Calculate refund amount
+        base_refund = item.price * item.quantity
+        restocking_fee_applied = False
+        
+        # Denied requests have no refund
+        if status == "Denied":
+            base_refund = 0.0
+        # 15% restocking fee for opened items in active status
+        elif item.is_opened and status in ["Approved", "Processing", "Completed"]:
+            restocking_fee_applied = True
+            base_refund = base_refund * 0.85
+        
+        # Generate dates
+        request_date = datetime.now() - timedelta(days=random.randint(1, 30))
+        request_date_str = request_date.strftime("%Y-%m-%d")
+        
+        refund_date = None
+        if status in ["Approved", "Processing", "Completed"]:
+            refund_date = (request_date + timedelta(days=random.randint(3, 7))).strftime("%Y-%m-%d")
+        
+        transaction_id = None
+        if status in ["Approved", "Completed"]:
+            transaction_id = f"refund_{uuid.uuid4().hex[:12]}"
+        
+        return ReturnRequest(
+            item_index=item_index,
+            request_date=request_date_str,
+            reason=reason,
+            status=status,
+            refund_amount=round(base_refund, 2),
+            refund_date=refund_date,
+            transaction_id=transaction_id,
+            restocking_fee_applied=restocking_fee_applied
+        )
+    
+    def generate_order(self, order_num: int) -> Order:
+        """Generate a complete order with items and potential return requests."""
+        customer_name, customer_email, shipping_address, customer = self.get_customer_for_order()
+        
+        order_id = f"ORD-{order_num:06d}"
+        order_date = datetime.now() - timedelta(days=random.randint(0, 60))
+        order_date_str = order_date.strftime("%Y-%m-%d")
+        
+        # Generate 2-5 items per order
+        num_items = random.randint(2, 5)
+        items = []
+        
+        for i in range(num_items):
+            # 20% chance of digital item
+            is_digital = random.random() < 0.2
+            item = self.generate_item(i, is_digital)
+            
+            # Generate return requests for this item
+            return_request = self.generate_return_request(i, item)
+            if return_request:
+                item.return_requests.append(return_request)
+            
+            items.append(item)
+        
+        # Calculate total
+        total_amount = sum(item.price * item.quantity for item in items)
+        
+        # Determine order status
+        status_options = ["Delivered", "Shipped", "Processing", "Pending", "Cancelled"]
+        weights = [0.4, 0.25, 0.15, 0.1, 0.1]
+        status = random.choices(status_options, weights=weights)[0]
+        
+        order = Order(
+            order_id=order_id,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            order_date=order_date_str,
+            total_amount=round(total_amount, 2),
+            shipping_address=shipping_address,
+            status=status,
+            items=items
+        )
+        
+        # If any items have return requests, update order-level refund status
+        total_refund = sum(rr.refund_amount for item in items for rr in item.return_requests)
+        if total_refund > 0:
+            order.refund_amount = round(total_refund, 2)
+            order.refund_status = "Partial Refund" if total_refund < total_amount else "Full Refund"
+        
+        # Assign order to customer's order_history
+        customer.order_history.append(order.to_dict())
+        
+        return order
+    
+    def generate_data(self) -> dict:
+        """Generate complete hierarchical CRM data.
+        
+        Structure:
+        {
+            "generated_at": "...",
+            "total_customers": 8,
+            "total_orders": 50,
+            "customers": [
+                {
+                    "id": "usr_001",
+                    "name": "...",
+                    "email": "...",
+                    "address": "...",
+                    "loyalty_tier": "Gold",
+                    "order_history": [...]
+                },
+                ...
+            ]
+        }
+        """
+        # Generate customer profiles with loyalty tiers
+        self.generate_customer_profiles()
+        
+        # Generate orders and assign to customers
+        orders = [self.generate_order(i + 1) for i in range(self.num_orders)]
+        total_orders = len(orders)
+        
+        return {
+            "generated_at": datetime.now().isoformat(),
+            "total_customers": len(self.customers),
+            "total_orders": total_orders,
+            "customers": [customer.to_dict() for customer in self.customers]
+        }
+    
+    def save_json(self, data: dict, filename: str):
+        """Save data to JSON file."""
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2)
+    
+    def save_csv(self, customers: List[Customer], filename: str):
+        """Save data to CSV file (flat format for legacy compatibility)."""
+        lines = []
+        header = ("order_id,customer_name,customer_email,order_date,total_amount,"
+                  "status,item_index,item_name,category,quantity,price,item_type,"
+                  "is_opened,return_request_date,return_reason,return_status,"
+                  "refund_amount,refund_date,transaction_id,restocking_fee_applied")
+        lines.append(header)
+        
+        for customer in customers:
+            for order in customer.order_history:
+                for item_idx, item in enumerate(order["items"]):
+                    base = [
+                        order["order_id"],
+                        customer.name,
+                        customer.email,
+                        order["order_date"],
+                        str(order["total_amount"]),
+                        order["status"],
+                        str(item_idx),
+                        f'"{item["name"]}"',
+                        item["category"],
+                        str(item["quantity"]),
+                        str(item["price"]),
+                        item["item_type"],
+                        str(item["is_opened"]),
+                        "", "", "", "", "", "", "", "", "", ""
+                    ]
+                    lines.append(",".join(base))
+                    
+                    for rr in item["return_requests"]:
+                        rr_line = [
+                            "", "", "", "", "", "",
+                            "", "", "", "", "", "", "", "", "", "", "",
+                            rr["request_date"],
+                            f'"{rr["reason"]}"',
+                            rr["status"],
+                            str(rr["refund_amount"]),
+                            rr.get("refund_date") or "",
+                            rr.get("transaction_id") or "",
+                            str(rr["restocking_fee_applied"])
+                        ]
+                        lines.append(",".join(rr_line))
+        
+        with open(filename, 'w') as f:
+            f.write("\n".join(lines))
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate and validate mock CRM data for SupportAgent"
+    """Main entry point."""
+    print("Generating hierarchical CRM data with item-level returns support...")
+    
+    generator = CRMDataGenerator(num_orders=50)
+    data = generator.generate_data()
+    
+    # Save JSON
+    generator.save_json(data, "local_crm.json")
+    print(f"Saved {data['total_orders']} orders across {data['total_customers']} customers to local_crm.json")
+    
+    # Generate CSV for legacy compatibility
+    generator.save_csv(generator.customers, "crm_orders.csv")
+    print("Saved CSV data to crm_orders.csv")
+    
+    # Print summary
+    total_items = sum(
+        len(order["items"])
+        for customer in data["customers"]
+        for order in customer["order_history"]
     )
-    parser.add_argument(
-        "--seed", type=int, default=42, help="Random seed for reproducibility"
+    total_return_requests = sum(
+        len(item["return_requests"])
+        for customer in data["customers"]
+        for order in customer["order_history"]
+        for item in order["items"]
     )
-    parser.add_argument(
-        "-n",
-        "--num-customers",
-        type=int,
-        default=15,
-        help="Number of customers to generate",
-    )
-    parser.add_argument(
-        "--validate",
-        action="store_true",
-        help="Validate output against Pydantic schema",
-    )
-    parser.add_argument(
-        "--export-csv",
-        action="store_true",
-        help="Export flattened orders to crm_orders.csv",
-    )
-    parser.add_argument(
-        "--export-json", action="store_true", help="Export to local_crm.json"
-    )
-    parser.add_argument(
-        "--json-path", default="local_crm.json", help="Output JSON path"
-    )
-    parser.add_argument("--csv-path", default="crm_orders.csv", help="Output CSV path")
-
-    args = parser.parse_args()
-
-    # Generate
-    crm = generate_crm(seed=args.seed, num_customers=args.num_customers)
-
-    # Validate (optional)
-    if args.validate:
-        try:
-            crm.model_validate(crm)  # Pydantic v2 style
-            print("✅ Schema validation passed.")
-        except Exception as e:
-            print(f"❌ Validation failed: {e}")
-            return
-
-    # Export
-    if args.export_json:
-        export_json(crm, args.json_path)
-    if args.export_csv:
-        export_csv(crm, args.csv_path)
-
-    if not (args.export_json or args.export_csv):
-        print(
-            "ℹ️  No export flag passed. Use --export-json and/or --export-csv to write files."
-        )
-
-    # Summary
-    total_orders = sum(len(u.order_history) for u in crm.root)
-    statuses = {"None": 0, "Pending": 0, "Refunded": 0, "Denied": 0}
-    for u in crm.root:
-        for o in u.order_history:
-            statuses[o.refund_status] += 1
-    print(f"📊 Generated {total_orders} orders across {len(crm.root)} users:")
-    for s, count in statuses.items():
-        print(f"   - {s}: {count}")
+    
+    print(f"\n=== Hierarchical Data Summary ===")
+    print(f"  Total Customers: {data['total_customers']}")
+    print(f"  Total Orders: {data['total_orders']}")
+    print(f"  Total Items: {total_items}")
+    print(f"  Total Return Requests: {total_return_requests}")
+    print(f"  Avg Orders per Customer: {data['total_orders'] / data['total_customers']:.1f}")
+    print(f"  Avg Items per Order: {total_items / data['total_orders']:.1f}")
+    
+    # Customer breakdown
+    print(f"\n=== Customer Profiles ===")
+    for customer in data["customers"]:
+        num_orders = len(customer["order_history"])
+        print(f"  {customer['id']} | {customer['name']} | {customer['loyalty_tier']} | {num_orders} orders")
+    
+    # Loyalty tier distribution
+    tier_counts = {}
+    for customer in data["customers"]:
+        tier = customer["loyalty_tier"]
+        tier_counts[tier] = tier_counts.get(tier, 0) + 1
+    print(f"\n=== Loyalty Tier Distribution ===")
+    for tier in ["Standard", "Bronze", "Silver", "Gold"]:
+        count = tier_counts.get(tier, 0)
+        print(f"  {tier}: {count}")
+    
+    # Count return request statuses
+    status_counts = {}
+    for customer in data["customers"]:
+        for order in customer["order_history"]:
+            for item in order["items"]:
+                for rr in item["return_requests"]:
+                    status_counts[rr["status"]] = status_counts.get(rr["status"], 0) + 1
+    
+    print(f"\n=== Return Request Statuses ===")
+    for status, count in sorted(status_counts.items()):
+        print(f"  {status}: {count}")
 
 
 if __name__ == "__main__":

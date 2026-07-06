@@ -1,154 +1,190 @@
-# Support Agent - AI Customer Support System
+# Support-Agent Application
 
-A FastAPI-based AI customer support agent that processes e-commerce refund requests using LangGraph for tool orchestration.
-
-## Architecture
-
-```
-+--------------------------------------------------------------------------+
-|                               FRONTEND (UI)                              |
-|  - Chat Interface | Voice Capture | Admin Trace Panel                    |
-+---------------------------+-----------------------------+---------------+
-                            |                             |
-+---------------------------v-----------------------------v---------------+
-|                    AGENT LAYER (LangGraph)                             |
-|  - State Machine | Policy Engine | Tool Orchestration                   |
-+---------------------------+-----------------------------+---------------+
-                            |                             |
-+---------------------------v-----------------------------v---------------+
-|                    TOOL REGISTRY & DATA LAYER                          |
-|  - CRM DB Reader | Policy Rules | Refund Processor                     |
-+--------------------------------------------------------------------------+
-```
+A comprehensive customer support application with item-level returns management.
 
 ## Features
 
-- **LLM-Powered Agent**: Uses LangGraph for dynamic tool orchestration
-- **Policy Validation**: Enforces refund policies (time windows, item conditions)
-- **Error Recovery**: Implements retry logic for transient failures
-- **SSE Streaming**: Real-time admin trace logging
-- **Voice Pipeline**: Pluggable architecture for STT/TTS integration
-
-## Requirements
-
-- Python 3.10+
-- FastAPI
-- LangGraph
-- LangChain OpenAI
-- OpenAI API (for LLM integration)
-
-## Installation
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-## Configuration
-
-### LLM Configuration (`llm_config.json`)
-```json
-{
-  "url": "http://localhost:8080/v1/chat/completions",
-  "api_key": "omlx-om5hh4rsln2h3f8w",
-  "model_name": "gemma-4-31B-it-MLX-8bit"
-}
-```
-
-## Running the Server
-
-```bash
-cd backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-## API Endpoints
-
-### `GET /health`
-Health check endpoint.
-
-### `POST /chat`
-Main chat endpoint for customer interactions.
-
-**Request:**
-```json
-{
-  "customer_id": "usr_001",
-  "email": "customer@example.com",
-  "message": "I want to request a refund for order ORD-2025-02-25-001"
-}
-```
-
-**Response:**
-```json
-{
-  "response": "I've successfully processed your refund...",
-  "messages": [...]
-}
-```
-
-### `GET /admin/trace`
-SSE endpoint for admin trace logging.
-
-### `POST /api/voice/ingress`
-Stub endpoint for future voice pipeline integration.
-
-## Tool Registry
-
-### `get_user_profile(customer_id)`
-Retrieve user profile and order history from CRM.
-
-### `check_policy_validity(order_id, clause)`
-Check if a refund request matches policy rules.
-
-### `process_refund_transaction(order_id, amount)`
-Process a refund transaction for an order.
-
-### `escalate_to_human(reason)`
-Escalate an issue to a human agent.
-
-## Test Scenarios
-
-### SCENARIO-01: Happy Path
-- Customer within 30-day window (or 45 for Gold tier)
-- Unopened item
-- Expected: Successful refund
-
-### SCENARIO-02: Holding the Line
-- Customer outside refund window
-- Expected: Refusal with policy explanation
-
-### SCENARIO-03: Error Recovery
-- Odd-amount refund triggers simulated transient failure
-- Expected: Automatic retry and successful completion
-
-## Running Tests
-
-```bash
-cd tests
-pytest test_scenarios.py -v
-```
+- **Item-Level Returns**: Each order item can have multiple return requests, not just order-level
+- **Flexible Refund Policy**: 
+  - Digital items: Non-refundable
+  - Physical items: 
+    - Unopened: Full refund
+    - Opened: 15% restocking fee
+- **Real-time Return Request Tracking**: View and manage return requests per item
+- **REST API**: FastAPI-based backend for all operations
+- **Data Viewer**: Interactive web interface for exploring CRM data
 
 ## Project Structure
 
 ```
 support-agent/
-├── llm_config.json          # LLM configuration
-├── policy_rules.md          # Refund policy document
-├── local_crm.json           # Mock CRM database
-├── spec.md                  # Technical specification
-├── README.md                # This file
+├── generate-crm.py          # Data generator with item-level returns
 ├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   └── main.py          # FastAPI application
-│   ├── requirements.txt
-│   └── tests/
-│       ├── __init__.py
-│       └── test_scenarios.py
-└── docs/
+│   └── app/
+│       └── main.py          # FastAPI backend with item-level refund logic
+├── data-viewer/
+│   └── index.html           # Interactive data viewer
+├── local_crm.json           # Generated CRM data (gitignored)
+└── README.md
 ```
+
+## Quick Start
+
+### 1. Generate CRM Data
+
+```bash
+python3 generate-crm.py
+```
+
+This creates `local_crm.json` with:
+- 50 sample orders
+- 170+ items
+- 60+ return requests in various statuses (Pending, Processing, Approved, Denied, Completed)
+
+### 2. Start the Backend API
+
+```bash
+cd backend/app
+pip install fastapi uvicorn
+uvicorn main:app --reload
+```
+
+The API will be available at `http://localhost:8000`
+
+### 3. Open the Data Viewer
+
+Open `data-viewer/index.html` in your browser to:
+- View all orders with item-level details
+- See return requests for each item
+- Create new return requests
+- Filter and search orders
+
+## Data Structure
+
+### Order Item
+
+```json
+{
+  "item_id": "abc123",
+  "name": "Wireless Headphones",
+  "category": "Electronics",
+  "quantity": 2,
+  "price": 149.99,
+  "item_type": "Physical",
+  "is_opened": false,
+  "return_requests": []
+}
+```
+
+### Return Request
+
+```json
+{
+  "item_index": 0,
+  "request_date": "2026-06-15",
+  "reason": "Defective product",
+  "status": "Pending",
+  "refund_amount": 299.98,
+  "refund_date": null,
+  "transaction_id": null,
+  "restocking_fee_applied": false
+}
+```
+
+## API Endpoints
+
+### Orders
+- `GET /orders` - List all orders
+- `GET /orders/{order_id}` - Get specific order
+- `GET /orders/{order_id}/items` - List items in order
+- `GET /orders/{order_id}/return-requests` - List return requests
+
+### Return Requests
+- `POST /orders/{order_id}/return-requests` - Create return request
+- `PATCH /orders/{order_id}/return-requests/{request_index}` - Update return status
+- `DELETE /orders/{order_id}/return-requests/{request_index}` - Delete return request
+
+### Refunds
+- `POST /orders/{order_id}/process-refund` - Process refund for specific items
+- `GET /policy` - Get return policy
+
+## Refund Policy Logic
+
+### Digital Items
+- Always non-refundable
+- Status: 100% non-refundable
+
+### Physical Items - Unopened
+- Full refund eligible
+- No restocking fee
+
+### Physical Items - Opened
+- 15% restocking fee applied
+- 85% refund eligible
+
+## Return Request Workflow
+
+1. **Create Request**: Customer/agent creates return request (status: Pending)
+2. **Review**: Support reviews the request
+3. **Approve/Deny**: Status updated to Approved, Processing, or Denied
+4. **Process**: Refund is processed (status: Processing → Completed)
+5. **Complete**: Return request closed (status: Completed)
+
+## Usage Examples
+
+### Create a Return Request (API)
+
+```bash
+curl -X POST http://localhost:8000/orders/ORD-000001/return-requests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": "ORD-000001",
+    "item_indices": [0, 2],
+    "reason": "Defective product"
+  }'
+```
+
+### Process a Refund (API)
+
+```bash
+curl -X POST http://localhost:8000/orders/ORD-000001/process-refund \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": "ORD-000001",
+    "item_indices": [0, 2],
+    "confirm": true
+  }'
+```
+
+### View Return Policy
+
+```bash
+curl http://localhost:8000/policy
+```
+
+## Development
+
+### Testing the Backend
+
+```bash
+cd backend/app
+pip install -r requirements.txt
+uvicorn main:app --reload
+
+# Test endpoints
+curl http://localhost:8000/
+curl http://localhost:8000/orders | jq
+curl http://localhost:8000/orders/ORD-000001
+```
+
+### Modifying Data Generator
+
+Edit `generate-crm.py` to:
+- Change number of orders
+- Adjust return request rates
+- Modify product categories
+- Customize customer data
 
 ## License
 
-MIT License
+MIT
