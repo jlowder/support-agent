@@ -1,0 +1,2967 @@
+{
+  "generated_at": "2026-07-06T04:53:42.760679",
+  "total_orders": 50,
+  "orders": [
+    {
+      "order_id": "ORD-000001",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-06-26",
+      "total_amount": 3416.1,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 2154.84,
+      "items": [
+        {
+          "item_id": "60f0f3d8",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 241.29,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-09",
+              "reason": "Better price elsewhere",
+              "status": "Approved",
+              "refund_amount": 723.87,
+              "refund_date": "2026-06-15",
+              "transaction_id": "refund_d4db2fad3dca",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "45ae2a7f",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 420.42,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "51c2326e",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 370.13,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-16",
+              "reason": "Item damaged in shipping",
+              "status": "Processing",
+              "refund_amount": 1110.39,
+              "refund_date": "2026-06-19",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "35c41ce0",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 106.86,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-06-22",
+              "reason": "Defective product",
+              "status": "Approved",
+              "refund_amount": 320.58,
+              "refund_date": "2026-06-28",
+              "transaction_id": "refund_dbd753d5b634",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000002",
+      "customer_name": "Diana Prince",
+      "customer_email": "diana.p@email.com",
+      "order_date": "2026-05-15",
+      "total_amount": 2648.41,
+      "shipping_address": "987 Cedar Ln, Boston",
+      "status": "Cancelled",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "d0511e16",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 309.44,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "72b47785",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 376.11,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "be3c3580",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 299.98,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "42ccb2f0",
+          "name": "Software License: Design Tool",
+          "category": "Software",
+          "quantity": 2,
+          "price": 93.23,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "79e81c01",
+          "name": "Software License: Design Tool",
+          "category": "Software",
+          "quantity": 1,
+          "price": 181.45,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000003",
+      "customer_name": "Diana Prince",
+      "customer_email": "diana.p@email.com",
+      "order_date": "2026-06-09",
+      "total_amount": 159.7,
+      "shipping_address": "987 Cedar Ln, Boston",
+      "status": "Cancelled",
+      "refund_status": "Partial Refund",
+      "refund_amount": 25.04,
+      "items": [
+        {
+          "item_id": "088734ea",
+          "name": "Music Album: Best Hits",
+          "category": "Entertainment",
+          "quantity": 2,
+          "price": 67.33,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "ce51ff92",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 25.04,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-10",
+              "reason": "Defective product",
+              "status": "Approved",
+              "refund_amount": 25.04,
+              "refund_date": "2026-06-15",
+              "transaction_id": "refund_adbc90d0f773",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000004",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-06-06",
+      "total_amount": 1515.55,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 233.16,
+      "items": [
+        {
+          "item_id": "0073dd49",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 281.11,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "a8cb00e0",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 116.58,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-17",
+              "reason": "Defective product",
+              "status": "Processing",
+              "refund_amount": 233.16,
+              "refund_date": "2026-06-23",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "08585b3d",
+          "name": "E-book: Python Programming",
+          "category": "Books",
+          "quantity": 3,
+          "price": 93.47,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "f44cd6d4",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 219.88,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000005",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-06-27",
+      "total_amount": 988.63,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 585.39,
+      "items": [
+        {
+          "item_id": "0e5ec41d",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 195.13,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-14",
+              "reason": "Not working as expected",
+              "status": "Approved",
+              "refund_amount": 585.39,
+              "refund_date": "2026-06-21",
+              "transaction_id": "refund_b72ba8c2fcd3",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "a56a7429",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 201.62,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000006",
+      "customer_name": "Jane Doe",
+      "customer_email": "jane.doe@email.com",
+      "order_date": "2026-06-30",
+      "total_amount": 912.24,
+      "shipping_address": "456 Oak Ave, Portland",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 721.66,
+      "items": [
+        {
+          "item_id": "b3d65622",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 356.04,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-16",
+              "reason": "Changed mind",
+              "status": "Processing",
+              "refund_amount": 356.04,
+              "refund_date": "2026-06-22",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "57f4e563",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 126.06,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "da2d8fc2",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 430.14,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-07-02",
+              "reason": "Not as described",
+              "status": "Approved",
+              "refund_amount": 365.62,
+              "refund_date": "2026-07-06",
+              "transaction_id": "refund_c62f98400248",
+              "restocking_fee_applied": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000007",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-05-10",
+      "total_amount": 339.3,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 194.43,
+      "items": [
+        {
+          "item_id": "c958c050",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 64.81,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-07-05",
+              "reason": "Better price elsewhere",
+              "status": "Pending",
+              "refund_amount": 194.43,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "42b01421",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 48.29,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000008",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-06-14",
+      "total_amount": 1869.68,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 849.61,
+      "items": [
+        {
+          "item_id": "c21b80a1",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 435.07,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "da71100a",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 499.77,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-22",
+              "reason": "Better price elsewhere",
+              "status": "Completed",
+              "refund_amount": 849.61,
+              "refund_date": "2026-06-28",
+              "transaction_id": "refund_2d8c102cc28f",
+              "restocking_fee_applied": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000009",
+      "customer_name": "John Smith",
+      "customer_email": "john.smith@email.com",
+      "order_date": "2026-05-18",
+      "total_amount": 842.18,
+      "shipping_address": "123 Main St, Springfield",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "52de3df3",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 157.01,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "f06f9bb4",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 228.39,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000010",
+      "customer_name": "Jane Doe",
+      "customer_email": "jane.doe@email.com",
+      "order_date": "2026-06-27",
+      "total_amount": 2257.24,
+      "shipping_address": "456 Oak Ave, Portland",
+      "status": "Cancelled",
+      "refund_status": "Partial Refund",
+      "refund_amount": 128.4,
+      "items": [
+        {
+          "item_id": "ae99f36f",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 1,
+          "price": 357.99,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "d85e8ae3",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 128.4,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-16",
+              "reason": "Not as described",
+              "status": "Processing",
+              "refund_amount": 128.4,
+              "refund_date": "2026-06-21",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "cb569d19",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 1,
+          "price": 450.99,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "529de869",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 436.16,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "51f16c70",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 149.18,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000011",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-05-24",
+      "total_amount": 1775.2,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 753.75,
+      "items": [
+        {
+          "item_id": "676b9f37",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 185.52,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e34be314",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 228.39,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "ad96e39b",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 251.25,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-08",
+              "reason": "Not as described",
+              "status": "Approved",
+              "refund_amount": 753.75,
+              "refund_date": "2026-06-11",
+              "transaction_id": "refund_63e896058954",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "13acc987",
+          "name": "Video Course: AI Fundamentals",
+          "category": "Education",
+          "quantity": 1,
+          "price": 152.38,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "2bc2bfdc",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 3,
+          "price": 89.88,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000012",
+      "customer_name": "Diana Prince",
+      "customer_email": "diana.p@email.com",
+      "order_date": "2026-05-22",
+      "total_amount": 543.71,
+      "shipping_address": "987 Cedar Ln, Boston",
+      "status": "Cancelled",
+      "refund_status": "Partial Refund",
+      "refund_amount": 240.59,
+      "items": [
+        {
+          "item_id": "11ec4ae3",
+          "name": "E-book: Python Programming",
+          "category": "Books",
+          "quantity": 1,
+          "price": 20.67,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "21e17e3e",
+          "name": "Music Album: Best Hits",
+          "category": "Entertainment",
+          "quantity": 3,
+          "price": 94.15,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "3d0ceb2f",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 240.59,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-14",
+              "reason": "Wrong size",
+              "status": "Completed",
+              "refund_amount": 240.59,
+              "refund_date": "2026-06-20",
+              "transaction_id": "refund_e470e0447540",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000013",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-05-10",
+      "total_amount": 1414.97,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 1046.65,
+      "items": [
+        {
+          "item_id": "e490d96b",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 303.18,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-20",
+              "reason": "Item damaged in shipping",
+              "status": "Pending",
+              "refund_amount": 909.54,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "43d67565",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 33.96,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "edc8750d",
+          "name": "E-book: Python Programming",
+          "category": "Books",
+          "quantity": 2,
+          "price": 150.2,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "a2f0f97b",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 137.11,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-06-12",
+              "reason": "Not as described",
+              "status": "Approved",
+              "refund_amount": 137.11,
+              "refund_date": "2026-06-18",
+              "transaction_id": "refund_9af38b01a787",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000014",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-05-21",
+      "total_amount": 2315.78,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 637.16,
+      "items": [
+        {
+          "item_id": "2b8951e8",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 328.09,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "ebae297c",
+          "name": "Yoga Mat",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 466.07,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e1bf5f33",
+          "name": "Video Course: AI Fundamentals",
+          "category": "Education",
+          "quantity": 1,
+          "price": 90.3,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "bc514b99",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 318.58,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-06-16",
+              "reason": "Received duplicate",
+              "status": "Pending",
+              "refund_amount": 637.16,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000015",
+      "customer_name": "Diana Prince",
+      "customer_email": "diana.p@email.com",
+      "order_date": "2026-06-05",
+      "total_amount": 1903.13,
+      "shipping_address": "987 Cedar Ln, Boston",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 815.26,
+      "items": [
+        {
+          "item_id": "2a9305ae",
+          "name": "Music Album: Best Hits",
+          "category": "Entertainment",
+          "quantity": 1,
+          "price": 156.47,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "64c92323",
+          "name": "E-book: Data Science",
+          "category": "Books",
+          "quantity": 3,
+          "price": 174.56,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "fb3e346d",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 407.63,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-07-02",
+              "reason": "Changed mind",
+              "status": "Pending",
+              "refund_amount": 815.26,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "5e71ee2d",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 407.72,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000016",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-06-13",
+      "total_amount": 2105.86,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 1283.4,
+      "items": [
+        {
+          "item_id": "e8ef3cfa",
+          "name": "Yoga Mat",
+          "category": "Fitness",
+          "quantity": 1,
+          "price": 332.59,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-13",
+              "reason": "Item damaged in shipping",
+              "status": "Denied",
+              "refund_amount": 0.0,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "7f67f418",
+          "name": "Music Album: Best Hits",
+          "category": "Entertainment",
+          "quantity": 3,
+          "price": 163.29,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "47d18436",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 427.8,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-24",
+              "reason": "Better price elsewhere",
+              "status": "Approved",
+              "refund_amount": 1283.4,
+              "refund_date": "2026-06-28",
+              "transaction_id": "refund_d037a7b8043e",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000017",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-05-23",
+      "total_amount": 1552.73,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 1107.03,
+      "items": [
+        {
+          "item_id": "59244f3b",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 250.34,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "5540a167",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 388.89,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-16",
+              "reason": "Received duplicate",
+              "status": "Processing",
+              "refund_amount": 991.67,
+              "refund_date": "2026-06-19",
+              "transaction_id": null,
+              "restocking_fee_applied": true
+            }
+          ]
+        },
+        {
+          "item_id": "595c4c6e",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 135.72,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-08",
+              "reason": "Defective product",
+              "status": "Approved",
+              "refund_amount": 115.36,
+              "refund_date": "2026-06-14",
+              "transaction_id": "refund_301d02d9cdb3",
+              "restocking_fee_applied": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000018",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-06-27",
+      "total_amount": 521.6,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Processing",
+      "refund_status": "Partial Refund",
+      "refund_amount": 176.28,
+      "items": [
+        {
+          "item_id": "be218e7b",
+          "name": "E-book: Python Programming",
+          "category": "Books",
+          "quantity": 2,
+          "price": 172.66,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "53d40217",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 58.76,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-14",
+              "reason": "Not working as expected",
+              "status": "Pending",
+              "refund_amount": 176.28,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000019",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-06-25",
+      "total_amount": 727.03,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 24.56,
+      "items": [
+        {
+          "item_id": "bc02fb8e",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 75.85,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "94c7994a",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 129.23,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "9e9010df",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 24.56,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-26",
+              "reason": "Changed mind",
+              "status": "Completed",
+              "refund_amount": 24.56,
+              "refund_date": "2026-06-30",
+              "transaction_id": "refund_0b92010d1add",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "1598bc3f",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 421.54,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000020",
+      "customer_name": "Frank Miller",
+      "customer_email": "frank.m@email.com",
+      "order_date": "2026-05-22",
+      "total_amount": 2053.61,
+      "shipping_address": "258 Spruce Ct, Miami",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "dc17ccf2",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 284.84,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "ec5f11bb",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 190.95,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "da470ad6",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 112.27,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "cd1e69a2",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 133.9,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000021",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-06-20",
+      "total_amount": 1132.1,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 43.28,
+      "items": [
+        {
+          "item_id": "823b2e2c",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 141.78,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "4385fd84",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 3,
+          "price": 171.19,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "9a103ec5",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 43.28,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-08",
+              "reason": "Received duplicate",
+              "status": "Processing",
+              "refund_amount": 43.28,
+              "refund_date": "2026-06-15",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "0fbe0850",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 97.23,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000022",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-06-04",
+      "total_amount": 1793.44,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Cancelled",
+      "refund_status": "Partial Refund",
+      "refund_amount": 872.86,
+      "items": [
+        {
+          "item_id": "2de67f84",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 267.35,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "5c4e16f6",
+          "name": "E-book: Python Programming",
+          "category": "Books",
+          "quantity": 1,
+          "price": 86.19,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e933cd5d",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 436.43,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-25",
+              "reason": "Changed mind",
+              "status": "Completed",
+              "refund_amount": 872.86,
+              "refund_date": "2026-06-28",
+              "transaction_id": "refund_49fb71f0f2a6",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "72bc9d5b",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 1,
+          "price": 32.34,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000023",
+      "customer_name": "Frank Miller",
+      "customer_email": "frank.m@email.com",
+      "order_date": "2026-06-15",
+      "total_amount": 1441.39,
+      "shipping_address": "258 Spruce Ct, Miami",
+      "status": "Cancelled",
+      "refund_status": "Partial Refund",
+      "refund_amount": 989.56,
+      "items": [
+        {
+          "item_id": "06a5b313",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 413.24,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-11",
+              "reason": "Item damaged in shipping",
+              "status": "Pending",
+              "refund_amount": 413.24,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "e710b8c5",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 150.61,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "281f04fd",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 348.99,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-25",
+              "reason": "Better price elsewhere",
+              "status": "Pending",
+              "refund_amount": 348.99,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "ddfc85f6",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 227.33,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-06-22",
+              "reason": "Received duplicate",
+              "status": "Approved",
+              "refund_amount": 227.33,
+              "refund_date": "2026-06-29",
+              "transaction_id": "refund_90a9a0b7e3ad",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000024",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-06-28",
+      "total_amount": 469.31,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "f63f8753",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 108.37,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "d78c09e3",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 3,
+          "price": 84.19,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000025",
+      "customer_name": "Diana Prince",
+      "customer_email": "diana.p@email.com",
+      "order_date": "2026-05-16",
+      "total_amount": 343.02,
+      "shipping_address": "987 Cedar Ln, Boston",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "ccb6e652",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 111.94,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "3dc2e4a3",
+          "name": "E-book: Data Science",
+          "category": "Books",
+          "quantity": 1,
+          "price": 119.14,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000026",
+      "customer_name": "Bob Johnson",
+      "customer_email": "bob.j@email.com",
+      "order_date": "2026-05-15",
+      "total_amount": 990.0,
+      "shipping_address": "789 Pine Rd, Austin",
+      "status": "Pending",
+      "refund_status": "Partial Refund",
+      "refund_amount": 497.64,
+      "items": [
+        {
+          "item_id": "2e6e6db1",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 497.64,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-21",
+              "reason": "Item damaged in shipping",
+              "status": "Pending",
+              "refund_amount": 497.64,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "c94b7f8a",
+          "name": "E-book: Data Science",
+          "category": "Books",
+          "quantity": 3,
+          "price": 137.88,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "24c4aa2e",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 78.72,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000027",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-05-28",
+      "total_amount": 920.03,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Pending",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "5b39708c",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 349.61,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "2573115f",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 26.92,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "7134e089",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 164.8,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e44be5e8",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 189.35,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000028",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-05-11",
+      "total_amount": 1517.16,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "212fe1cc",
+          "name": "E-book: Data Science",
+          "category": "Books",
+          "quantity": 1,
+          "price": 123.15,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "93e1f3d9",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 379.08,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "b430a3e5",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 211.95,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000029",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-07-05",
+      "total_amount": 1795.7,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Shipped",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "f6e0ad29",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 263.47,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "74815850",
+          "name": "E-book: Data Science",
+          "category": "Books",
+          "quantity": 2,
+          "price": 26.92,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "6c8491ff",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 493.13,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "a30d87f0",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 228.66,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000030",
+      "customer_name": "John Smith",
+      "customer_email": "john.smith@email.com",
+      "order_date": "2026-05-17",
+      "total_amount": 1912.44,
+      "shipping_address": "123 Main St, Springfield",
+      "status": "Pending",
+      "refund_status": "Partial Refund",
+      "refund_amount": 874.5,
+      "items": [
+        {
+          "item_id": "c01f315c",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 437.25,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-17",
+              "reason": "Item damaged in shipping",
+              "status": "Processing",
+              "refund_amount": 874.5,
+              "refund_date": "2026-06-22",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "28409405",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 55.27,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "2d34f4e9",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 129.97,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "929029be",
+          "name": "Software License: Design Tool",
+          "category": "Software",
+          "quantity": 2,
+          "price": 184.58,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "016f8dc9",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 161.18,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000031",
+      "customer_name": "Frank Miller",
+      "customer_email": "frank.m@email.com",
+      "order_date": "2026-05-29",
+      "total_amount": 1927.72,
+      "shipping_address": "258 Spruce Ct, Miami",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 663.31,
+      "items": [
+        {
+          "item_id": "432732fa",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 385.03,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-30",
+              "reason": "Item damaged in shipping",
+              "status": "Pending",
+              "refund_amount": 385.03,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "5667ba78",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 2,
+          "price": 181.67,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "57175b0c",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 92.76,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-21",
+              "reason": "Wrong size",
+              "status": "Completed",
+              "refund_amount": 278.28,
+              "refund_date": "2026-06-25",
+              "transaction_id": "refund_2f7e66606479",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "8aee93fd",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 57.67,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "45dcb56e",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 261.91,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000032",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-05-31",
+      "total_amount": 1014.72,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "a246f069",
+          "name": "Yoga Mat",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 382.77,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "7119dc83",
+          "name": "Video Course: AI Fundamentals",
+          "category": "Education",
+          "quantity": 2,
+          "price": 124.59,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000033",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-05-13",
+      "total_amount": 1374.63,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 529.3,
+      "items": [
+        {
+          "item_id": "4434d25c",
+          "name": "Software License: Design Tool",
+          "category": "Software",
+          "quantity": 2,
+          "price": 59.23,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "f5d0ccde",
+          "name": "Yoga Mat",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 167.39,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "727d17ce",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 112.35,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "1b1bf892",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 264.65,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-06-30",
+              "reason": "Received duplicate",
+              "status": "Pending",
+              "refund_amount": 529.3,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000034",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-06-23",
+      "total_amount": 1979.71,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "16922f9a",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 488.99,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e5b730fa",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 2,
+          "price": 186.15,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e2537e8d",
+          "name": "E-book: Python Programming",
+          "category": "Books",
+          "quantity": 3,
+          "price": 58.2,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "af1ff2e2",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 318.16,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "a6b67b8e",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 153.75,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000035",
+      "customer_name": "Alice Williams",
+      "customer_email": "alice.w@email.com",
+      "order_date": "2026-06-20",
+      "total_amount": 1004.28,
+      "shipping_address": "321 Elm St, Denver",
+      "status": "Pending",
+      "refund_status": "Partial Refund",
+      "refund_amount": 98.86,
+      "items": [
+        {
+          "item_id": "d2b7f829",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 319.56,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "4ea16f88",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 35.98,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "da578763",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 49.43,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-20",
+              "reason": "Received duplicate",
+              "status": "Approved",
+              "refund_amount": 98.86,
+              "refund_date": "2026-06-27",
+              "transaction_id": "refund_dcb249f202be",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "256dff05",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 274.94,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000036",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-06-16",
+      "total_amount": 382.09,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 168.71,
+      "items": [
+        {
+          "item_id": "2f8d7268",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 168.71,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-23",
+              "reason": "Item damaged in shipping",
+              "status": "Pending",
+              "refund_amount": 168.71,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "3ce82df0",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 106.69,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000037",
+      "customer_name": "Frank Miller",
+      "customer_email": "frank.m@email.com",
+      "order_date": "2026-06-01",
+      "total_amount": 151.17,
+      "shipping_address": "258 Spruce Ct, Miami",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 80.76,
+      "items": [
+        {
+          "item_id": "72529723",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 23.47,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "3123fc7b",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 1,
+          "price": 80.76,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-23",
+              "reason": "Changed mind",
+              "status": "Approved",
+              "refund_amount": 80.76,
+              "refund_date": "2026-06-26",
+              "transaction_id": "refund_2df1aead1f09",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000038",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-05-17",
+      "total_amount": 2276.16,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Pending",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "c30fe04d",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 140.13,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-26",
+              "reason": "Defective product",
+              "status": "Denied",
+              "refund_amount": 0.0,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "63f69ac7",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 291.5,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "8a43622b",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 302.25,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "909252ea",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 74.52,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000039",
+      "customer_name": "Frank Miller",
+      "customer_email": "frank.m@email.com",
+      "order_date": "2026-05-27",
+      "total_amount": 1340.88,
+      "shipping_address": "258 Spruce Ct, Miami",
+      "status": "Shipped",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "2c704026",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 1,
+          "price": 89.74,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "31eb2c46",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 454.47,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "e2313fd4",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 342.2,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000040",
+      "customer_name": "John Smith",
+      "customer_email": "john.smith@email.com",
+      "order_date": "2026-05-11",
+      "total_amount": 1025.6,
+      "shipping_address": "123 Main St, Springfield",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 486.66,
+      "items": [
+        {
+          "item_id": "5d8999b8",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 125.85,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "b08a59ad",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 413.09,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "9ccdd2db",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 280.7,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-07",
+              "reason": "Defective product",
+              "status": "Completed",
+              "refund_amount": 280.7,
+              "refund_date": "2026-06-10",
+              "transaction_id": "refund_2c8e0adf7eb5",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "a7d735d6",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 102.98,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-06-24",
+              "reason": "Changed mind",
+              "status": "Pending",
+              "refund_amount": 205.96,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000041",
+      "customer_name": "Bob Johnson",
+      "customer_email": "bob.j@email.com",
+      "order_date": "2026-06-02",
+      "total_amount": 2768.07,
+      "shipping_address": "789 Pine Rd, Austin",
+      "status": "Cancelled",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "b6b7b701",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 444.73,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "87142488",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 370.42,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "6eca7993",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 2,
+          "price": 184.86,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "8a5b0e20",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 327.18,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "acf8e629",
+          "name": "E-book: Data Science",
+          "category": "Books",
+          "quantity": 1,
+          "price": 70.45,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000042",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-06-04",
+      "total_amount": 2409.74,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 715.5,
+      "items": [
+        {
+          "item_id": "be206e1d",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 269.66,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "ab14693d",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 357.75,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-23",
+              "reason": "Better price elsewhere",
+              "status": "Processing",
+              "refund_amount": 715.5,
+              "refund_date": "2026-06-26",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "d4e179bd",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 442.63,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000043",
+      "customer_name": "Eve Wilson",
+      "customer_email": "eve.w@email.com",
+      "order_date": "2026-06-11",
+      "total_amount": 2245.05,
+      "shipping_address": "147 Birch Way, Chicago",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 301.98,
+      "items": [
+        {
+          "item_id": "ce0c3f84",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 248.38,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "89647060",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 481.78,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "13a03bd5",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 333.31,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "00a22f11",
+          "name": "Yoga Mat",
+          "category": "Fitness",
+          "quantity": 1,
+          "price": 301.98,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 3,
+              "request_date": "2026-07-01",
+              "reason": "Received duplicate",
+              "status": "Pending",
+              "refund_amount": 301.98,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "d799ee7c",
+          "name": "Music Album: Best Hits",
+          "category": "Entertainment",
+          "quantity": 1,
+          "price": 149.44,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000044",
+      "customer_name": "John Smith",
+      "customer_email": "john.smith@email.com",
+      "order_date": "2026-07-06",
+      "total_amount": 1258.47,
+      "shipping_address": "123 Main St, Springfield",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 524.06,
+      "items": [
+        {
+          "item_id": "5175bda1",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 130.07,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "9f7c6d1e",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 308.27,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-10",
+              "reason": "Item damaged in shipping",
+              "status": "Approved",
+              "refund_amount": 524.06,
+              "refund_date": "2026-06-15",
+              "transaction_id": "refund_ea3c958a44ad",
+              "restocking_fee_applied": true
+            }
+          ]
+        },
+        {
+          "item_id": "e2d918b7",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 125.86,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000045",
+      "customer_name": "Jane Doe",
+      "customer_email": "jane.doe@email.com",
+      "order_date": "2026-05-10",
+      "total_amount": 628.54,
+      "shipping_address": "456 Oak Ave, Portland",
+      "status": "Processing",
+      "refund_status": "Partial Refund",
+      "refund_amount": 189.99,
+      "items": [
+        {
+          "item_id": "5715d264",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 189.99,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-07-04",
+              "reason": "Received duplicate",
+              "status": "Processing",
+              "refund_amount": 189.99,
+              "refund_date": "2026-07-11",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "b46eb378",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 1,
+          "price": 438.55,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000046",
+      "customer_name": "John Smith",
+      "customer_email": "john.smith@email.com",
+      "order_date": "2026-05-19",
+      "total_amount": 733.96,
+      "shipping_address": "123 Main St, Springfield",
+      "status": "Shipped",
+      "refund_status": "Partial Refund",
+      "refund_amount": 692.25,
+      "items": [
+        {
+          "item_id": "882fe19c",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 315.18,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-07-02",
+              "reason": "Wrong size",
+              "status": "Pending",
+              "refund_amount": 630.36,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "012c6374",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 1,
+          "price": 41.71,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "d277dc54",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 20.63,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-18",
+              "reason": "Better price elsewhere",
+              "status": "Completed",
+              "refund_amount": 61.89,
+              "refund_date": "2026-06-23",
+              "transaction_id": "refund_205419df99f1",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000047",
+      "customer_name": "Bob Johnson",
+      "customer_email": "bob.j@email.com",
+      "order_date": "2026-05-10",
+      "total_amount": 3146.98,
+      "shipping_address": "789 Pine Rd, Austin",
+      "status": "Processing",
+      "refund_status": "Partial Refund",
+      "refund_amount": 827.8,
+      "items": [
+        {
+          "item_id": "81a2c1ec",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 3,
+          "price": 314.03,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "7bead90b",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 458.59,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 1,
+              "request_date": "2026-06-12",
+              "reason": "Better price elsewhere",
+              "status": "Denied",
+              "refund_amount": 0.0,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "857075d7",
+          "name": "Running Shoes",
+          "category": "Apparel",
+          "quantity": 2,
+          "price": 77.11,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 2,
+              "request_date": "2026-06-25",
+              "reason": "Better price elsewhere",
+              "status": "Pending",
+              "refund_amount": 154.22,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "d4b1aba2",
+          "name": "Desk Lamp",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 459.91,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "88d964f7",
+          "name": "Bluetooth Speaker",
+          "category": "Electronics",
+          "quantity": 2,
+          "price": 336.79,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 4,
+              "request_date": "2026-06-15",
+              "reason": "Defective product",
+              "status": "Approved",
+              "refund_amount": 673.58,
+              "refund_date": "2026-06-20",
+              "transaction_id": "refund_8eff2ef6ba9e",
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000048",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-07-02",
+      "total_amount": 3221.49,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Delivered",
+      "refund_status": "Partial Refund",
+      "refund_amount": 2236.07,
+      "items": [
+        {
+          "item_id": "293d4f6a",
+          "name": "Backpack",
+          "category": "Apparel",
+          "quantity": 3,
+          "price": 471.73,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-07-04",
+              "reason": "Not working as expected",
+              "status": "Pending",
+              "refund_amount": 1415.19,
+              "refund_date": null,
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "44819848",
+          "name": "Online Course: Web Development",
+          "category": "Education",
+          "quantity": 3,
+          "price": 158.66,
+          "item_type": "Digital",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "bde57932",
+          "name": "Wireless Headphones",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 386.62,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "b6a2b953",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 2,
+          "price": 61.41,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "e4934967",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 2,
+          "price": 410.44,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 4,
+              "request_date": "2026-06-14",
+              "reason": "Wrong size",
+              "status": "Processing",
+              "refund_amount": 820.88,
+              "refund_date": "2026-06-19",
+              "transaction_id": null,
+              "restocking_fee_applied": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000049",
+      "customer_name": "Charlie Brown",
+      "customer_email": "charlie.b@email.com",
+      "order_date": "2026-07-01",
+      "total_amount": 2752.4,
+      "shipping_address": "654 Maple Dr, Seattle",
+      "status": "Processing",
+      "refund_status": "Partial Refund",
+      "refund_amount": 247.59,
+      "items": [
+        {
+          "item_id": "c4d70c8b",
+          "name": "Yoga Mat",
+          "category": "Fitness",
+          "quantity": 1,
+          "price": 247.59,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": [
+            {
+              "item_index": 0,
+              "request_date": "2026-06-12",
+              "reason": "Defective product",
+              "status": "Completed",
+              "refund_amount": 247.59,
+              "refund_date": "2026-06-16",
+              "transaction_id": "refund_77d19be11f42",
+              "restocking_fee_applied": false
+            }
+          ]
+        },
+        {
+          "item_id": "88336ada",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 1,
+          "price": 160.35,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "ccdbf587",
+          "name": "Water Bottle",
+          "category": "Fitness",
+          "quantity": 3,
+          "price": 485.28,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "2383cc6a",
+          "name": "Coffee Maker",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 165.96,
+          "item_type": "Physical",
+          "is_opened": true,
+          "return_requests": []
+        },
+        {
+          "item_id": "4ad6e894",
+          "name": "Music Album: Best Hits",
+          "category": "Entertainment",
+          "quantity": 2,
+          "price": 195.37,
+          "item_type": "Digital",
+          "is_opened": true,
+          "return_requests": []
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-000050",
+      "customer_name": "Jane Doe",
+      "customer_email": "jane.doe@email.com",
+      "order_date": "2026-06-20",
+      "total_amount": 807.52,
+      "shipping_address": "456 Oak Ave, Portland",
+      "status": "Shipped",
+      "refund_status": "Not Refunded",
+      "refund_amount": 0.0,
+      "items": [
+        {
+          "item_id": "179902a5",
+          "name": "Tablet Stand",
+          "category": "Electronics",
+          "quantity": 1,
+          "price": 31.42,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        },
+        {
+          "item_id": "64f015de",
+          "name": "Kitchen Blender",
+          "category": "Home & Kitchen",
+          "quantity": 3,
+          "price": 258.7,
+          "item_type": "Physical",
+          "is_opened": false,
+          "return_requests": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,92 +1,171 @@
-# Support-Agent Application
+# Support Agent
 
-A comprehensive customer support application with item-level returns management.
+LangGraph-based customer service agent with LLM-driven refund decisions.
 
-## Features
+## Overview
 
-- **Item-Level Returns**: Each order item can have multiple return requests, not just order-level
-- **Flexible Refund Policy**: 
-  - Digital items (`digital`): Non-refundable
-  - Physical items (`physical`): 
-    - Unopened: Full refund
-    - Opened: 15% restocking fee
-- **Real-time Return Request Tracking**: View and manage return requests per item
-- **REST API**: FastAPI-based backend for all operations
-- **Interactive Data Viewer**: Web interface for exploring CRM data (Node.js server on port 3200)
-- **Customer Chat UI**: Frontend interface for customer support interactions
-- **LangGraph AI Agent**: AI-powered support agent with state-machine workflow (see `spec.md`)
+This is a LangGraph-powered agent that handles customer refund requests using natural language. The agent:
 
-## Project Structure
+- Authenticates customers via CRM lookup
+- Lists order history when needed
+- Extracts order details from customer messages using LLM
+- Checks policy validity using factual tools
+- Makes refund decisions via LLM (not hardcoded logic)
+- Processes refunds with retry logic
+- Escalates to humans when needed
+- Streams admin trace events via SSE
+
+## Architecture
+
+### Agent State Machine (LangGraph)
 
 ```
-support-agent/
-├── README.md                  # You are here
-├── spec.md                    # LangGraph agent architecture specification
-├── llm_config.json            # LLM configuration (local ollama endpoint)
-├── policy_rules.md            # Refund policy rules
-├── challenge.md               # Challenge / exercise documentation
-├── local_crm.json             # Generated CRM data (gitignored, ~170+ items)
-├── crm_orders.csv             # Flat CSV export of CRM orders
-├── .gitignore
-│
-├── datagen/                   # Data generation tools
-│   ├── spec.md                # Data generator specification
-│   ├── generate-crm.py        # Python script: generates hierarchical CRM data
-│   ├── requirements.txt       # Dependencies (requests)
-│   └── crm_orders.csv         # Flat CSV output
-│
-├── backend/                   # FastAPI backend
-│   └── app/
-│       ├── main.py            # REST API: orders, returns, refunds
-│       └── requirements.txt   # fastapi, uvicorn, pydantic, python-multipart
-│
-├── frontend/                  # Customer chat UI
-│   ├── index.html             # Customer support chat interface (Tailwind CSS)
-│   └── src/components/        # UI components (placeholder)
-│
-├── data-viewer/               # Interactive CRM data viewer
-│   ├── index.html             # Visual CRM explorer (1000+ lines)
-│   └── server.js              # Static file server (port 3200)
-│
-├── tests/                     # Regression tests
-│   ├── conftest.py            # Pytest fixtures (30s timeout)
-│   └── test_scenarios.py      # 3 refund scenario tests
-│
-└── doc/                       # Documentation & diagrams
-    ├── state-flow.mmd         # Mermaid diagram source
-    └── state-flow.png         # Rendered state flow diagram
+init -> authenticate -> (request_auth_info | list_orders | extract)
+                                        |
+                                    request_auth_info -> generate_response
+                                        |
+                                    list_orders -> extract -> check_policy -> process -> generate_response
+                                                              |
+                                                          generate_response
 ```
 
-## Quick Start
+### Nodes
 
-### 1. Generate CRM Data
+1. **init** - Initialize the agent loop
+2. **authenticate** - Verify customer identity via CRM
+3. **request_auth_info** - Ask for customer ID/email
+4. **list_orders** - Display customer's order history
+5. **extract** - Extract order_id and amount from customer message using LLM
+6. **check_policy** - Check policy validity and make LLM-based decision
+7. **process** - Process refund transaction with retry logic
+8. **generate_response** - Generate final response (fallback)
+
+### Tool Functions
+
+All tool functions are importable and testable independently:
+
+```python
+from backend.app.main import (
+    get_user_profile_fn,
+    check_policy_validity_fn,
+    process_refund_transaction_fn,
+    escalate_to_human_fn,
+)
+```
+
+#### `get_user_profile_fn(customer_id: str) -> dict`
+Look up customer profile from CRM. Returns customer data if found, or error JSON.
+
+#### `check_policy_validity_fn(order_id: str, check_type: str = "full") -> dict`
+Factual tool that gathers policy-relevant data about an order. Returns:
+- order_id, valid, days_since_purchase
+- within_30_day_window, within_60_day_window
+- items, return_history
+- Does NOT make policy decisions (that's the LLM's job)
+
+#### `process_refund_transaction_fn(order_id: str, amount: float) -> dict`
+Process a refund transaction. Includes retry logic:
+- Fails on first attempt if `(amount * 100)` is odd (simulated 503)
+- Retries up to 3 times
+- Returns transaction_id on success
+
+#### `escalate_to_human_fn(reason: str) -> dict`
+Create an escalation record. Returns:
+- escalation_id (format: ESC-XXXXXXXX)
+- status: "logged"
+- reason, timestamp, priority
+
+## API Endpoints
+
+### POST /chat
+Primary chat endpoint that runs the full agent loop.
+
+**Request:**
+```json
+{
+  "customer_id": "diana.p@email.com",
+  "message": "I want to refund order ORD-000001 for $100"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "Your refund of $100.00 for order ORD-000001 has been successfully processed. Transaction ID: refund_abc123..."
+}
+```
+
+### GET /admin/trace
+SSE endpoint for real-time admin trace streaming.
+
+**Event Schema:**
+```json
+{
+  "timestamp": "2026-07-02T12:00:05.123Z",
+  "type": "trace",
+  "component": "authenticate",
+  "message": "Customer authenticated: Diana Prince",
+  "payload": { "customer_email": "diana.p@email.com" }
+}
+```
+
+### POST /api/voice/ingress
+Voice ingress stub (pending integration).
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Voice ingress is pluggable and pending integration"
+}
+```
+
+### GET /health
+Health check endpoint.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-07-06T18:50:00.000Z"
+}
+```
+
+## Configuration
+
+### LLM Configuration (`llm_config.json`)
+```json
+{
+  "model": "local-model",
+  "base_url": "http://localhost:8080/v1",
+  "api_key": "not-needed-for-local",
+  "max_tokens": 1024,
+  "temperature": 0.3
+}
+```
+
+### Policy Rules (`policy_rules.md`)
+Defines refund eligibility:
+- 30-day full refund window
+- 31-60 day partial refund window
+- Digital products non-refundable once accessed
+- Damaged/defective products always eligible
+- Restocking fees after 14 days for opened items
+
+## Installation
 
 ```bash
-# Default: generate 15 customers
-python3 datagen/generate-crm.py
-
-# Custom count: generate 20 customers
-python3 datagen/generate-crm.py -n 20
+cd support-agent/backend/app
+pip install -r requirements.txt
 ```
 
-This creates `local_crm.json` with:
-- N customers (configurable via `-n`, default 15)
-- ~50 sample orders
-- 170+ items
-- 60+ return requests in various statuses (`pending`, `processing`, `approved`, `denied`, `completed`)
+## Running
 
-**For >15 customers**, the generator uses an OpenAI-compatible LLM for realistic name generation. Set these environment variables:
+### 1. Install Dependencies
 
 ```bash
-export LLM_URL=https://your-openai-compatible-api.com/v1
-export LLM_MODEL=gemma-4-31b-it
-export LLM_API_KEY=your-api-key-here
-```
-
-Install the datagen dependency first:
-
-```bash
-pip install -r datagen/requirements.txt
+cd support-agent/backend/app
+pip install -r requirements.txt
 ```
 
 ### 2. Start the Backend API
@@ -94,209 +173,39 @@ pip install -r datagen/requirements.txt
 ```bash
 cd backend/app
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8050
 ```
 
-The API will be available at `http://localhost:8000`
-
-### 3. Start the Data Viewer
+## Testing Tool Functions
 
 ```bash
-cd data-viewer
-node server.js
+cd support-agent
+python test_tools.py
 ```
 
-Then open `http://localhost:3200` in your browser to:
-- View all orders with item-level details
-- See return requests for each item
-- Create new return requests
-- Filter and search orders
+## Key Design Decisions
 
-## Data Model
+1. **LLM-Driven Decisions**: All refund decisions are made by the LLM based on factual data from tools, not hardcoded Python logic.
 
-The data is hierarchical: **Customers → Orders → Items → Return Requests**.
+2. **Factual Tools**: Tools like `check_policy_validity_fn` return raw data (days_since_purchase, item conditions, etc.). The LLM interprets this data and makes policy decisions.
 
-### Customer
+3. **Retry Logic**: The `process_refund_transaction_fn` includes simulated 503 errors for odd-digit amounts to test retry behavior.
 
-```json
-{
-  "id": "usr_001",
-  "name": "John Smith",
-  "email": "john.smith@email.com",
-  "address": "123 Main St, Springfield",
-  "loyalty_tier": "gold",
-  "order_history": [...]
-}
+4. **Admin Tracing**: All agent actions are broadcast via SSE for real-time monitoring.
+
+5. **Stateless Tools**: Tool functions can be called independently without the LLM or FastAPI app, making them easy to test.
+
+## File Structure
+
 ```
-
-**Loyalty tiers**: `standard`, `silver`, `gold`
-
-### Order
-
-```json
-{
-  "order_id": "ORD-000001",
-  "order_date": "2026-06-15",
-  "total_amount": 299.98,
-  "shipping_address": "123 Main St, Springfield",
-  "status": "shipped",
-  "refund_status": "Partially Refunded",
-  "refund_amount": 0.0,
-  "items": [...]
-}
+support-agent/
+├── backend/
+│   └── app/
+│       ├── __init__.py
+│       ├── main.py              # Main agent code + FastAPI app
+│       ├── requirements.txt     # Python dependencies
+│       ├── llm_config.json      # LLM configuration
+│       ├── policy_rules.md      # Refund policy rules
+│       └── local_crm.json       # Customer order data
+└── test_tools.py                # Tool function tests
 ```
-
-**Order statuses**: `pending`, `processing`, `delivered`, `shipped`, `cancelled`
-
-### Order Item
-
-```json
-{
-  "item_id": "abc123",
-  "name": "Wireless Headphones",
-  "category": "Electronics",
-  "quantity": 2,
-  "price": 149.99,
-  "item_type": "physical",
-  "is_opened": false,
-  "return_requests": []
-}
-```
-
-**Item types**: `physical`, `digital`
-
-### Return Request
-
-```json
-{
-  "item_index": 0,
-  "request_date": "2026-06-15",
-  "reason": "Defective product",
-  "status": "pending",
-  "refund_amount": 299.98,
-  "refund_date": null,
-  "transaction_id": null,
-  "restocking_fee_applied": false
-}
-```
-
-**Return request statuses**: `pending`, `approved`, `denied`, `processing`, `completed`
-
-## API Endpoints
-
-### Orders
-- `GET /orders` - List all orders
-- `GET /orders/{order_id}` - Get specific order
-- `GET /orders/{order_id}/items` - List items in order
-- `GET /orders/{order_id}/return-requests` - List return requests
-
-### Return Requests
-- `POST /orders/{order_id}/return-requests` - Create return request
-- `PATCH /orders/{order_id}/return-requests/{request_index}` - Update return status
-- `DELETE /orders/{order_id}/return-requests/{request_index}` - Delete return request
-
-### Refunds
-- `POST /orders/{order_id}/process-refund` - Process refund for specific items
-- `GET /policy` - Get return policy
-
-## Refund Policy Logic
-
-### Digital Items (`digital`)
-- Always non-refundable
-- Status: 100% non-refundable
-
-### Physical Items - Unopened (`is_opened: false`)
-- Full refund eligible
-- No restocking fee
-
-### Physical Items - Opened (`is_opened: true`)
-- 15% restocking fee applied
-- 85% refund eligible
-
-## Return Request Workflow
-
-1. **Create Request**: Customer/agent creates return request (status: `pending`)
-2. **Review**: Support reviews the request
-3. **Approve/Deny**: Status updated to `approved`, `processing`, or `denied`
-4. **Process**: Refund is processed (status: `processing` → `completed`)
-5. **Complete**: Return request closed (status: `completed`)
-
-## Usage Examples
-
-### Create a Return Request (API)
-
-```bash
-curl -X POST http://localhost:8000/orders/ORD-000001/return-requests \
-  -H "Content-Type: application/json" \
-  -d '{
-    "order_id": "ORD-000001",
-    "item_indices": [0, 2],
-    "reason": "Defective product"
-  }'
-```
-
-### Process a Refund (API)
-
-```bash
-curl -X POST http://localhost:8000/orders/ORD-000001/process-refund \
-  -H "Content-Type: application/json" \
-  -d '{
-    "order_id": "ORD-000001",
-    "item_indices": [0, 2],
-    "confirm": true
-  }'
-```
-
-### View Return Policy
-
-```bash
-curl http://localhost:8000/policy
-```
-
-## Specification & Design
-
-- **`spec.md`** — Full specification for the LangGraph-based AI support agent, including the state machine flow (`init → authenticate → list_orders → extract → check_policy → process → generate_response`), tool registry, and SSE-based admin trace engine.
-- **`llm_config.json`** — LLM configuration (local ollama endpoint, gemma-4-31B-it model).
-- **`policy_rules.md`** — Detailed refund policy rules referenced by both the data generator and backend.
-- **`datagen/spec.md`** — Specification for the data generator tool.
-- **`doc/state-flow.mmd`** — Mermaid source for the agent state flow diagram.
-- **`doc/state-flow.png`** — Rendered state flow diagram.
-
-## Testing
-
-Three regression test scenarios cover the refund workflow:
-
-```bash
-cd tests
-pip install pytest
-pytest test_scenarios.py -v
-```
-
-| Scenario | Description |
-|---|---|
-| Happy Path | Complete refund for an unopened physical item |
-| Bronze Tier Denial | Loyalty-tier-based return denial |
-| Error Recovery | Handling backend failures and retry logic |
-
-## Development
-
-### Modifying the Data Generator
-
-Edit `datagen/generate-crm.py` to:
-- Change the number of orders (modify `num_orders` parameter)
-- Adjust return request generation rates
-- Modify product categories and item pools
-- Customize the LLM prompt for customer name generation
-
-### Running the Data Generator with LLM
-
-```bash
-LLM_URL=https://api.openai.com/v1 \
-LLM_MODEL=gpt-4 \
-LLM_API_KEY=sk-xxx \
-python3 datagen/generate-crm.py -n 25
-```
-
-## License
-
-MIT
