@@ -468,6 +468,131 @@
                 justify-content: center;
             }
         }
+        
+        /* Return Request Styles */
+        .return-requests-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e9ecef;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .section-title:hover {
+            color: #667eea;
+        }
+        
+        .section-title .toggle-icon {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .section-title.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .return-requests-list {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .return-requests-list.collapsed {
+            max-height: 0;
+        }
+        
+        .return-request-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .return-request-card:last-child {
+            margin-bottom: 0;
+        }
+        
+        .return-request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .request-status {
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-processing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-denied {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-completed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .request-date {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .return-request-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .return-request-details .detail-item {
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .return-request-details .detail-item .label {
+            font-weight: 600;
+            color: #495057;
+            margin-right: 5px;
+        }
+        
+        .no-requests {
+            font-size: 13px;
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -515,6 +640,18 @@
                 </select>
             </div>
             
+            <div class="control-group">
+                <label for="return-status-filter">Return Status:</label>
+                <select id="return-status-filter">
+                    <option value="all">All Returns</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Denied">Denied</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            
             <button id="load-data-btn">🔄 Load Data</button>
         </div>
         
@@ -532,6 +669,7 @@
         const customersTreeEl = document.getElementById('customers-tree');
         const searchInput = document.getElementById('search-input');
         const statusFilter = document.getElementById('status-filter');
+        const returnStatusFilter = document.getElementById('return-status-filter');
         const loadBtn = document.getElementById('load-data-btn');
         const corsWarning = document.getElementById('cors-warning');
         
@@ -549,6 +687,7 @@
         function setupEventListeners() {
             searchInput.addEventListener('input', filterCustomers);
             statusFilter.addEventListener('change', filterCustomers);
+            returnStatusFilter.addEventListener('change', filterCustomers);
             loadBtn.addEventListener('click', loadFromPossibleLocations);
             
             // Global delegated click listener for hierarchical expansion
@@ -620,6 +759,7 @@
         function filterCustomers() {
             const searchTerm = searchInput.value.toLowerCase();
             const statusValue = statusFilter.value;
+            const returnStatusValue = returnStatusFilter.value;
             
             filteredCustomers = customers.filter(customer => {
                 // Search filter - check customer info
@@ -636,10 +776,27 @@
                             return false;
                         }
                         
+                        // Apply return status filter even during search
+                        if (returnStatusValue !== 'all') {
+                            const hasMatchingReturn = order.items.some(item =>
+                                item.return_requests && item.return_requests.some(req =>
+                                    req.status === returnStatusValue
+                                )
+                            );
+                            if (!hasMatchingReturn) {
+                                return false;
+                            }
+                        }
+                        
                         const orderMatch = order.order_id.toLowerCase().includes(searchTerm);
                         const itemMatch = order.items.some(item =>
                             item.name.toLowerCase().includes(searchTerm) ||
-                            item.category.toLowerCase().includes(searchTerm)
+                            item.category.toLowerCase().includes(searchTerm) ||
+                            (item.return_requests && item.return_requests.some(req =>
+                                req.reason.toLowerCase().includes(searchTerm) ||
+                                req.status.toLowerCase().includes(searchTerm) ||
+                                (req.refund_amount && String(req.refund_amount).includes(searchTerm))
+                            ))
                         );
                         
                         return orderMatch || itemMatch;
@@ -655,6 +812,18 @@
                             order.status === statusValue
                         );
                         return hasMatchingOrders;
+                    }
+                    
+                    // Apply return status filter when no search term
+                    if (returnStatusValue !== 'all') {
+                        const hasMatchingReturns = customer.order_history.some(order =>
+                            order.items.some(item =>
+                                item.return_requests && item.return_requests.some(req =>
+                                    req.status === returnStatusValue
+                                )
+                            )
+                        );
+                        return hasMatchingReturns;
                     }
                 }
                 
@@ -797,6 +966,45 @@
                                 <span class="value">${formatCurrency(item.price * item.quantity)}</span>
                             </div>
                         </div>
+                        ${item.return_requests && item.return_requests.length > 0 ? `
+                            <div class="return-requests-section">
+                                <div class="section-title" onclick="event.stopPropagation(); this.classList.toggle('collapsed'); this.nextElementSibling.classList.toggle('collapsed');">
+                                    <span class="toggle-icon">▼</span>
+                                    📋 Return Requests (${item.return_requests.length})
+                                </div>
+                                <div class="return-requests-list">
+                                    ${item.return_requests.map(request => `
+                                        <div class="return-request-card">
+                                            <div class="return-request-header">
+                                                <span class="request-status status-${request.status.toLowerCase()}">${request.status}</span>
+                                                <span class="request-date">${formatDate(request.request_date)}</span>
+                                            </div>
+                                            <div class="return-request-details">
+                                                <div class="detail-item">
+                                                    <span class="label">Reason:</span> ${escapeHtml(request.reason)}
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="label">Refund Amount:</span> ${formatCurrency(request.refund_amount)}
+                                                </div>
+                                                ${request.refund_date ? `
+                                                    <div class="detail-item">
+                                                        <span class="label">Refund Date:</span> ${formatDate(request.refund_date)}
+                                                    </div>
+                                                ` : ''}
+                                                ${request.transaction_id ? `
+                                                    <div class="detail-item">
+                                                        <span class="label">Transaction ID:</span> ${escapeHtml(request.transaction_id)}
+                                                    </div>
+                                                ` : ''}
+                                                <div class="detail-item">
+                                                    <span class="label">Restocking Fee:</span> ${request.restocking_fee_applied ? 'Yes' : 'No'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
                 

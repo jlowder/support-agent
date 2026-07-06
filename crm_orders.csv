@@ -1,225 +1,234 @@
 order_id,customer_name,customer_email,order_date,total_amount,status,item_index,item_name,category,quantity,price,item_type,is_opened,return_request_date,return_reason,return_status,refund_amount,refund_date,transaction_id,restocking_fee_applied
-ORD-000013,John Smith,john.smith@email.com,2026-05-31,3998.54,Delivered,0,"Running Shoes",Apparel,1,201.42,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-26,"Item damaged in shipping",Pending,201.42,,,False
-ORD-000013,John Smith,john.smith@email.com,2026-05-31,3998.54,Delivered,1,"Tablet Stand",Electronics,2,285.72,Physical,False,,,,,,,,,,
-ORD-000013,John Smith,john.smith@email.com,2026-05-31,3998.54,Delivered,2,"Kitchen Blender",Home & Kitchen,3,443.43,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-25,"Changed mind",Completed,1330.29,2026-06-30,refund_b75a683c6064,False
-ORD-000013,John Smith,john.smith@email.com,2026-05-31,3998.54,Delivered,3,"Backpack",Apparel,3,358.67,Physical,False,,,,,,,,,,
-ORD-000013,John Smith,john.smith@email.com,2026-05-31,3998.54,Delivered,4,"Yoga Mat",Fitness,2,409.69,Physical,False,,,,,,,,,,
-ORD-000016,John Smith,john.smith@email.com,2026-05-19,1123.97,Shipped,0,"Wireless Headphones",Electronics,1,137.0,Physical,False,,,,,,,,,,
-ORD-000016,John Smith,john.smith@email.com,2026-05-19,1123.97,Shipped,1,"Running Shoes",Apparel,1,358.9,Physical,False,,,,,,,,,,
-ORD-000016,John Smith,john.smith@email.com,2026-05-19,1123.97,Shipped,2,"Backpack",Apparel,3,176.2,Physical,False,,,,,,,,,,
-ORD-000016,John Smith,john.smith@email.com,2026-05-19,1123.97,Shipped,3,"Desk Lamp",Home & Kitchen,1,99.47,Physical,True,,,,,,,,,,
-ORD-000023,John Smith,john.smith@email.com,2026-06-03,1205.69,Shipped,0,"Software License: Design Tool",Software,2,169.33,Digital,False,,,,,,,,,,
-ORD-000023,John Smith,john.smith@email.com,2026-06-03,1205.69,Shipped,1,"Backpack",Apparel,1,372.92,Physical,True,,,,,,,,,,
-ORD-000023,John Smith,john.smith@email.com,2026-06-03,1205.69,Shipped,2,"Coffee Maker",Home & Kitchen,3,69.43,Physical,True,,,,,,,,,,
-ORD-000023,John Smith,john.smith@email.com,2026-06-03,1205.69,Shipped,3,"Desk Lamp",Home & Kitchen,1,285.82,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-15,"Wrong size",Denied,0.0,,,False
-ORD-000028,John Smith,john.smith@email.com,2026-05-10,2297.21,Delivered,0,"Running Shoes",Apparel,1,342.32,Physical,True,,,,,,,,,,
-ORD-000028,John Smith,john.smith@email.com,2026-05-10,2297.21,Delivered,1,"Running Shoes",Apparel,2,186.98,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-20,"Better price elsewhere",Completed,373.96,2026-06-27,refund_bcb2785249d1,False
-ORD-000028,John Smith,john.smith@email.com,2026-05-10,2297.21,Delivered,2,"Kitchen Blender",Home & Kitchen,3,95.67,Physical,False,,,,,,,,,,
-ORD-000028,John Smith,john.smith@email.com,2026-05-10,2297.21,Delivered,3,"Backpack",Apparel,1,485.36,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-10,"Changed mind",Processing,412.56,2026-06-15,,True
-ORD-000028,John Smith,john.smith@email.com,2026-05-10,2297.21,Delivered,4,"Running Shoes",Apparel,3,269.52,Physical,False,,,,,,,,,,
-ORD-000037,John Smith,john.smith@email.com,2026-06-10,2046.25,Delivered,0,"Coffee Maker",Home & Kitchen,2,160.07,Physical,False,,,,,,,,,,
-ORD-000037,John Smith,john.smith@email.com,2026-06-10,2046.25,Delivered,1,"Wireless Headphones",Electronics,3,138.3,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-13,"Not as described",Processing,414.9,2026-06-18,,False
-ORD-000037,John Smith,john.smith@email.com,2026-06-10,2046.25,Delivered,2,"Yoga Mat",Fitness,3,437.07,Physical,True,,,,,,,,,,
-ORD-000047,John Smith,john.smith@email.com,2026-07-04,469.39,Delivered,0,"Coffee Maker",Home & Kitchen,1,94.81,Physical,False,,,,,,,,,,
-ORD-000047,John Smith,john.smith@email.com,2026-07-04,469.39,Delivered,1,"Coffee Maker",Home & Kitchen,1,24.81,Physical,True,,,,,,,,,,
-ORD-000047,John Smith,john.smith@email.com,2026-07-04,469.39,Delivered,2,"Online Course: Web Development",Education,3,116.59,Digital,False,,,,,,,,,,
-ORD-000049,John Smith,john.smith@email.com,2026-05-28,1244.6,Processing,0,"Backpack",Apparel,1,374.64,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-21,"Better price elsewhere",Processing,374.64,2026-06-25,,False
-ORD-000049,John Smith,john.smith@email.com,2026-05-28,1244.6,Processing,1,"Desk Lamp",Home & Kitchen,1,399.83,Physical,True,,,,,,,,,,
-ORD-000049,John Smith,john.smith@email.com,2026-05-28,1244.6,Processing,2,"Bluetooth Speaker",Electronics,2,165.9,Physical,False,,,,,,,,,,
-ORD-000049,John Smith,john.smith@email.com,2026-05-28,1244.6,Processing,3,"Tablet Stand",Electronics,3,46.11,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-12,"Received duplicate",Completed,138.33,2026-06-17,refund_bf8e5f19e5f3,False
-ORD-000008,Jane Doe,jane.doe@email.com,2026-06-25,1265.18,Processing,0,"Backpack",Apparel,1,391.29,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-15,"Item damaged in shipping",Approved,391.29,2026-06-21,refund_87415195ca79,False
-ORD-000008,Jane Doe,jane.doe@email.com,2026-06-25,1265.18,Processing,1,"Software License: Design Tool",Software,3,119.63,Digital,False,,,,,,,,,,
-ORD-000008,Jane Doe,jane.doe@email.com,2026-06-25,1265.18,Processing,2,"E-book: Python Programming",Books,2,22.76,Digital,False,,,,,,,,,,
-ORD-000008,Jane Doe,jane.doe@email.com,2026-06-25,1265.18,Processing,3,"Running Shoes",Apparel,2,234.74,Physical,False,,,,,,,,,,
-ORD-000014,Jane Doe,jane.doe@email.com,2026-05-25,2818.29,Cancelled,0,"Coffee Maker",Home & Kitchen,3,135.24,Physical,False,,,,,,,,,,
-ORD-000014,Jane Doe,jane.doe@email.com,2026-05-25,2818.29,Cancelled,1,"Running Shoes",Apparel,2,494.1,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-07-01,"Better price elsewhere",Approved,988.2,2026-07-08,refund_c970a9c2f80a,False
-ORD-000014,Jane Doe,jane.doe@email.com,2026-05-25,2818.29,Cancelled,2,"Water Bottle",Fitness,3,303.76,Physical,True,,,,,,,,,,
-ORD-000014,Jane Doe,jane.doe@email.com,2026-05-25,2818.29,Cancelled,3,"Online Course: Web Development",Education,3,171.03,Digital,False,,,,,,,,,,
-ORD-000025,Jane Doe,jane.doe@email.com,2026-06-22,2873.75,Shipped,0,"Desk Lamp",Home & Kitchen,1,414.59,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-15,"Item damaged in shipping",Pending,414.59,,,False
-ORD-000025,Jane Doe,jane.doe@email.com,2026-06-22,2873.75,Shipped,1,"Backpack",Apparel,3,326.73,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-21,"Wrong size",Pending,980.19,,,False
-ORD-000025,Jane Doe,jane.doe@email.com,2026-06-22,2873.75,Shipped,2,"Desk Lamp",Home & Kitchen,3,350.05,Physical,False,,,,,,,,,,
-ORD-000025,Jane Doe,jane.doe@email.com,2026-06-22,2873.75,Shipped,3,"Backpack",Apparel,1,428.82,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-08,"Defective product",Completed,428.82,2026-06-15,refund_3d7817e0eebf,False
-ORD-000029,Jane Doe,jane.doe@email.com,2026-05-14,1158.01,Delivered,0,"Water Bottle",Fitness,2,257.2,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-10,"Received duplicate",Processing,514.4,2026-06-13,,False
-ORD-000029,Jane Doe,jane.doe@email.com,2026-05-14,1158.01,Delivered,1,"Backpack",Apparel,2,278.0,Physical,True,,,,,,,,,,
-ORD-000029,Jane Doe,jane.doe@email.com,2026-05-14,1158.01,Delivered,2,"Yoga Mat",Fitness,1,87.61,Physical,True,,,,,,,,,,
-ORD-000032,Jane Doe,jane.doe@email.com,2026-06-13,2739.07,Cancelled,0,"Running Shoes",Apparel,3,184.22,Physical,True,,,,,,,,,,
-ORD-000032,Jane Doe,jane.doe@email.com,2026-06-13,2739.07,Cancelled,1,"Yoga Mat",Fitness,3,215.39,Physical,True,,,,,,,,,,
-ORD-000032,Jane Doe,jane.doe@email.com,2026-06-13,2739.07,Cancelled,2,"Water Bottle",Fitness,3,75.08,Physical,False,,,,,,,,,,
-ORD-000032,Jane Doe,jane.doe@email.com,2026-06-13,2739.07,Cancelled,3,"Water Bottle",Fitness,3,342.46,Physical,False,,,,,,,,,,
-ORD-000032,Jane Doe,jane.doe@email.com,2026-06-13,2739.07,Cancelled,4,"Coffee Maker",Home & Kitchen,2,143.81,Physical,False,,,,,,,,,,
-ORD-000018,Bob Johnson,bob.j@email.com,2026-06-25,1509.58,Delivered,0,"Kitchen Blender",Home & Kitchen,3,312.4,Physical,False,,,,,,,,,,
-ORD-000018,Bob Johnson,bob.j@email.com,2026-06-25,1509.58,Delivered,1,"Bluetooth Speaker",Electronics,2,286.19,Physical,False,,,,,,,,,,
-ORD-000034,Bob Johnson,bob.j@email.com,2026-05-26,3769.82,Delivered,0,"Running Shoes",Apparel,3,298.63,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-18,"Not working as expected",Pending,895.89,,,False
-ORD-000034,Bob Johnson,bob.j@email.com,2026-05-26,3769.82,Delivered,1,"Kitchen Blender",Home & Kitchen,2,423.5,Physical,False,,,,,,,,,,
-ORD-000034,Bob Johnson,bob.j@email.com,2026-05-26,3769.82,Delivered,2,"Tablet Stand",Electronics,1,353.74,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-25,"Item damaged in shipping",Pending,353.74,,,False
-ORD-000034,Bob Johnson,bob.j@email.com,2026-05-26,3769.82,Delivered,3,"Coffee Maker",Home & Kitchen,3,474.77,Physical,False,,,,,,,,,,
-ORD-000034,Bob Johnson,bob.j@email.com,2026-05-26,3769.82,Delivered,4,"Coffee Maker",Home & Kitchen,3,82.96,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-17,"Not as described",Processing,211.55,2026-06-23,,True
-ORD-000002,Alice Williams,alice.w@email.com,2026-06-27,3749.63,Delivered,0,"Wireless Headphones",Electronics,3,128.29,Physical,True,,,,,,,,,,
-ORD-000002,Alice Williams,alice.w@email.com,2026-06-27,3749.63,Delivered,1,"Backpack",Apparel,1,372.32,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-26,"Item damaged in shipping",Completed,372.32,2026-06-29,refund_06b637971e1c,False
-ORD-000002,Alice Williams,alice.w@email.com,2026-06-27,3749.63,Delivered,2,"Backpack",Apparel,2,406.68,Physical,False,,,,,,,,,,
-ORD-000002,Alice Williams,alice.w@email.com,2026-06-27,3749.63,Delivered,3,"Bluetooth Speaker",Electronics,3,485.44,Physical,True,,,,,,,,,,
-ORD-000002,Alice Williams,alice.w@email.com,2026-06-27,3749.63,Delivered,4,"Water Bottle",Fitness,2,361.38,Physical,True,,,,,,,,,,
-ORD-000004,Alice Williams,alice.w@email.com,2026-05-15,2509.08,Processing,0,"Yoga Mat",Fitness,2,72.63,Physical,False,,,,,,,,,,
-ORD-000004,Alice Williams,alice.w@email.com,2026-05-15,2509.08,Processing,1,"Wireless Headphones",Electronics,3,259.3,Physical,False,,,,,,,,,,
-ORD-000004,Alice Williams,alice.w@email.com,2026-05-15,2509.08,Processing,2,"Backpack",Apparel,3,350.7,Physical,True,,,,,,,,,,
-ORD-000004,Alice Williams,alice.w@email.com,2026-05-15,2509.08,Processing,3,"E-book: Data Science",Books,3,115.63,Digital,False,,,,,,,,,,
-ORD-000004,Alice Williams,alice.w@email.com,2026-05-15,2509.08,Processing,4,"Music Album: Best Hits",Entertainment,1,186.93,Digital,True,,,,,,,,,,
-ORD-000005,Alice Williams,alice.w@email.com,2026-05-15,1908.8,Cancelled,0,"Kitchen Blender",Home & Kitchen,3,391.88,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-07,"Changed mind",Denied,0.0,,,False
-ORD-000005,Alice Williams,alice.w@email.com,2026-05-15,1908.8,Cancelled,1,"E-book: Data Science",Books,3,67.49,Digital,True,,,,,,,,,,
-ORD-000005,Alice Williams,alice.w@email.com,2026-05-15,1908.8,Cancelled,2,"Water Bottle",Fitness,3,138.63,Physical,True,,,,,,,,,,
-ORD-000005,Alice Williams,alice.w@email.com,2026-05-15,1908.8,Cancelled,3,"Bluetooth Speaker",Electronics,2,57.4,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-08,"Changed mind",Completed,97.58,2026-06-12,refund_c478bcaad285,True
-ORD-000009,Alice Williams,alice.w@email.com,2026-06-11,1632.64,Shipped,0,"Video Course: AI Fundamentals",Education,2,66.91,Digital,False,,,,,,,,,,
-ORD-000009,Alice Williams,alice.w@email.com,2026-06-11,1632.64,Shipped,1,"Water Bottle",Fitness,2,85.78,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-24,"Changed mind",Completed,145.83,2026-06-28,refund_f98be304af4e,True
-ORD-000009,Alice Williams,alice.w@email.com,2026-06-11,1632.64,Shipped,2,"Bluetooth Speaker",Electronics,3,211.26,Physical,False,,,,,,,,,,
-ORD-000009,Alice Williams,alice.w@email.com,2026-06-11,1632.64,Shipped,3,"Bluetooth Speaker",Electronics,3,231.16,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-07-02,"Not as described",Completed,693.48,2026-07-08,refund_2ef1069ce112,False
-ORD-000024,Alice Williams,alice.w@email.com,2026-06-10,2246.3,Delivered,0,"Video Course: AI Fundamentals",Education,1,26.76,Digital,False,,,,,,,,,,
-ORD-000024,Alice Williams,alice.w@email.com,2026-06-10,2246.3,Delivered,1,"Music Album: Best Hits",Entertainment,3,195.12,Digital,False,,,,,,,,,,
-ORD-000024,Alice Williams,alice.w@email.com,2026-06-10,2246.3,Delivered,2,"Video Course: AI Fundamentals",Education,3,79.3,Digital,True,,,,,,,,,,
-ORD-000024,Alice Williams,alice.w@email.com,2026-06-10,2246.3,Delivered,3,"Backpack",Apparel,1,298.91,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-29,"Not working as expected",Pending,298.91,,,False
-ORD-000024,Alice Williams,alice.w@email.com,2026-06-10,2246.3,Delivered,4,"Bluetooth Speaker",Electronics,3,365.79,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-07-01,"Not working as expected",Completed,1097.37,2026-07-05,refund_811d1dbcef58,False
-ORD-000026,Alice Williams,alice.w@email.com,2026-05-14,1374.24,Shipped,0,"Bluetooth Speaker",Electronics,2,278.98,Physical,True,,,,,,,,,,
-ORD-000026,Alice Williams,alice.w@email.com,2026-05-14,1374.24,Shipped,1,"Running Shoes",Apparel,2,282.21,Physical,False,,,,,,,,,,
-ORD-000026,Alice Williams,alice.w@email.com,2026-05-14,1374.24,Shipped,2,"Water Bottle",Fitness,1,251.86,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-26,"Not as described",Processing,214.08,2026-06-30,,True
-ORD-000035,Alice Williams,alice.w@email.com,2026-06-14,1665.55,Shipped,0,"Yoga Mat",Fitness,3,476.46,Physical,True,,,,,,,,,,
-ORD-000035,Alice Williams,alice.w@email.com,2026-06-14,1665.55,Shipped,1,"Video Course: AI Fundamentals",Education,1,38.56,Digital,True,,,,,,,,,,
-ORD-000035,Alice Williams,alice.w@email.com,2026-06-14,1665.55,Shipped,2,"Wireless Headphones",Electronics,3,65.87,Physical,False,,,,,,,,,,
-ORD-000043,Alice Williams,alice.w@email.com,2026-06-21,491.17,Delivered,0,"Backpack",Apparel,1,371.5,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-27,"Better price elsewhere",Completed,315.77,2026-06-30,refund_d16bc5095355,True
-ORD-000043,Alice Williams,alice.w@email.com,2026-06-21,491.17,Delivered,1,"Running Shoes",Apparel,3,39.89,Physical,False,,,,,,,,,,
-ORD-000045,Alice Williams,alice.w@email.com,2026-05-16,3057.17,Cancelled,0,"Kitchen Blender",Home & Kitchen,3,340.19,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-17,"Not working as expected",Pending,1020.57,,,False
-ORD-000045,Alice Williams,alice.w@email.com,2026-05-16,3057.17,Cancelled,1,"Online Course: Web Development",Education,2,107.3,Digital,False,,,,,,,,,,
-ORD-000045,Alice Williams,alice.w@email.com,2026-05-16,3057.17,Cancelled,2,"Water Bottle",Fitness,2,247.54,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-28,"Not working as expected",Denied,0.0,,,False
-ORD-000045,Alice Williams,alice.w@email.com,2026-05-16,3057.17,Cancelled,3,"Yoga Mat",Fitness,1,21.53,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-26,"Not working as expected",Approved,21.53,2026-07-02,refund_2be35ca9090e,False
-ORD-000045,Alice Williams,alice.w@email.com,2026-05-16,3057.17,Cancelled,4,"Water Bottle",Fitness,3,435.13,Physical,False,,,,,,,,,,
-ORD-000046,Alice Williams,alice.w@email.com,2026-05-09,2583.73,Pending,0,"Tablet Stand",Electronics,2,249.09,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-07,"Not as described",Pending,498.18,,,False
-ORD-000046,Alice Williams,alice.w@email.com,2026-05-09,2583.73,Pending,1,"Desk Lamp",Home & Kitchen,3,392.63,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-06,"Received duplicate",Approved,1177.89,2026-06-10,refund_f6f044ef9db1,False
-ORD-000046,Alice Williams,alice.w@email.com,2026-05-09,2583.73,Pending,2,"Kitchen Blender",Home & Kitchen,2,453.83,Physical,False,,,,,,,,,,
-ORD-000021,Charlie Brown,charlie.b@email.com,2026-05-28,2494.12,Cancelled,0,"Wireless Headphones",Electronics,3,462.58,Physical,True,,,,,,,,,,
-ORD-000021,Charlie Brown,charlie.b@email.com,2026-05-28,2494.12,Cancelled,1,"Backpack",Apparel,2,494.38,Physical,False,,,,,,,,,,
-ORD-000021,Charlie Brown,charlie.b@email.com,2026-05-28,2494.12,Cancelled,2,"Coffee Maker",Home & Kitchen,2,58.81,Physical,False,,,,,,,,,,
-ORD-000030,Charlie Brown,charlie.b@email.com,2026-06-13,1878.72,Shipped,0,"Water Bottle",Fitness,2,490.21,Physical,False,,,,,,,,,,
-ORD-000030,Charlie Brown,charlie.b@email.com,2026-06-13,1878.72,Shipped,1,"Kitchen Blender",Home & Kitchen,2,405.46,Physical,True,,,,,,,,,,
-ORD-000030,Charlie Brown,charlie.b@email.com,2026-06-13,1878.72,Shipped,2,"Running Shoes",Apparel,1,64.95,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-06,"Better price elsewhere",Processing,64.95,2026-06-13,,False
-ORD-000030,Charlie Brown,charlie.b@email.com,2026-06-13,1878.72,Shipped,3,"Online Course: Web Development",Education,1,22.43,Digital,False,,,,,,,,,,
-ORD-000036,Charlie Brown,charlie.b@email.com,2026-06-29,454.02,Shipped,0,"Software License: Design Tool",Software,2,75.71,Digital,True,,,,,,,,,,
-ORD-000036,Charlie Brown,charlie.b@email.com,2026-06-29,454.02,Shipped,1,"Desk Lamp",Home & Kitchen,2,151.3,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-14,"Item damaged in shipping",Pending,302.6,,,False
-ORD-000048,Charlie Brown,charlie.b@email.com,2026-06-08,841.57,Delivered,0,"Music Album: Best Hits",Entertainment,2,45.39,Digital,False,,,,,,,,,,
-ORD-000048,Charlie Brown,charlie.b@email.com,2026-06-08,841.57,Delivered,1,"Software License: Design Tool",Software,2,159.57,Digital,True,,,,,,,,,,
-ORD-000048,Charlie Brown,charlie.b@email.com,2026-06-08,841.57,Delivered,2,"Kitchen Blender",Home & Kitchen,1,431.65,Physical,True,,,,,,,,,,
-ORD-000050,Charlie Brown,charlie.b@email.com,2026-07-02,743.45,Delivered,0,"Music Album: Best Hits",Entertainment,1,160.51,Digital,False,,,,,,,,,,
-ORD-000050,Charlie Brown,charlie.b@email.com,2026-07-02,743.45,Delivered,1,"Bluetooth Speaker",Electronics,2,291.47,Physical,True,,,,,,,,,,
-ORD-000001,Diana Prince,diana.p@email.com,2026-06-13,1652.9,Shipped,0,"Backpack",Apparel,2,40.88,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-09,"Wrong size",Processing,81.76,2026-06-15,,False
-ORD-000001,Diana Prince,diana.p@email.com,2026-06-13,1652.9,Shipped,1,"E-book: Python Programming",Books,1,100.18,Digital,False,,,,,,,,,,
-ORD-000001,Diana Prince,diana.p@email.com,2026-06-13,1652.9,Shipped,2,"Bluetooth Speaker",Electronics,3,490.32,Physical,True,,,,,,,,,,
-ORD-000006,Diana Prince,diana.p@email.com,2026-06-25,1239.87,Delivered,0,"Wireless Headphones",Electronics,3,68.88,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-11,"Not as described",Completed,206.64,2026-06-18,refund_4fd3380e4fa3,False
-ORD-000006,Diana Prince,diana.p@email.com,2026-06-25,1239.87,Delivered,1,"Coffee Maker",Home & Kitchen,3,85.58,Physical,False,,,,,,,,,,
-ORD-000006,Diana Prince,diana.p@email.com,2026-06-25,1239.87,Delivered,2,"E-book: Data Science",Books,1,65.93,Digital,False,,,,,,,,,,
-ORD-000006,Diana Prince,diana.p@email.com,2026-06-25,1239.87,Delivered,3,"Kitchen Blender",Home & Kitchen,3,161.92,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-13,"Not as described",Processing,485.76,2026-06-17,,False
-ORD-000006,Diana Prince,diana.p@email.com,2026-06-25,1239.87,Delivered,4,"Backpack",Apparel,1,224.8,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-17,"Item damaged in shipping",Denied,0.0,,,False
-ORD-000007,Diana Prince,diana.p@email.com,2026-07-04,2104.18,Pending,0,"Online Course: Web Development",Education,3,184.51,Digital,False,,,,,,,,,,
-ORD-000007,Diana Prince,diana.p@email.com,2026-07-04,2104.18,Pending,1,"Tablet Stand",Electronics,2,190.37,Physical,True,,,,,,,,,,
-ORD-000007,Diana Prince,diana.p@email.com,2026-07-04,2104.18,Pending,2,"Kitchen Blender",Home & Kitchen,1,243.82,Physical,True,,,,,,,,,,
-ORD-000007,Diana Prince,diana.p@email.com,2026-07-04,2104.18,Pending,3,"Water Bottle",Fitness,2,412.23,Physical,False,,,,,,,,,,
-ORD-000007,Diana Prince,diana.p@email.com,2026-07-04,2104.18,Pending,4,"Video Course: AI Fundamentals",Education,1,101.63,Digital,False,,,,,,,,,,
-ORD-000017,Diana Prince,diana.p@email.com,2026-05-24,1832.34,Pending,0,"Running Shoes",Apparel,1,242.31,Physical,False,,,,,,,,,,
-ORD-000017,Diana Prince,diana.p@email.com,2026-05-24,1832.34,Pending,1,"Wireless Headphones",Electronics,2,260.1,Physical,True,,,,,,,,,,
-ORD-000017,Diana Prince,diana.p@email.com,2026-05-24,1832.34,Pending,2,"Wireless Headphones",Electronics,2,109.71,Physical,True,,,,,,,,,,
-ORD-000017,Diana Prince,diana.p@email.com,2026-05-24,1832.34,Pending,3,"Music Album: Best Hits",Entertainment,1,193.47,Digital,True,,,,,,,,,,
-ORD-000017,Diana Prince,diana.p@email.com,2026-05-24,1832.34,Pending,4,"Desk Lamp",Home & Kitchen,2,328.47,Physical,False,,,,,,,,,,
-ORD-000022,Diana Prince,diana.p@email.com,2026-05-15,567.79,Shipped,0,"Running Shoes",Apparel,2,113.11,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-11,"Defective product",Approved,226.22,2026-06-15,refund_c9e54bd43493,False
-ORD-000022,Diana Prince,diana.p@email.com,2026-05-15,567.79,Shipped,1,"Yoga Mat",Fitness,1,341.57,Physical,False,,,,,,,,,,
-ORD-000033,Diana Prince,diana.p@email.com,2026-07-01,1157.89,Processing,0,"Tablet Stand",Electronics,2,65.24,Physical,True,,,,,,,,,,
-ORD-000033,Diana Prince,diana.p@email.com,2026-07-01,1157.89,Processing,1,"Bluetooth Speaker",Electronics,1,36.97,Physical,False,,,,,,,,,,
-ORD-000033,Diana Prince,diana.p@email.com,2026-07-01,1157.89,Processing,2,"Yoga Mat",Fitness,2,495.22,Physical,True,,,,,,,,,,
-ORD-000041,Diana Prince,diana.p@email.com,2026-07-04,953.97,Delivered,0,"Backpack",Apparel,1,459.61,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-07,"Wrong size",Completed,459.61,2026-06-14,refund_c18bac91aff5,False
-ORD-000041,Diana Prince,diana.p@email.com,2026-07-04,953.97,Delivered,1,"Wireless Headphones",Electronics,1,340.94,Physical,True,,,,,,,,,,
-ORD-000041,Diana Prince,diana.p@email.com,2026-07-04,953.97,Delivered,2,"Water Bottle",Fitness,2,76.71,Physical,True,,,,,,,,,,
-ORD-000042,Diana Prince,diana.p@email.com,2026-06-11,1414.34,Cancelled,0,"Video Course: AI Fundamentals",Education,3,34.48,Digital,False,,,,,,,,,,
-ORD-000042,Diana Prince,diana.p@email.com,2026-06-11,1414.34,Cancelled,1,"Yoga Mat",Fitness,2,171.17,Physical,False,,,,,,,,,,
-ORD-000042,Diana Prince,diana.p@email.com,2026-06-11,1414.34,Cancelled,2,"Coffee Maker",Home & Kitchen,2,484.28,Physical,False,,,,,,,,,,
-ORD-000044,Diana Prince,diana.p@email.com,2026-05-07,1046.06,Delivered,0,"Coffee Maker",Home & Kitchen,2,471.61,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-18,"Changed mind",Processing,943.22,2026-06-24,,False
-ORD-000044,Diana Prince,diana.p@email.com,2026-05-07,1046.06,Delivered,1,"Backpack",Apparel,2,51.42,Physical,False,,,,,,,,,,
-ORD-000010,Eve Wilson,eve.w@email.com,2026-06-15,1988.51,Delivered,0,"Running Shoes",Apparel,2,293.51,Physical,False,,,,,,,,,,
-ORD-000010,Eve Wilson,eve.w@email.com,2026-06-15,1988.51,Delivered,1,"Yoga Mat",Fitness,1,311.77,Physical,False,,,,,,,,,,
-ORD-000010,Eve Wilson,eve.w@email.com,2026-06-15,1988.51,Delivered,2,"Water Bottle",Fitness,3,235.7,Physical,True,,,,,,,,,,
-ORD-000010,Eve Wilson,eve.w@email.com,2026-06-15,1988.51,Delivered,3,"Running Shoes",Apparel,1,382.62,Physical,True,,,,,,,,,,
-ORD-000012,Eve Wilson,eve.w@email.com,2026-05-28,1152.19,Delivered,0,"Video Course: AI Fundamentals",Education,2,43.88,Digital,False,,,,,,,,,,
-ORD-000012,Eve Wilson,eve.w@email.com,2026-05-28,1152.19,Delivered,1,"Tablet Stand",Electronics,2,438.24,Physical,True,,,,,,,,,,
-ORD-000012,Eve Wilson,eve.w@email.com,2026-05-28,1152.19,Delivered,2,"E-book: Python Programming",Books,1,187.95,Digital,True,,,,,,,,,,
-ORD-000015,Eve Wilson,eve.w@email.com,2026-07-04,483.62,Cancelled,0,"Running Shoes",Apparel,2,190.49,Physical,False,,,,,,,,,,
-ORD-000015,Eve Wilson,eve.w@email.com,2026-07-04,483.62,Cancelled,1,"Video Course: AI Fundamentals",Education,2,51.32,Digital,False,,,,,,,,,,
-ORD-000020,Eve Wilson,eve.w@email.com,2026-07-01,940.02,Shipped,0,"Coffee Maker",Home & Kitchen,1,271.65,Physical,False,,,,,,,,,,
-ORD-000020,Eve Wilson,eve.w@email.com,2026-07-01,940.02,Shipped,1,"Desk Lamp",Home & Kitchen,2,243.25,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-08,"Received duplicate",Completed,486.5,2026-06-15,refund_90fef92116de,False
-ORD-000020,Eve Wilson,eve.w@email.com,2026-07-01,940.02,Shipped,2,"Desk Lamp",Home & Kitchen,1,21.17,Physical,True,,,,,,,,,,
-ORD-000020,Eve Wilson,eve.w@email.com,2026-07-01,940.02,Shipped,3,"Running Shoes",Apparel,1,160.7,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-19,"Better price elsewhere",Completed,160.7,2026-06-25,refund_e34c12e35be9,False
-ORD-000027,Eve Wilson,eve.w@email.com,2026-05-08,1088.67,Delivered,0,"Backpack",Apparel,1,400.5,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-25,"Item damaged in shipping",Completed,400.5,2026-06-29,refund_4ede8d6f266c,False
-ORD-000027,Eve Wilson,eve.w@email.com,2026-05-08,1088.67,Delivered,1,"Running Shoes",Apparel,3,44.15,Physical,False,,,,,,,,,,
-ORD-000027,Eve Wilson,eve.w@email.com,2026-05-08,1088.67,Delivered,2,"Wireless Headphones",Electronics,2,277.86,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-11,"Received duplicate",Denied,0.0,,,False
-ORD-000031,Eve Wilson,eve.w@email.com,2026-05-12,1305.73,Delivered,0,"Backpack",Apparel,3,411.91,Physical,True,,,,,,,,,,
-ORD-000031,Eve Wilson,eve.w@email.com,2026-05-12,1305.73,Delivered,1,"Backpack",Apparel,2,35.0,Physical,False,,,,,,,,,,
-ORD-000038,Eve Wilson,eve.w@email.com,2026-05-20,924.06,Delivered,0,"Desk Lamp",Home & Kitchen,2,265.98,Physical,False,,,,,,,,,,
-ORD-000038,Eve Wilson,eve.w@email.com,2026-05-20,924.06,Delivered,1,"Water Bottle",Fitness,2,196.05,Physical,False,,,,,,,,,,
-ORD-000039,Eve Wilson,eve.w@email.com,2026-05-13,1173.0,Processing,0,"Music Album: Best Hits",Entertainment,1,28.54,Digital,True,,,,,,,,,,
-ORD-000039,Eve Wilson,eve.w@email.com,2026-05-13,1173.0,Processing,1,"Coffee Maker",Home & Kitchen,2,477.82,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-18,"Item damaged in shipping",Denied,0.0,,,False
-ORD-000039,Eve Wilson,eve.w@email.com,2026-05-13,1173.0,Processing,2,"Tablet Stand",Electronics,2,94.41,Physical,False,,,,,,,,,,
-ORD-000003,Frank Miller,frank.m@email.com,2026-05-15,1735.25,Delivered,0,"Wireless Headphones",Electronics,1,285.81,Physical,False,,,,,,,,,,
-ORD-000003,Frank Miller,frank.m@email.com,2026-05-15,1735.25,Delivered,1,"Tablet Stand",Electronics,1,84.22,Physical,False,,,,,,,,,,
-ORD-000003,Frank Miller,frank.m@email.com,2026-05-15,1735.25,Delivered,2,"Bluetooth Speaker",Electronics,2,271.0,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-07-05,"Changed mind",Approved,542.0,2026-07-08,refund_3516fee8239b,False
-ORD-000003,Frank Miller,frank.m@email.com,2026-05-15,1735.25,Delivered,3,"Running Shoes",Apparel,2,411.61,Physical,False,,,,,,,,,,
-ORD-000011,Frank Miller,frank.m@email.com,2026-06-25,1912.99,Delivered,0,"Wireless Headphones",Electronics,3,278.69,Physical,True,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-07-02,"Not working as expected",Pending,836.07,,,False
-ORD-000011,Frank Miller,frank.m@email.com,2026-06-25,1912.99,Delivered,1,"Kitchen Blender",Home & Kitchen,2,92.08,Physical,False,,,,,,,,,,
-ORD-000011,Frank Miller,frank.m@email.com,2026-06-25,1912.99,Delivered,2,"Coffee Maker",Home & Kitchen,2,446.38,Physical,True,,,,,,,,,,
-ORD-000019,Frank Miller,frank.m@email.com,2026-05-27,1500.99,Delivered,0,"Online Course: Web Development",Education,2,164.8,Digital,False,,,,,,,,,,
-ORD-000019,Frank Miller,frank.m@email.com,2026-05-27,1500.99,Delivered,1,"Wireless Headphones",Electronics,1,344.16,Physical,False,,,,,,,,,,
-ORD-000019,Frank Miller,frank.m@email.com,2026-05-27,1500.99,Delivered,2,"Music Album: Best Hits",Entertainment,2,71.12,Digital,False,,,,,,,,,,
-ORD-000019,Frank Miller,frank.m@email.com,2026-05-27,1500.99,Delivered,3,"Bluetooth Speaker",Electronics,2,60.87,Physical,False,,,,,,,,,,
-ORD-000019,Frank Miller,frank.m@email.com,2026-05-27,1500.99,Delivered,4,"Music Album: Best Hits",Entertainment,3,187.75,Digital,False,,,,,,,,,,
-ORD-000040,Frank Miller,frank.m@email.com,2026-05-07,1872.15,Delivered,0,"Water Bottle",Fitness,2,237.18,Physical,False,,,,,,,,,,
-,,,,,,,,,,,,,,,,,2026-06-20,"Not working as expected",Completed,474.36,2026-06-25,refund_e245623ef190,False
-ORD-000040,Frank Miller,frank.m@email.com,2026-05-07,1872.15,Delivered,1,"Yoga Mat",Fitness,3,465.93,Physical,True,,,,,,,,,,
+ORD-000002,John Smith,john.smith@email.com,2026-06-13,576.43,Pending,0,"Running Shoes",Apparel,2,110.44,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-25,"Better price elsewhere",Processing,220.88,2026-07-01,,False
+ORD-000002,John Smith,john.smith@email.com,2026-06-13,576.43,Pending,1,"Wireless Headphones",Electronics,1,355.55,Physical,False,,,,,,,,,,
+ORD-000006,John Smith,john.smith@email.com,2026-06-02,2521.68,Processing,0,"Yoga Mat",Fitness,1,97.95,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-23,"Changed mind",Processing,97.95,2026-06-29,,False
+ORD-000006,John Smith,john.smith@email.com,2026-06-02,2521.68,Processing,1,"Tablet Stand",Electronics,3,472.41,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-03,"Wrong size",Approved,1417.23,2026-07-08,refund_20fae45b5599,False
+ORD-000006,John Smith,john.smith@email.com,2026-06-02,2521.68,Processing,2,"Coffee Maker",Home & Kitchen,3,290.28,Physical,True,,,,,,,,,,
+ORD-000006,John Smith,john.smith@email.com,2026-06-02,2521.68,Processing,3,"Online Course: Web Development",Education,2,67.83,Digital,True,,,,,,,,,,
+ORD-000012,John Smith,john.smith@email.com,2026-07-03,790.28,Shipped,0,"Video Course: AI Fundamentals",Education,3,14.62,Digital,True,,,,,,,,,,
+ORD-000012,John Smith,john.smith@email.com,2026-07-03,790.28,Shipped,1,"Yoga Mat",Fitness,1,330.63,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-28,"Not as described",Processing,281.04,2026-07-05,,True
+ORD-000012,John Smith,john.smith@email.com,2026-07-03,790.28,Shipped,2,"Yoga Mat",Fitness,1,415.79,Physical,False,,,,,,,,,,
+ORD-000014,John Smith,john.smith@email.com,2026-06-27,1023.11,Delivered,0,"Video Course: AI Fundamentals",Education,2,122.53,Digital,False,,,,,,,,,,
+ORD-000014,John Smith,john.smith@email.com,2026-06-27,1023.11,Delivered,1,"Wireless Headphones",Electronics,3,202.37,Physical,False,,,,,,,,,,
+ORD-000014,John Smith,john.smith@email.com,2026-06-27,1023.11,Delivered,2,"E-book: Data Science",Books,2,85.47,Digital,False,,,,,,,,,,
+ORD-000019,John Smith,john.smith@email.com,2026-05-30,1709.56,Delivered,0,"Backpack",Apparel,1,98.2,Physical,False,,,,,,,,,,
+ORD-000019,John Smith,john.smith@email.com,2026-05-30,1709.56,Delivered,1,"Water Bottle",Fitness,2,57.98,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-29,"Better price elsewhere",Pending,115.96,,,False
+ORD-000019,John Smith,john.smith@email.com,2026-05-30,1709.56,Delivered,2,"Water Bottle",Fitness,3,60.51,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-30,"Not working as expected",Pending,181.53,,,False
+ORD-000019,John Smith,john.smith@email.com,2026-05-30,1709.56,Delivered,3,"Water Bottle",Fitness,3,141.53,Physical,False,,,,,,,,,,
+ORD-000019,John Smith,john.smith@email.com,2026-05-30,1709.56,Delivered,4,"Water Bottle",Fitness,2,444.64,Physical,False,,,,,,,,,,
+ORD-000021,John Smith,john.smith@email.com,2026-05-15,1489.32,Processing,0,"Running Shoes",Apparel,1,101.55,Physical,True,,,,,,,,,,
+ORD-000021,John Smith,john.smith@email.com,2026-05-15,1489.32,Processing,1,"Running Shoes",Apparel,3,462.59,Physical,False,,,,,,,,,,
+ORD-000022,John Smith,john.smith@email.com,2026-05-19,1281.9,Cancelled,0,"Water Bottle",Fitness,2,442.79,Physical,True,,,,,,,,,,
+ORD-000022,John Smith,john.smith@email.com,2026-05-19,1281.9,Cancelled,1,"Coffee Maker",Home & Kitchen,1,396.32,Physical,False,,,,,,,,,,
+ORD-000027,John Smith,john.smith@email.com,2026-06-08,2001.76,Delivered,0,"Water Bottle",Fitness,1,385.24,Physical,True,,,,,,,,,,
+ORD-000027,John Smith,john.smith@email.com,2026-06-08,2001.76,Delivered,1,"Backpack",Apparel,3,162.05,Physical,True,,,,,,,,,,
+ORD-000027,John Smith,john.smith@email.com,2026-06-08,2001.76,Delivered,2,"Tablet Stand",Electronics,1,226.41,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-16,"Received duplicate",Completed,226.41,2026-06-20,refund_f43aebbd3385,False
+ORD-000027,John Smith,john.smith@email.com,2026-06-08,2001.76,Delivered,3,"Tablet Stand",Electronics,2,419.1,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-25,"Better price elsewhere",Approved,838.2,2026-06-29,refund_110c60befd91,False
+ORD-000027,John Smith,john.smith@email.com,2026-06-08,2001.76,Delivered,4,"Software License: Design Tool",Software,3,21.92,Digital,False,,,,,,,,,,
+ORD-000003,Jane Doe,jane.doe@email.com,2026-06-08,2348.24,Pending,0,"Online Course: Web Development",Education,2,89.85,Digital,False,,,,,,,,,,
+ORD-000003,Jane Doe,jane.doe@email.com,2026-06-08,2348.24,Pending,1,"Backpack",Apparel,3,386.15,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-11,"Not as described",Denied,0.0,,,False
+ORD-000003,Jane Doe,jane.doe@email.com,2026-06-08,2348.24,Pending,2,"Coffee Maker",Home & Kitchen,2,428.43,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-05,"Wrong size",Completed,728.33,2026-07-08,refund_0c34b1e91978,True
+ORD-000003,Jane Doe,jane.doe@email.com,2026-06-08,2348.24,Pending,3,"Backpack",Apparel,1,95.9,Physical,False,,,,,,,,,,
+ORD-000003,Jane Doe,jane.doe@email.com,2026-06-08,2348.24,Pending,4,"Bluetooth Speaker",Electronics,1,57.33,Physical,True,,,,,,,,,,
+ORD-000018,Jane Doe,jane.doe@email.com,2026-05-27,1233.11,Shipped,0,"Running Shoes",Apparel,2,295.25,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-29,"Better price elsewhere",Pending,590.5,,,False
+ORD-000018,Jane Doe,jane.doe@email.com,2026-05-27,1233.11,Shipped,1,"Software License: Design Tool",Software,3,74.5,Digital,False,,,,,,,,,,
+ORD-000018,Jane Doe,jane.doe@email.com,2026-05-27,1233.11,Shipped,2,"Wireless Headphones",Electronics,1,419.11,Physical,False,,,,,,,,,,
+ORD-000033,Jane Doe,jane.doe@email.com,2026-06-13,1625.64,Processing,0,"Bluetooth Speaker",Electronics,3,354.14,Physical,False,,,,,,,,,,
+ORD-000033,Jane Doe,jane.doe@email.com,2026-06-13,1625.64,Processing,1,"Backpack",Apparel,3,187.74,Physical,True,,,,,,,,,,
+ORD-000035,Jane Doe,jane.doe@email.com,2026-06-12,1060.04,Delivered,0,"Yoga Mat",Fitness,1,47.46,Physical,True,,,,,,,,,,
+ORD-000035,Jane Doe,jane.doe@email.com,2026-06-12,1060.04,Delivered,1,"Tablet Stand",Electronics,2,473.68,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-27,"Better price elsewhere",Approved,805.26,2026-07-04,refund_53afb2d5da72,True
+ORD-000035,Jane Doe,jane.doe@email.com,2026-06-12,1060.04,Delivered,2,"E-book: Python Programming",Books,2,32.61,Digital,False,,,,,,,,,,
+ORD-000037,Jane Doe,jane.doe@email.com,2026-05-18,1038.15,Cancelled,0,"Software License: Design Tool",Software,1,83.4,Digital,False,,,,,,,,,,
+ORD-000037,Jane Doe,jane.doe@email.com,2026-05-18,1038.15,Cancelled,1,"Bluetooth Speaker",Electronics,1,216.69,Physical,False,,,,,,,,,,
+ORD-000037,Jane Doe,jane.doe@email.com,2026-05-18,1038.15,Cancelled,2,"Yoga Mat",Fitness,1,317.01,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-30,"Better price elsewhere",Processing,269.46,2026-07-03,,True
+ORD-000037,Jane Doe,jane.doe@email.com,2026-05-18,1038.15,Cancelled,3,"Tablet Stand",Electronics,2,153.93,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-30,"Defective product",Completed,307.86,2026-07-05,refund_76fba33c4175,False
+ORD-000037,Jane Doe,jane.doe@email.com,2026-05-18,1038.15,Cancelled,4,"Backpack",Apparel,1,113.19,Physical,False,,,,,,,,,,
+ORD-000040,Jane Doe,jane.doe@email.com,2026-05-28,2877.96,Shipped,0,"Water Bottle",Fitness,1,362.73,Physical,True,,,,,,,,,,
+ORD-000040,Jane Doe,jane.doe@email.com,2026-05-28,2877.96,Shipped,1,"Bluetooth Speaker",Electronics,3,351.35,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-30,"Item damaged in shipping",Completed,1054.05,2026-07-07,refund_48a2b8699f8f,False
+ORD-000040,Jane Doe,jane.doe@email.com,2026-05-28,2877.96,Shipped,2,"Running Shoes",Apparel,3,487.06,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-05,"Item damaged in shipping",Processing,1461.18,2026-07-11,,False
+ORD-000007,Bob Johnson,bob.j@email.com,2026-05-20,931.13,Delivered,0,"Wireless Headphones",Electronics,2,52.33,Physical,False,,,,,,,,,,
+ORD-000007,Bob Johnson,bob.j@email.com,2026-05-20,931.13,Delivered,1,"Tablet Stand",Electronics,1,451.02,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-09,"Received duplicate",Completed,451.02,2026-06-13,refund_d5d4d7621805,False
+ORD-000007,Bob Johnson,bob.j@email.com,2026-05-20,931.13,Delivered,2,"Tablet Stand",Electronics,1,375.45,Physical,False,,,,,,,,,,
+ORD-000016,Bob Johnson,bob.j@email.com,2026-05-08,3123.66,Shipped,0,"Water Bottle",Fitness,3,499.06,Physical,True,,,,,,,,,,
+ORD-000016,Bob Johnson,bob.j@email.com,2026-05-08,3123.66,Shipped,1,"Backpack",Apparel,3,124.85,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-10,"Better price elsewhere",Processing,374.55,2026-06-13,,False
+ORD-000016,Bob Johnson,bob.j@email.com,2026-05-08,3123.66,Shipped,2,"Tablet Stand",Electronics,1,462.96,Physical,False,,,,,,,,,,
+ORD-000016,Bob Johnson,bob.j@email.com,2026-05-08,3123.66,Shipped,3,"Water Bottle",Fitness,3,120.13,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-11,"Not as described",Processing,306.33,2026-06-18,,True
+ORD-000016,Bob Johnson,bob.j@email.com,2026-05-08,3123.66,Shipped,4,"Tablet Stand",Electronics,2,214.29,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-03,"Wrong size",Processing,428.58,2026-07-06,,False
+ORD-000020,Bob Johnson,bob.j@email.com,2026-06-05,827.89,Delivered,0,"Desk Lamp",Home & Kitchen,3,65.35,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-24,"Received duplicate",Denied,0.0,,,False
+ORD-000020,Bob Johnson,bob.j@email.com,2026-06-05,827.89,Delivered,1,"Tablet Stand",Electronics,2,210.66,Physical,False,,,,,,,,,,
+ORD-000020,Bob Johnson,bob.j@email.com,2026-06-05,827.89,Delivered,2,"Software License: Design Tool",Software,2,105.26,Digital,False,,,,,,,,,,
+ORD-000023,Bob Johnson,bob.j@email.com,2026-06-13,1050.69,Processing,0,"Coffee Maker",Home & Kitchen,1,265.42,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-25,"Wrong size",Pending,265.42,,,False
+ORD-000023,Bob Johnson,bob.j@email.com,2026-06-13,1050.69,Processing,1,"Coffee Maker",Home & Kitchen,2,245.54,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-15,"Item damaged in shipping",Completed,491.08,2026-06-22,refund_9aa8a39f201a,False
+ORD-000023,Bob Johnson,bob.j@email.com,2026-06-13,1050.69,Processing,2,"Kitchen Blender",Home & Kitchen,1,92.91,Physical,False,,,,,,,,,,
+ORD-000023,Bob Johnson,bob.j@email.com,2026-06-13,1050.69,Processing,3,"Coffee Maker",Home & Kitchen,1,201.28,Physical,False,,,,,,,,,,
+ORD-000026,Bob Johnson,bob.j@email.com,2026-05-10,1246.36,Shipped,0,"E-book: Python Programming",Books,2,47.51,Digital,False,,,,,,,,,,
+ORD-000026,Bob Johnson,bob.j@email.com,2026-05-10,1246.36,Shipped,1,"Backpack",Apparel,3,383.78,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-19,"Defective product",Pending,1151.34,,,False
+ORD-000032,Bob Johnson,bob.j@email.com,2026-06-29,1460.65,Shipped,0,"E-book: Python Programming",Books,2,109.95,Digital,False,,,,,,,,,,
+ORD-000032,Bob Johnson,bob.j@email.com,2026-06-29,1460.65,Shipped,1,"Wireless Headphones",Electronics,1,448.61,Physical,False,,,,,,,,,,
+ORD-000032,Bob Johnson,bob.j@email.com,2026-06-29,1460.65,Shipped,2,"Music Album: Best Hits",Entertainment,1,159.37,Digital,True,,,,,,,,,,
+ORD-000032,Bob Johnson,bob.j@email.com,2026-06-29,1460.65,Shipped,3,"Music Album: Best Hits",Entertainment,1,180.41,Digital,False,,,,,,,,,,
+ORD-000032,Bob Johnson,bob.j@email.com,2026-06-29,1460.65,Shipped,4,"Wireless Headphones",Electronics,1,452.36,Physical,False,,,,,,,,,,
+ORD-000034,Bob Johnson,bob.j@email.com,2026-05-20,711.46,Shipped,0,"E-book: Python Programming",Books,1,32.67,Digital,False,,,,,,,,,,
+ORD-000034,Bob Johnson,bob.j@email.com,2026-05-20,711.46,Shipped,1,"Bluetooth Speaker",Electronics,1,110.23,Physical,True,,,,,,,,,,
+ORD-000034,Bob Johnson,bob.j@email.com,2026-05-20,711.46,Shipped,2,"Running Shoes",Apparel,1,82.35,Physical,True,,,,,,,,,,
+ORD-000034,Bob Johnson,bob.j@email.com,2026-05-20,711.46,Shipped,3,"Wireless Headphones",Electronics,3,162.07,Physical,False,,,,,,,,,,
+ORD-000045,Bob Johnson,bob.j@email.com,2026-05-07,1798.9,Delivered,0,"Backpack",Apparel,3,240.05,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-20,"Not as described",Pending,720.15,,,False
+ORD-000045,Bob Johnson,bob.j@email.com,2026-05-07,1798.9,Delivered,1,"Water Bottle",Fitness,3,286.45,Physical,True,,,,,,,,,,
+ORD-000045,Bob Johnson,bob.j@email.com,2026-05-07,1798.9,Delivered,2,"Backpack",Apparel,2,109.7,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-27,"Defective product",Completed,219.4,2026-07-03,refund_3190d17110ce,False
+ORD-000047,Bob Johnson,bob.j@email.com,2026-07-04,1022.07,Cancelled,0,"Bluetooth Speaker",Electronics,1,188.59,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-05,"Better price elsewhere",Approved,188.59,2026-07-09,refund_3c28c139aa28,False
+ORD-000047,Bob Johnson,bob.j@email.com,2026-07-04,1022.07,Cancelled,1,"Backpack",Apparel,3,243.15,Physical,False,,,,,,,,,,
+ORD-000047,Bob Johnson,bob.j@email.com,2026-07-04,1022.07,Cancelled,2,"Coffee Maker",Home & Kitchen,1,104.03,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-16,"Wrong size",Pending,104.03,,,False
+ORD-000005,Alice Williams,alice.w@email.com,2026-06-15,611.14,Shipped,0,"Music Album: Best Hits",Entertainment,2,148.5,Digital,True,,,,,,,,,,
+ORD-000005,Alice Williams,alice.w@email.com,2026-06-15,611.14,Shipped,1,"Bluetooth Speaker",Electronics,2,157.07,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-29,"Better price elsewhere",Approved,314.14,2026-07-03,refund_af3154546639,False
+ORD-000010,Alice Williams,alice.w@email.com,2026-06-23,2208.71,Delivered,0,"Kitchen Blender",Home & Kitchen,2,347.8,Physical,False,,,,,,,,,,
+ORD-000010,Alice Williams,alice.w@email.com,2026-06-23,2208.71,Delivered,1,"Wireless Headphones",Electronics,1,450.42,Physical,False,,,,,,,,,,
+ORD-000010,Alice Williams,alice.w@email.com,2026-06-23,2208.71,Delivered,2,"Wireless Headphones",Electronics,2,302.94,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-25,"Changed mind",Pending,605.88,,,False
+ORD-000010,Alice Williams,alice.w@email.com,2026-06-23,2208.71,Delivered,3,"Kitchen Blender",Home & Kitchen,3,152.27,Physical,False,,,,,,,,,,
+ORD-000031,Alice Williams,alice.w@email.com,2026-06-01,1305.54,Delivered,0,"Wireless Headphones",Electronics,2,178.34,Physical,False,,,,,,,,,,
+ORD-000031,Alice Williams,alice.w@email.com,2026-06-01,1305.54,Delivered,1,"Software License: Design Tool",Software,3,61.82,Digital,False,,,,,,,,,,
+ORD-000031,Alice Williams,alice.w@email.com,2026-06-01,1305.54,Delivered,2,"Coffee Maker",Home & Kitchen,2,381.7,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-12,"Defective product",Completed,648.89,2026-06-15,refund_608ea100a11c,True
+ORD-000049,Alice Williams,alice.w@email.com,2026-06-11,1616.03,Delivered,0,"Yoga Mat",Fitness,2,255.22,Physical,True,,,,,,,,,,
+ORD-000049,Alice Williams,alice.w@email.com,2026-06-11,1616.03,Delivered,1,"Coffee Maker",Home & Kitchen,1,108.69,Physical,False,,,,,,,,,,
+ORD-000049,Alice Williams,alice.w@email.com,2026-06-11,1616.03,Delivered,2,"Coffee Maker",Home & Kitchen,2,222.79,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-21,"Changed mind",Pending,445.58,,,False
+ORD-000049,Alice Williams,alice.w@email.com,2026-06-11,1616.03,Delivered,3,"Water Bottle",Fitness,1,73.63,Physical,False,,,,,,,,,,
+ORD-000049,Alice Williams,alice.w@email.com,2026-06-11,1616.03,Delivered,4,"Online Course: Web Development",Education,3,159.23,Digital,False,,,,,,,,,,
+ORD-000004,Charlie Brown,charlie.b@email.com,2026-05-18,1499.93,Processing,0,"Water Bottle",Fitness,3,294.6,Physical,False,,,,,,,,,,
+ORD-000004,Charlie Brown,charlie.b@email.com,2026-05-18,1499.93,Processing,1,"Yoga Mat",Fitness,2,199.98,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-04,"Defective product",Approved,339.97,2026-07-09,refund_8a840d5bc919,True
+ORD-000004,Charlie Brown,charlie.b@email.com,2026-05-18,1499.93,Processing,2,"Wireless Headphones",Electronics,1,63.49,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-02,"Wrong size",Approved,63.49,2026-07-06,refund_1d9e46077142,False
+ORD-000004,Charlie Brown,charlie.b@email.com,2026-05-18,1499.93,Processing,3,"Music Album: Best Hits",Entertainment,1,152.68,Digital,False,,,,,,,,,,
+ORD-000009,Charlie Brown,charlie.b@email.com,2026-06-13,3055.27,Cancelled,0,"Bluetooth Speaker",Electronics,1,125.58,Physical,False,,,,,,,,,,
+ORD-000009,Charlie Brown,charlie.b@email.com,2026-06-13,3055.27,Cancelled,1,"Backpack",Apparel,3,427.01,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-18,"Not as described",Approved,1088.88,2026-06-25,refund_9a3a5c558b86,True
+ORD-000009,Charlie Brown,charlie.b@email.com,2026-06-13,3055.27,Cancelled,2,"Water Bottle",Fitness,3,455.14,Physical,False,,,,,,,,,,
+ORD-000009,Charlie Brown,charlie.b@email.com,2026-06-13,3055.27,Cancelled,3,"Yoga Mat",Fitness,1,283.24,Physical,False,,,,,,,,,,
+ORD-000028,Charlie Brown,charlie.b@email.com,2026-06-09,1646.37,Pending,0,"Coffee Maker",Home & Kitchen,3,146.4,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-04,"Wrong size",Approved,373.32,2026-07-08,refund_e9ea0de14a9c,True
+ORD-000028,Charlie Brown,charlie.b@email.com,2026-06-09,1646.37,Pending,1,"Video Course: AI Fundamentals",Education,1,131.39,Digital,False,,,,,,,,,,
+ORD-000028,Charlie Brown,charlie.b@email.com,2026-06-09,1646.37,Pending,2,"Bluetooth Speaker",Electronics,2,359.81,Physical,True,,,,,,,,,,
+ORD-000028,Charlie Brown,charlie.b@email.com,2026-06-09,1646.37,Pending,3,"Kitchen Blender",Home & Kitchen,3,118.72,Physical,False,,,,,,,,,,
+ORD-000029,Charlie Brown,charlie.b@email.com,2026-06-30,631.5,Processing,0,"Water Bottle",Fitness,1,362.32,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-25,"Better price elsewhere",Approved,362.32,2026-06-29,refund_1b6e6ca73ab1,False
+ORD-000029,Charlie Brown,charlie.b@email.com,2026-06-30,631.5,Processing,1,"Tablet Stand",Electronics,1,269.18,Physical,False,,,,,,,,,,
+ORD-000038,Charlie Brown,charlie.b@email.com,2026-07-01,976.2,Processing,0,"Running Shoes",Apparel,1,220.96,Physical,False,,,,,,,,,,
+ORD-000038,Charlie Brown,charlie.b@email.com,2026-07-01,976.2,Processing,1,"Software License: Design Tool",Software,2,188.7,Digital,True,,,,,,,,,,
+ORD-000038,Charlie Brown,charlie.b@email.com,2026-07-01,976.2,Processing,2,"Water Bottle",Fitness,2,188.92,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-23,"Wrong size",Pending,377.84,,,False
+ORD-000046,Charlie Brown,charlie.b@email.com,2026-05-15,1476.0,Delivered,0,"Tablet Stand",Electronics,2,475.26,Physical,False,,,,,,,,,,
+ORD-000046,Charlie Brown,charlie.b@email.com,2026-05-15,1476.0,Delivered,1,"Video Course: AI Fundamentals",Education,3,175.16,Digital,False,,,,,,,,,,
+ORD-000011,Diana Prince,diana.p@email.com,2026-06-07,1080.36,Shipped,0,"Yoga Mat",Fitness,2,176.01,Physical,False,,,,,,,,,,
+ORD-000011,Diana Prince,diana.p@email.com,2026-06-07,1080.36,Shipped,1,"Running Shoes",Apparel,3,161.94,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-23,"Changed mind",Completed,412.95,2026-06-27,refund_88d56d51c8a2,True
+ORD-000011,Diana Prince,diana.p@email.com,2026-06-07,1080.36,Shipped,2,"Desk Lamp",Home & Kitchen,1,242.52,Physical,False,,,,,,,,,,
+ORD-000013,Diana Prince,diana.p@email.com,2026-06-29,1600.78,Shipped,0,"Running Shoes",Apparel,3,117.88,Physical,False,,,,,,,,,,
+ORD-000013,Diana Prince,diana.p@email.com,2026-06-29,1600.78,Shipped,1,"Desk Lamp",Home & Kitchen,1,302.2,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-23,"Not working as expected",Pending,302.2,,,False
+ORD-000013,Diana Prince,diana.p@email.com,2026-06-29,1600.78,Shipped,2,"Kitchen Blender",Home & Kitchen,2,472.47,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-17,"Changed mind",Pending,944.94,,,False
+ORD-000017,Diana Prince,diana.p@email.com,2026-06-22,2341.95,Delivered,0,"E-book: Python Programming",Books,2,61.16,Digital,False,,,,,,,,,,
+ORD-000017,Diana Prince,diana.p@email.com,2026-06-22,2341.95,Delivered,1,"Backpack",Apparel,2,280.0,Physical,False,,,,,,,,,,
+ORD-000017,Diana Prince,diana.p@email.com,2026-06-22,2341.95,Delivered,2,"Water Bottle",Fitness,3,472.6,Physical,True,,,,,,,,,,
+ORD-000017,Diana Prince,diana.p@email.com,2026-06-22,2341.95,Delivered,3,"Water Bottle",Fitness,1,241.83,Physical,True,,,,,,,,,,
+ORD-000024,Diana Prince,diana.p@email.com,2026-06-25,867.48,Processing,0,"Water Bottle",Fitness,3,66.76,Physical,False,,,,,,,,,,
+ORD-000024,Diana Prince,diana.p@email.com,2026-06-25,867.48,Processing,1,"Tablet Stand",Electronics,1,196.14,Physical,False,,,,,,,,,,
+ORD-000024,Diana Prince,diana.p@email.com,2026-06-25,867.48,Processing,2,"Software License: Design Tool",Software,2,11.73,Digital,False,,,,,,,,,,
+ORD-000024,Diana Prince,diana.p@email.com,2026-06-25,867.48,Processing,3,"Backpack",Apparel,1,447.6,Physical,False,,,,,,,,,,
+ORD-000030,Diana Prince,diana.p@email.com,2026-06-26,888.9,Delivered,0,"Tablet Stand",Electronics,2,150.09,Physical,False,,,,,,,,,,
+ORD-000030,Diana Prince,diana.p@email.com,2026-06-26,888.9,Delivered,1,"Software License: Design Tool",Software,3,196.24,Digital,False,,,,,,,,,,
+ORD-000039,Diana Prince,diana.p@email.com,2026-05-08,1717.06,Cancelled,0,"Yoga Mat",Fitness,1,151.21,Physical,False,,,,,,,,,,
+ORD-000039,Diana Prince,diana.p@email.com,2026-05-08,1717.06,Cancelled,1,"Bluetooth Speaker",Electronics,2,88.01,Physical,False,,,,,,,,,,
+ORD-000039,Diana Prince,diana.p@email.com,2026-05-08,1717.06,Cancelled,2,"Water Bottle",Fitness,2,160.09,Physical,False,,,,,,,,,,
+ORD-000039,Diana Prince,diana.p@email.com,2026-05-08,1717.06,Cancelled,3,"Tablet Stand",Electronics,1,223.92,Physical,False,,,,,,,,,,
+ORD-000039,Diana Prince,diana.p@email.com,2026-05-08,1717.06,Cancelled,4,"Coffee Maker",Home & Kitchen,3,281.91,Physical,False,,,,,,,,,,
+ORD-000042,Diana Prince,diana.p@email.com,2026-06-04,2785.23,Delivered,0,"Yoga Mat",Fitness,3,319.16,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-02,"Changed mind",Pending,957.48,,,False
+ORD-000042,Diana Prince,diana.p@email.com,2026-06-04,2785.23,Delivered,1,"E-book: Python Programming",Books,2,136.94,Digital,False,,,,,,,,,,
+ORD-000042,Diana Prince,diana.p@email.com,2026-06-04,2785.23,Delivered,2,"Running Shoes",Apparel,3,411.06,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-20,"Not as described",Denied,0.0,,,False
+ORD-000042,Diana Prince,diana.p@email.com,2026-06-04,2785.23,Delivered,3,"Backpack",Apparel,1,320.69,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-25,"Item damaged in shipping",Approved,272.59,2026-07-02,refund_5cf18933342c,True
+ORD-000043,Diana Prince,diana.p@email.com,2026-07-05,2110.33,Processing,0,"Tablet Stand",Electronics,3,50.4,Physical,True,,,,,,,,,,
+ORD-000043,Diana Prince,diana.p@email.com,2026-07-05,2110.33,Processing,1,"Tablet Stand",Electronics,3,301.09,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-22,"Wrong size",Completed,767.78,2026-06-27,refund_0e90b210615f,True
+ORD-000043,Diana Prince,diana.p@email.com,2026-07-05,2110.33,Processing,2,"Kitchen Blender",Home & Kitchen,3,293.28,Physical,False,,,,,,,,,,
+ORD-000043,Diana Prince,diana.p@email.com,2026-07-05,2110.33,Processing,3,"Water Bottle",Fitness,1,152.53,Physical,False,,,,,,,,,,
+ORD-000043,Diana Prince,diana.p@email.com,2026-07-05,2110.33,Processing,4,"Coffee Maker",Home & Kitchen,1,23.49,Physical,False,,,,,,,,,,
+ORD-000048,Diana Prince,diana.p@email.com,2026-07-01,1808.4,Shipped,0,"Wireless Headphones",Electronics,1,210.47,Physical,False,,,,,,,,,,
+ORD-000048,Diana Prince,diana.p@email.com,2026-07-01,1808.4,Shipped,1,"Coffee Maker",Home & Kitchen,2,129.73,Physical,False,,,,,,,,,,
+ORD-000048,Diana Prince,diana.p@email.com,2026-07-01,1808.4,Shipped,2,"Music Album: Best Hits",Entertainment,3,74.94,Digital,False,,,,,,,,,,
+ORD-000048,Diana Prince,diana.p@email.com,2026-07-01,1808.4,Shipped,3,"Running Shoes",Apparel,1,191.15,Physical,True,,,,,,,,,,
+ORD-000048,Diana Prince,diana.p@email.com,2026-07-01,1808.4,Shipped,4,"Backpack",Apparel,3,307.5,Physical,False,,,,,,,,,,
+ORD-000001,Eve Wilson,eve.w@email.com,2026-05-15,989.69,Delivered,0,"Wireless Headphones",Electronics,3,48.39,Physical,False,,,,,,,,,,
+ORD-000001,Eve Wilson,eve.w@email.com,2026-05-15,989.69,Delivered,1,"Yoga Mat",Fitness,2,422.26,Physical,False,,,,,,,,,,
+ORD-000015,Eve Wilson,eve.w@email.com,2026-05-29,1731.36,Pending,0,"Software License: Design Tool",Software,3,146.32,Digital,False,,,,,,,,,,
+ORD-000015,Eve Wilson,eve.w@email.com,2026-05-29,1731.36,Pending,1,"Yoga Mat",Fitness,1,342.58,Physical,False,,,,,,,,,,
+ORD-000015,Eve Wilson,eve.w@email.com,2026-05-29,1731.36,Pending,2,"Coffee Maker",Home & Kitchen,2,474.91,Physical,False,,,,,,,,,,
+ORD-000025,Eve Wilson,eve.w@email.com,2026-06-03,1056.67,Delivered,0,"Yoga Mat",Fitness,2,111.87,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-04,"Not working as expected",Processing,223.74,2026-07-09,,False
+ORD-000025,Eve Wilson,eve.w@email.com,2026-06-03,1056.67,Delivered,1,"Backpack",Apparel,1,118.27,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-15,"Wrong size",Pending,118.27,,,False
+ORD-000025,Eve Wilson,eve.w@email.com,2026-06-03,1056.67,Delivered,2,"E-book: Data Science",Books,3,47.95,Digital,False,,,,,,,,,,
+ORD-000025,Eve Wilson,eve.w@email.com,2026-06-03,1056.67,Delivered,3,"Yoga Mat",Fitness,3,190.27,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-07,"Not working as expected",Pending,570.81,,,False
+ORD-000036,Eve Wilson,eve.w@email.com,2026-06-30,1171.01,Shipped,0,"Desk Lamp",Home & Kitchen,3,147.52,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-02,"Not as described",Completed,442.56,2026-07-09,refund_4b43ff32226d,False
+ORD-000036,Eve Wilson,eve.w@email.com,2026-06-30,1171.01,Shipped,1,"Music Album: Best Hits",Entertainment,1,53.42,Digital,False,,,,,,,,,,
+ORD-000036,Eve Wilson,eve.w@email.com,2026-06-30,1171.01,Shipped,2,"Kitchen Blender",Home & Kitchen,3,140.87,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-21,"Received duplicate",Processing,422.61,2026-06-27,,False
+ORD-000036,Eve Wilson,eve.w@email.com,2026-06-30,1171.01,Shipped,3,"Running Shoes",Apparel,2,126.21,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-05,"Not working as expected",Completed,252.42,2026-07-10,refund_f4c563c31117,False
+ORD-000041,Eve Wilson,eve.w@email.com,2026-06-15,1908.64,Delivered,0,"Tablet Stand",Electronics,2,78.47,Physical,False,,,,,,,,,,
+ORD-000041,Eve Wilson,eve.w@email.com,2026-06-15,1908.64,Delivered,1,"Coffee Maker",Home & Kitchen,3,299.15,Physical,False,,,,,,,,,,
+ORD-000041,Eve Wilson,eve.w@email.com,2026-06-15,1908.64,Delivered,2,"Wireless Headphones",Electronics,1,168.07,Physical,False,,,,,,,,,,
+ORD-000041,Eve Wilson,eve.w@email.com,2026-06-15,1908.64,Delivered,3,"Kitchen Blender",Home & Kitchen,1,286.89,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-15,"Wrong size",Pending,286.89,,,False
+ORD-000041,Eve Wilson,eve.w@email.com,2026-06-15,1908.64,Delivered,4,"Running Shoes",Apparel,1,399.29,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-01,"Better price elsewhere",Processing,399.29,2026-07-08,,False
+ORD-000044,Eve Wilson,eve.w@email.com,2026-06-24,1103.1,Delivered,0,"Desk Lamp",Home & Kitchen,1,477.46,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-07,"Received duplicate",Processing,405.84,2026-06-10,,True
+ORD-000044,Eve Wilson,eve.w@email.com,2026-06-24,1103.1,Delivered,1,"Wireless Headphones",Electronics,1,69.44,Physical,False,,,,,,,,,,
+ORD-000044,Eve Wilson,eve.w@email.com,2026-06-24,1103.1,Delivered,2,"Backpack",Apparel,1,394.14,Physical,True,,,,,,,,,,
+ORD-000044,Eve Wilson,eve.w@email.com,2026-06-24,1103.1,Delivered,3,"Wireless Headphones",Electronics,1,162.06,Physical,False,,,,,,,,,,
+ORD-000050,Eve Wilson,eve.w@email.com,2026-05-19,1885.62,Delivered,0,"Tablet Stand",Electronics,3,35.76,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-15,"Not working as expected",Processing,107.28,2026-06-19,,False
+ORD-000050,Eve Wilson,eve.w@email.com,2026-05-19,1885.62,Delivered,1,"Wireless Headphones",Electronics,2,414.34,Physical,True,,,,,,,,,,
+ORD-000050,Eve Wilson,eve.w@email.com,2026-05-19,1885.62,Delivered,2,"Running Shoes",Apparel,2,153.52,Physical,False,,,,,,,,,,
+ORD-000050,Eve Wilson,eve.w@email.com,2026-05-19,1885.62,Delivered,3,"E-book: Data Science",Books,3,144.3,Digital,True,,,,,,,,,,
+ORD-000050,Eve Wilson,eve.w@email.com,2026-05-19,1885.62,Delivered,4,"Bluetooth Speaker",Electronics,2,104.86,Physical,False,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-07-03,"Defective product",Denied,0.0,,,False
+ORD-000008,Frank Miller,frank.m@email.com,2026-05-22,1379.85,Processing,0,"Coffee Maker",Home & Kitchen,3,413.78,Physical,True,,,,,,,,,,
+,,,,,,,,,,,,,,,,,2026-06-10,"Better price elsewhere",Processing,1055.14,2026-06-17,,True
+ORD-000008,Frank Miller,frank.m@email.com,2026-05-22,1379.85,Processing,1,"Desk Lamp",Home & Kitchen,3,46.17,Physical,False,,,,,,,,,,
