@@ -5,6 +5,8 @@ This module provides REST API endpoints for managing orders and processing retur
 at the item level rather than order level.
 
 Data structure: Hierarchical (Customers -> Orders -> Items)
+
+This file is an implementation of ../../spec.md. All changes to this file must be in agreement with ../../spec.md.
 """
 
 import json
