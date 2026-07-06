@@ -1,11 +1,59 @@
 user_id,user_name,user_email,user_tier,order_id,order_date,order_total,order_refund_status,item_name,item_type,item_price,item_opened
-usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-02-26-001,2025-02-26T00:00:00Z,239.98,Denied,Smart Home Hub,physical,119.99,True
-usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-02-26-001,2025-02-26T00:00:00Z,239.98,Denied,Smart Home Hub,physical,119.99,True
-usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-04-06-002,2025-04-06T00:00:00Z,194.48,Pending,Digital Guidebook,digital,19.99,False
-usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-04-06-002,2025-04-06T00:00:00Z,194.48,Pending,Online Course Access,digital,149.99,False
-usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-04-06-002,2025-04-06T00:00:00Z,194.48,Pending,Organic Coffee Beans,physical,24.5,True
-usr_002,Harper Clark,harper.clark@example.com,Standard,ORD-2025-04-01-001,2025-04-01T00:00:00Z,24.99,None,Wireless Charging Pad,physical,24.99,False
-usr_002,Harper Clark,harper.clark@example.com,Standard,ORD-2025-03-10-002,2025-03-10T00:00:00Z,29.99,Denied,E-Book Bundle,digital,29.99,False
-usr_003,Linda Johnson,linda.johnson@example.com,Gold,ORD-2025-03-31-001,2025-03-31T00:00:00Z,89.98,None,Subscription Monthly,digital,9.99,False
-usr_003,Linda Johnson,linda.johnson@example.com,Gold,ORD-2025-03-31-001,2025-03-31T00:00:00Z,89.98,None,Gaming Mouse,physical,79.99,False
-usr_003,Linda Johnson,linda.johnson@example.com,Gold,ORD-2025-04-14-002,2025-04-14T00:00:00Z,299.99,Refunded,Ergonomic Chair,physical,299.99,False
+usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-05-19-001,2026-05-19T00:00:00Z,239.98,Denied,Smart Home Hub,physical,119.99,True
+usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-05-19-001,2026-05-19T00:00:00Z,239.98,Denied,Smart Home Hub,physical,119.99,True
+usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-06-27-002,2026-06-27T00:00:00Z,194.48,None,Digital Guidebook,digital,19.99,False
+usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-06-27-002,2026-06-27T00:00:00Z,194.48,None,Online Course Access,digital,149.99,False
+usr_001,Noah Davis,noah.davis@example.com,Gold,ORD-2025-06-27-002,2026-06-27T00:00:00Z,194.48,None,Organic Coffee Beans,physical,24.5,True
+usr_002,Harper Clark,harper.clark@example.com,Standard,ORD-2025-06-22-001,2026-06-22T00:00:00Z,24.99,None,Wireless Charging Pad,physical,24.99,False
+usr_002,Harper Clark,harper.clark@example.com,Standard,ORD-2025-05-31-002,2026-05-31T00:00:00Z,29.99,Denied,E-Book Bundle,digital,29.99,False
+usr_003,Linda Johnson,linda.johnson@example.com,Gold,ORD-2025-06-21-001,2026-06-21T00:00:00Z,89.98,Pending,Subscription Monthly,digital,9.99,False
+usr_003,Linda Johnson,linda.johnson@example.com,Gold,ORD-2025-06-21-001,2026-06-21T00:00:00Z,89.98,Pending,Gaming Mouse,physical,79.99,False
+usr_003,Linda Johnson,linda.johnson@example.com,Gold,ORD-2025-07-05-002,2026-07-05T00:00:00Z,299.99,Refunded,Ergonomic Chair,physical,299.99,False
+usr_004,Daniel Martin,daniel.martin@example.com,Silver,ORD-2025-06-22-001,2026-06-22T00:00:00Z,44.49,None,Digital Guidebook,digital,19.99,False
+usr_004,Daniel Martin,daniel.martin@example.com,Silver,ORD-2025-06-22-001,2026-06-22T00:00:00Z,44.49,None,Organic Coffee Beans,physical,24.5,True
+usr_004,Daniel Martin,daniel.martin@example.com,Silver,ORD-2025-06-13-002,2026-06-13T00:00:00Z,129.98,Pending,Digital Access Pass,digital,49.99,False
+usr_004,Daniel Martin,daniel.martin@example.com,Silver,ORD-2025-06-13-002,2026-06-13T00:00:00Z,129.98,Pending,Gaming Mouse,physical,79.99,False
+usr_005,Ava Williams,ava.williams@example.com,Gold,ORD-2025-06-28-001,2026-06-28T00:00:00Z,174.49,None,Organic Coffee Beans,physical,24.5,True
+usr_005,Ava Williams,ava.williams@example.com,Gold,ORD-2025-06-28-001,2026-06-28T00:00:00Z,174.49,None,Online Course Access,digital,149.99,False
+usr_005,Ava Williams,ava.williams@example.com,Gold,ORD-2025-05-26-002,2026-05-26T00:00:00Z,149.97,None,USB-C Docking Station,physical,99.99,True
+usr_005,Ava Williams,ava.williams@example.com,Gold,ORD-2025-05-26-002,2026-05-26T00:00:00Z,149.97,None,Subscription Monthly,digital,9.99,False
+usr_005,Ava Williams,ava.williams@example.com,Gold,ORD-2025-05-26-002,2026-05-26T00:00:00Z,149.97,None,Laptop Stand,physical,39.99,False
+usr_006,Priya Thomas,priya.thomas@example.com,Standard,ORD-2025-05-17-001,2026-05-17T00:00:00Z,144.49,Denied,Organic Coffee Beans,physical,24.5,True
+usr_006,Priya Thomas,priya.thomas@example.com,Standard,ORD-2025-05-17-001,2026-05-17T00:00:00Z,144.49,Denied,Smart Home Hub,physical,119.99,True
+usr_007,Michael Thompson,michael.thompson@example.com,Standard,ORD-2025-06-06-001,2026-06-06T00:00:00Z,359.97,None,USB-C Docking Station,physical,99.99,True
+usr_007,Michael Thompson,michael.thompson@example.com,Standard,ORD-2025-06-06-001,2026-06-06T00:00:00Z,359.97,None,Noise-Canceling Earbuds,physical,159.99,True
+usr_007,Michael Thompson,michael.thompson@example.com,Standard,ORD-2025-06-06-001,2026-06-06T00:00:00Z,359.97,None,USB-C Docking Station,physical,99.99,True
+usr_007,Michael Thompson,michael.thompson@example.com,Standard,ORD-2025-05-24-002,2026-05-24T00:00:00Z,54.49,Denied,E-Book Bundle,digital,29.99,False
+usr_007,Michael Thompson,michael.thompson@example.com,Standard,ORD-2025-05-24-002,2026-05-24T00:00:00Z,54.49,Denied,Organic Coffee Beans,physical,24.5,True
+usr_008,Mia Miller,mia.miller@example.com,Gold,ORD-2025-06-01-001,2026-06-01T00:00:00Z,409.97,None,Smart Home Hub,physical,119.99,True
+usr_008,Mia Miller,mia.miller@example.com,Gold,ORD-2025-06-01-001,2026-06-01T00:00:00Z,409.97,None,Noise-Canceling Earbuds,physical,159.99,True
+usr_008,Mia Miller,mia.miller@example.com,Gold,ORD-2025-06-01-001,2026-06-01T00:00:00Z,409.97,None,External SSD 1TB,physical,129.99,False
+usr_009,Mason Lewis,mason.lewis@example.com,Gold,ORD-2025-06-21-001,2026-06-21T00:00:00Z,439.97,Pending,Webcam HD,physical,69.99,False
+usr_009,Mason Lewis,mason.lewis@example.com,Gold,ORD-2025-06-21-001,2026-06-21T00:00:00Z,439.97,Pending,Smart Watch Pro,physical,249.99,False
+usr_009,Mason Lewis,mason.lewis@example.com,Gold,ORD-2025-06-21-001,2026-06-21T00:00:00Z,439.97,Pending,Smart Home Hub,physical,119.99,True
+usr_010,James Lee,james.lee@example.com,Silver,ORD-2025-07-01-001,2026-07-01T00:00:00Z,9.99,Denied,Subscription Monthly,digital,9.99,False
+usr_010,James Lee,james.lee@example.com,Silver,ORD-2025-05-21-002,2026-05-21T00:00:00Z,69.98,None,Laptop Stand,physical,39.99,False
+usr_010,James Lee,james.lee@example.com,Silver,ORD-2025-05-21-002,2026-05-21T00:00:00Z,69.98,None,E-Book Bundle,digital,29.99,False
+usr_011,Sophia Garcia,sophia.garcia@example.com,Gold,ORD-2025-06-19-001,2026-06-19T00:00:00Z,119.99,None,Smart Home Hub,physical,119.99,True
+usr_011,Sophia Garcia,sophia.garcia@example.com,Gold,ORD-2025-06-01-002,2026-06-01T00:00:00Z,309.98,Pending,Subscription Monthly,digital,9.99,False
+usr_011,Sophia Garcia,sophia.garcia@example.com,Gold,ORD-2025-06-01-002,2026-06-01T00:00:00Z,309.98,Pending,Ergonomic Chair,physical,299.99,False
+usr_012,Logan Rodriguez,logan.rodriguez@example.com,Silver,ORD-2025-06-27-001,2026-06-27T00:00:00Z,334.48,Pending,Gaming Headset,physical,59.99,True
+usr_012,Logan Rodriguez,logan.rodriguez@example.com,Silver,ORD-2025-06-27-001,2026-06-27T00:00:00Z,334.48,Pending,Organic Coffee Beans,physical,24.5,True
+usr_012,Logan Rodriguez,logan.rodriguez@example.com,Silver,ORD-2025-06-27-001,2026-06-27T00:00:00Z,334.48,Pending,Smart Watch Pro,physical,249.99,False
+usr_012,Logan Rodriguez,logan.rodriguez@example.com,Silver,ORD-2025-06-26-002,2026-06-26T00:00:00Z,509.97,None,Noise-Canceling Earbuds,physical,159.99,True
+usr_012,Logan Rodriguez,logan.rodriguez@example.com,Silver,ORD-2025-06-26-002,2026-06-26T00:00:00Z,509.97,None,Ergonomic Chair,physical,299.99,False
+usr_012,Logan Rodriguez,logan.rodriguez@example.com,Silver,ORD-2025-06-26-002,2026-06-26T00:00:00Z,509.97,None,Digital Access Pass,digital,49.99,False
+usr_013,Marcus Jackson,marcus.jackson@example.com,Silver,ORD-2025-06-06-001,2026-06-06T00:00:00Z,319.97,None,Gaming Mouse,physical,79.99,False
+usr_013,Marcus Jackson,marcus.jackson@example.com,Silver,ORD-2025-06-06-001,2026-06-06T00:00:00Z,319.97,None,Online Course Access,digital,149.99,False
+usr_013,Marcus Jackson,marcus.jackson@example.com,Silver,ORD-2025-06-06-001,2026-06-06T00:00:00Z,319.97,None,Wireless Headphones,physical,89.99,True
+usr_013,Marcus Jackson,marcus.jackson@example.com,Silver,ORD-2025-06-28-002,2026-06-28T00:00:00Z,259.97,None,Online Course Access,digital,149.99,False
+usr_013,Marcus Jackson,marcus.jackson@example.com,Silver,ORD-2025-06-28-002,2026-06-28T00:00:00Z,259.97,None,Gaming Mouse,physical,79.99,False
+usr_013,Marcus Jackson,marcus.jackson@example.com,Silver,ORD-2025-06-28-002,2026-06-28T00:00:00Z,259.97,None,E-Book Bundle,digital,29.99,False
+usr_014,Sarah Chen,sarah.chen@example.com,Silver,ORD-2025-06-06-001,2026-06-06T00:00:00Z,79.99,Refunded,Gaming Mouse,physical,79.99,False
+usr_014,Sarah Chen,sarah.chen@example.com,Silver,ORD-2025-05-18-002,2026-05-18T00:00:00Z,24.99,Refunded,Wireless Charging Pad,physical,24.99,False
+usr_015,Ethan Wilson,ethan.wilson@example.com,Gold,ORD-2025-05-26-001,2026-05-26T00:00:00Z,219.97,None,Digital Access Pass,digital,49.99,False
+usr_015,Ethan Wilson,ethan.wilson@example.com,Gold,ORD-2025-05-26-001,2026-05-26T00:00:00Z,219.97,None,Laptop Stand,physical,39.99,False
+usr_015,Ethan Wilson,ethan.wilson@example.com,Gold,ORD-2025-05-26-001,2026-05-26T00:00:00Z,219.97,None,Ergonomic Keyboard,physical,129.99,False
+usr_015,Ethan Wilson,ethan.wilson@example.com,Gold,ORD-2025-06-25-002,2026-06-25T00:00:00Z,164.97,None,Wireless Charging Pad,physical,24.99,False
+usr_015,Ethan Wilson,ethan.wilson@example.com,Gold,ORD-2025-06-25-002,2026-06-25T00:00:00Z,164.97,None,Wireless Headphones,physical,89.99,True
+usr_015,Ethan Wilson,ethan.wilson@example.com,Gold,ORD-2025-06-25-002,2026-06-25T00:00:00Z,164.97,None,Digital Access Pass,digital,49.99,False

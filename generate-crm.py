@@ -59,7 +59,7 @@ class CRM(RootModel):
 
 POLICY_WINDOW_STANDARD = 30
 POLICY_WINDOW_GOLD = 45
-REFERENCE_DATE = datetime(2025, 4, 15)
+REFERENCE_DATE = datetime(2026, 7, 6)  # Current date
 
 # Product catalog: (name, type, price, opened_default)
 PRODUCTS = [
@@ -340,7 +340,7 @@ def generate_customer_names_fallback(num_customers: int, seed: int) -> List[str]
     return names
 
 
-def random_past_date(max_days_old: int = 60) -> datetime:
+def random_past_date(max_days_old: int = 120) -> datetime:
     """Generate a random date in the past, within `max_days_old` days from REFERENCE_DATE."""
     days_ago = random.randint(1, max_days_old)
     return REFERENCE_DATE - timedelta(days=days_ago)
@@ -388,6 +388,7 @@ def generate_crm(seed: int = 42, num_customers: int = 15) -> CRM:
                 total += price
 
             # Determine refund_status deterministically
+            # Most orders should have no return request ("None")
             is_outside_window = (
                 tier == "Standard" and days_old > POLICY_WINDOW_STANDARD
             ) or (tier == "Gold" and days_old > POLICY_WINDOW_GOLD)
@@ -396,13 +397,16 @@ def generate_crm(seed: int = 42, num_customers: int = 15) -> CRM:
             if is_outside_window or has_digital_only:
                 refund_status = "Denied"
             elif days_old <= 7:
+                # Orders returned within 7 days are refunded
                 refund_status = "Refunded"
             else:
+                # For orders outside the early return window:
+                # ~75% have no return request (None), ~15% pending, ~10% refunded
                 r = random.random()
-                if r < 0.60:
-                    refund_status = "Pending"  # Active refund request
+                if r < 0.75:
+                    refund_status = "None"  # No return request (most common)
                 elif r < 0.90:
-                    refund_status = "None"
+                    refund_status = "Pending"  # Active refund request
                 else:
                     refund_status = "Refunded"
 

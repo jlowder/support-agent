@@ -1,14 +1,520 @@
 [
   {
     "id": "usr_001",
-    "name": "James Thompson",
-    "email": "james.thompson@example.com",
+    "name": "Aisha Johnson",
+    "email": "aisha.johnson@example.com",
     "loyalty_tier": "Gold",
     "order_history": [
       {
-        "order_id": "ORD-2025-03-06-001",
-        "date": "2025-03-06T00:00:00Z",
+        "order_id": "ORD-2025-05-19-001",
+        "date": "2026-05-19T00:00:00Z",
         "items": [
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          },
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          }
+        ],
+        "total": 239.98,
+        "refund_status": "Denied"
+      },
+      {
+        "order_id": "ORD-2025-06-27-002",
+        "date": "2026-06-27T00:00:00Z",
+        "items": [
+          {
+            "name": "Digital Guidebook",
+            "type": "digital",
+            "price": 19.99,
+            "opened": false
+          },
+          {
+            "name": "Online Course Access",
+            "type": "digital",
+            "price": 149.99,
+            "opened": false
+          },
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          }
+        ],
+        "total": 194.48,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_002",
+    "name": "Mateo García",
+    "email": "mateo.garcía@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-22-001",
+        "date": "2026-06-22T00:00:00Z",
+        "items": [
+          {
+            "name": "Wireless Charging Pad",
+            "type": "physical",
+            "price": 24.99,
+            "opened": false
+          }
+        ],
+        "total": 24.99,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-05-31-002",
+        "date": "2026-05-31T00:00:00Z",
+        "items": [
+          {
+            "name": "E-Book Bundle",
+            "type": "digital",
+            "price": 29.99,
+            "opened": false
+          }
+        ],
+        "total": 29.99,
+        "refund_status": "Denied"
+      }
+    ]
+  },
+  {
+    "id": "usr_003",
+    "name": "Priya Patel",
+    "email": "priya.patel@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-21-001",
+        "date": "2026-06-21T00:00:00Z",
+        "items": [
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          },
+          {
+            "name": "Gaming Mouse",
+            "type": "physical",
+            "price": 79.99,
+            "opened": false
+          }
+        ],
+        "total": 89.98,
+        "refund_status": "Pending"
+      },
+      {
+        "order_id": "ORD-2025-07-05-002",
+        "date": "2026-07-05T00:00:00Z",
+        "items": [
+          {
+            "name": "Ergonomic Chair",
+            "type": "physical",
+            "price": 299.99,
+            "opened": false
+          }
+        ],
+        "total": 299.99,
+        "refund_status": "Refunded"
+      }
+    ]
+  },
+  {
+    "id": "usr_004",
+    "name": "Kenji Tanaka",
+    "email": "kenji.tanaka@example.com",
+    "loyalty_tier": "Silver",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-22-001",
+        "date": "2026-06-22T00:00:00Z",
+        "items": [
+          {
+            "name": "Digital Guidebook",
+            "type": "digital",
+            "price": 19.99,
+            "opened": false
+          },
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          }
+        ],
+        "total": 44.49,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-06-13-002",
+        "date": "2026-06-13T00:00:00Z",
+        "items": [
+          {
+            "name": "Digital Access Pass",
+            "type": "digital",
+            "price": 49.99,
+            "opened": false
+          },
+          {
+            "name": "Gaming Mouse",
+            "type": "physical",
+            "price": 79.99,
+            "opened": false
+          }
+        ],
+        "total": 129.98,
+        "refund_status": "Pending"
+      }
+    ]
+  },
+  {
+    "id": "usr_005",
+    "name": "Fatima Al-Farsi",
+    "email": "fatima.al-farsi@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-28-001",
+        "date": "2026-06-28T00:00:00Z",
+        "items": [
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          },
+          {
+            "name": "Online Course Access",
+            "type": "digital",
+            "price": 149.99,
+            "opened": false
+          }
+        ],
+        "total": 174.49,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-05-26-002",
+        "date": "2026-05-26T00:00:00Z",
+        "items": [
+          {
+            "name": "USB-C Docking Station",
+            "type": "physical",
+            "price": 99.99,
+            "opened": true
+          },
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          },
+          {
+            "name": "Laptop Stand",
+            "type": "physical",
+            "price": 39.99,
+            "opened": false
+          }
+        ],
+        "total": 149.97,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_006",
+    "name": "Dmitri Volkov",
+    "email": "dmitri.volkov@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-05-17-001",
+        "date": "2026-05-17T00:00:00Z",
+        "items": [
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          },
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          }
+        ],
+        "total": 144.49,
+        "refund_status": "Denied"
+      }
+    ]
+  },
+  {
+    "id": "usr_007",
+    "name": "Amara Nkosi",
+    "email": "amara.nkosi@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-06-001",
+        "date": "2026-06-06T00:00:00Z",
+        "items": [
+          {
+            "name": "USB-C Docking Station",
+            "type": "physical",
+            "price": 99.99,
+            "opened": true
+          },
+          {
+            "name": "Noise-Canceling Earbuds",
+            "type": "physical",
+            "price": 159.99,
+            "opened": true
+          },
+          {
+            "name": "USB-C Docking Station",
+            "type": "physical",
+            "price": 99.99,
+            "opened": true
+          }
+        ],
+        "total": 359.97,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-05-24-002",
+        "date": "2026-05-24T00:00:00Z",
+        "items": [
+          {
+            "name": "E-Book Bundle",
+            "type": "digital",
+            "price": 29.99,
+            "opened": false
+          },
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          }
+        ],
+        "total": 54.49,
+        "refund_status": "Denied"
+      }
+    ]
+  },
+  {
+    "id": "usr_008",
+    "name": "Liam O’Sullivan",
+    "email": "liam.o’sullivan@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-01-001",
+        "date": "2026-06-01T00:00:00Z",
+        "items": [
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          },
+          {
+            "name": "Noise-Canceling Earbuds",
+            "type": "physical",
+            "price": 159.99,
+            "opened": true
+          },
+          {
+            "name": "External SSD 1TB",
+            "type": "physical",
+            "price": 129.99,
+            "opened": false
+          }
+        ],
+        "total": 409.97,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_009",
+    "name": "Zahra Hassan",
+    "email": "zahra.hassan@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-21-001",
+        "date": "2026-06-21T00:00:00Z",
+        "items": [
+          {
+            "name": "Webcam HD",
+            "type": "physical",
+            "price": 69.99,
+            "opened": false
+          },
+          {
+            "name": "Smart Watch Pro",
+            "type": "physical",
+            "price": 249.99,
+            "opened": false
+          },
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          }
+        ],
+        "total": 439.97,
+        "refund_status": "Pending"
+      }
+    ]
+  },
+  {
+    "id": "usr_010",
+    "name": "Carlos Mendoza",
+    "email": "carlos.mendoza@example.com",
+    "loyalty_tier": "Silver",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-07-01-001",
+        "date": "2026-07-01T00:00:00Z",
+        "items": [
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          }
+        ],
+        "total": 9.99,
+        "refund_status": "Denied"
+      },
+      {
+        "order_id": "ORD-2025-05-21-002",
+        "date": "2026-05-21T00:00:00Z",
+        "items": [
+          {
+            "name": "Laptop Stand",
+            "type": "physical",
+            "price": 39.99,
+            "opened": false
+          },
+          {
+            "name": "E-Book Bundle",
+            "type": "digital",
+            "price": 29.99,
+            "opened": false
+          }
+        ],
+        "total": 69.98,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_011",
+    "name": "Mei Lin Chen",
+    "email": "mei.lin.chen@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-19-001",
+        "date": "2026-06-19T00:00:00Z",
+        "items": [
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          }
+        ],
+        "total": 119.99,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-06-01-002",
+        "date": "2026-06-01T00:00:00Z",
+        "items": [
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          },
+          {
+            "name": "Ergonomic Chair",
+            "type": "physical",
+            "price": 299.99,
+            "opened": false
+          }
+        ],
+        "total": 309.98,
+        "refund_status": "Pending"
+      }
+    ]
+  },
+  {
+    "id": "usr_012",
+    "name": "Elena Petrov",
+    "email": "elena.petrov@example.com",
+    "loyalty_tier": "Silver",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-27-001",
+        "date": "2026-06-27T00:00:00Z",
+        "items": [
+          {
+            "name": "Gaming Headset",
+            "type": "physical",
+            "price": 59.99,
+            "opened": true
+          },
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          },
+          {
+            "name": "Smart Watch Pro",
+            "type": "physical",
+            "price": 249.99,
+            "opened": false
+          }
+        ],
+        "total": 334.48,
+        "refund_status": "Pending"
+      },
+      {
+        "order_id": "ORD-2025-06-26-002",
+        "date": "2026-06-26T00:00:00Z",
+        "items": [
+          {
+            "name": "Noise-Canceling Earbuds",
+            "type": "physical",
+            "price": 159.99,
+            "opened": true
+          },
+          {
+            "name": "Ergonomic Chair",
+            "type": "physical",
+            "price": 299.99,
+            "opened": false
+          },
           {
             "name": "Digital Access Pass",
             "type": "digital",
@@ -16,42 +522,94 @@
             "opened": false
           }
         ],
-        "total": 49.99,
-        "refund_status": "Denied"
+        "total": 509.97,
+        "refund_status": "None"
       }
     ]
   },
   {
-    "id": "usr_002",
-    "name": "Sophia Miller",
-    "email": "sophia.miller@example.com",
-    "loyalty_tier": "Gold",
+    "id": "usr_013",
+    "name": "Jabari Williams",
+    "email": "jabari.williams@example.com",
+    "loyalty_tier": "Silver",
     "order_history": [
       {
-        "order_id": "ORD-2025-03-29-001",
-        "date": "2025-03-29T00:00:00Z",
+        "order_id": "ORD-2025-06-06-001",
+        "date": "2026-06-06T00:00:00Z",
         "items": [
           {
-            "name": "Monitor Light Bar",
+            "name": "Gaming Mouse",
             "type": "physical",
-            "price": 34.99,
+            "price": 79.99,
+            "opened": false
+          },
+          {
+            "name": "Online Course Access",
+            "type": "digital",
+            "price": 149.99,
+            "opened": false
+          },
+          {
+            "name": "Wireless Headphones",
+            "type": "physical",
+            "price": 89.99,
+            "opened": true
+          }
+        ],
+        "total": 319.97,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-06-28-002",
+        "date": "2026-06-28T00:00:00Z",
+        "items": [
+          {
+            "name": "Online Course Access",
+            "type": "digital",
+            "price": 149.99,
+            "opened": false
+          },
+          {
+            "name": "Gaming Mouse",
+            "type": "physical",
+            "price": 79.99,
+            "opened": false
+          },
+          {
+            "name": "E-Book Bundle",
+            "type": "digital",
+            "price": 29.99,
             "opened": false
           }
         ],
-        "total": 34.99,
-        "refund_status": "Pending"
+        "total": 259.97,
+        "refund_status": "None"
       }
     ]
   },
   {
-    "id": "usr_003",
-    "name": "Logan Lewis",
-    "email": "logan.lewis@example.com",
-    "loyalty_tier": "Standard",
+    "id": "usr_014",
+    "name": "Sofia Lundberg",
+    "email": "sofia.lundberg@example.com",
+    "loyalty_tier": "Silver",
     "order_history": [
       {
-        "order_id": "ORD-2025-03-16-001",
-        "date": "2025-03-16T00:00:00Z",
+        "order_id": "ORD-2025-06-06-001",
+        "date": "2026-06-06T00:00:00Z",
+        "items": [
+          {
+            "name": "Gaming Mouse",
+            "type": "physical",
+            "price": 79.99,
+            "opened": false
+          }
+        ],
+        "total": 79.99,
+        "refund_status": "Refunded"
+      },
+      {
+        "order_id": "ORD-2025-05-18-002",
+        "date": "2026-05-18T00:00:00Z",
         "items": [
           {
             "name": "Wireless Charging Pad",
@@ -66,14 +624,40 @@
     ]
   },
   {
-    "id": "usr_004",
-    "name": "Marcus Lee",
-    "email": "marcus.lee@example.com",
-    "loyalty_tier": "Standard",
+    "id": "usr_015",
+    "name": "Ravi Desai",
+    "email": "ravi.desai@example.com",
+    "loyalty_tier": "Gold",
     "order_history": [
       {
-        "order_id": "ORD-2025-04-04-001",
-        "date": "2025-04-04T00:00:00Z",
+        "order_id": "ORD-2025-05-26-001",
+        "date": "2026-05-26T00:00:00Z",
+        "items": [
+          {
+            "name": "Digital Access Pass",
+            "type": "digital",
+            "price": 49.99,
+            "opened": false
+          },
+          {
+            "name": "Laptop Stand",
+            "type": "physical",
+            "price": 39.99,
+            "opened": false
+          },
+          {
+            "name": "Ergonomic Keyboard",
+            "type": "physical",
+            "price": 129.99,
+            "opened": false
+          }
+        ],
+        "total": 219.97,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-06-25-002",
+        "date": "2026-06-25T00:00:00Z",
         "items": [
           {
             "name": "Wireless Charging Pad",
@@ -82,57 +666,425 @@
             "opened": false
           },
           {
-            "name": "Monitor Light Bar",
-            "type": "physical",
-            "price": 34.99,
-            "opened": false
-          },
-          {
-            "name": "E-Book Bundle",
-            "type": "digital",
-            "price": 29.99,
-            "opened": false
-          }
-        ],
-        "total": 89.97,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-04-10-002",
-        "date": "2025-04-10T00:00:00Z",
-        "items": [
-          {
             "name": "Wireless Headphones",
             "type": "physical",
             "price": 89.99,
             "opened": true
           },
           {
-            "name": "Smart Home Hub",
-            "type": "physical",
-            "price": 119.99,
-            "opened": true
+            "name": "Digital Access Pass",
+            "type": "digital",
+            "price": 49.99,
+            "opened": false
           }
         ],
-        "total": 209.98,
-        "refund_status": "Refunded"
+        "total": 164.97,
+        "refund_status": "None"
       }
     ]
   },
   {
-    "id": "usr_005",
-    "name": "Sarah Garcia",
-    "email": "sarah.garcia@example.com",
+    "id": "usr_016",
+    "name": "Nia Johnson",
+    "email": "nia.johnson@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-12-001",
+        "date": "2026-06-12T00:00:00Z",
+        "items": [
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          },
+          {
+            "name": "Smart Watch Pro",
+            "type": "physical",
+            "price": 249.99,
+            "opened": false
+          }
+        ],
+        "total": 369.98,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-05-30-002",
+        "date": "2026-05-30T00:00:00Z",
+        "items": [
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          }
+        ],
+        "total": 24.5,
+        "refund_status": "Denied"
+      }
+    ]
+  },
+  {
+    "id": "usr_017",
+    "name": "Hiroshi Sato",
+    "email": "hiroshi.sato@example.com",
     "loyalty_tier": "Gold",
     "order_history": [
       {
-        "order_id": "ORD-2025-02-25-001",
-        "date": "2025-02-25T00:00:00Z",
+        "order_id": "ORD-2025-07-01-001",
+        "date": "2026-07-01T00:00:00Z",
+        "items": [
+          {
+            "name": "Ergonomic Keyboard",
+            "type": "physical",
+            "price": 129.99,
+            "opened": false
+          },
+          {
+            "name": "Ergonomic Keyboard",
+            "type": "physical",
+            "price": 129.99,
+            "opened": false
+          },
+          {
+            "name": "Gaming Headset",
+            "type": "physical",
+            "price": 59.99,
+            "opened": true
+          }
+        ],
+        "total": 319.97,
+        "refund_status": "Refunded"
+      },
+      {
+        "order_id": "ORD-2025-05-31-002",
+        "date": "2026-05-31T00:00:00Z",
+        "items": [
+          {
+            "name": "Gaming Mouse",
+            "type": "physical",
+            "price": 79.99,
+            "opened": false
+          }
+        ],
+        "total": 79.99,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_018",
+    "name": "Yara Khalil",
+    "email": "yara.khalil@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-22-001",
+        "date": "2026-06-22T00:00:00Z",
+        "items": [
+          {
+            "name": "Laptop Stand",
+            "type": "physical",
+            "price": 39.99,
+            "opened": false
+          },
+          {
+            "name": "Mechanical Keyboard",
+            "type": "physical",
+            "price": 149.99,
+            "opened": true
+          },
+          {
+            "name": "Monitor Light Bar",
+            "type": "physical",
+            "price": 34.99,
+            "opened": false
+          }
+        ],
+        "total": 224.97,
+        "refund_status": "Refunded"
+      },
+      {
+        "order_id": "ORD-2025-05-25-002",
+        "date": "2026-05-25T00:00:00Z",
+        "items": [
+          {
+            "name": "External SSD 1TB",
+            "type": "physical",
+            "price": 129.99,
+            "opened": false
+          },
+          {
+            "name": "Wireless Charging Pad",
+            "type": "physical",
+            "price": 24.99,
+            "opened": false
+          }
+        ],
+        "total": 154.98,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_019",
+    "name": "Thomas O’Connor",
+    "email": "thomas.o’connor@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-14-001",
+        "date": "2026-06-14T00:00:00Z",
         "items": [
           {
             "name": "Subscription Monthly",
             "type": "digital",
             "price": 9.99,
+            "opened": false
+          }
+        ],
+        "total": 9.99,
+        "refund_status": "Denied"
+      },
+      {
+        "order_id": "ORD-2025-05-31-002",
+        "date": "2026-05-31T00:00:00Z",
+        "items": [
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          }
+        ],
+        "total": 9.99,
+        "refund_status": "Denied"
+      }
+    ]
+  },
+  {
+    "id": "usr_020",
+    "name": "Layla Benali",
+    "email": "layla.benali@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-05-21-001",
+        "date": "2026-05-21T00:00:00Z",
+        "items": [
+          {
+            "name": "Smart Watch Pro",
+            "type": "physical",
+            "price": 249.99,
+            "opened": false
+          },
+          {
+            "name": "Smart Home Hub",
+            "type": "physical",
+            "price": 119.99,
+            "opened": true
+          },
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          }
+        ],
+        "total": 394.48,
+        "refund_status": "Denied"
+      },
+      {
+        "order_id": "ORD-2025-07-03-002",
+        "date": "2026-07-03T00:00:00Z",
+        "items": [
+          {
+            "name": "Organic Coffee Beans",
+            "type": "physical",
+            "price": 24.5,
+            "opened": true
+          },
+          {
+            "name": "Wireless Charging Pad",
+            "type": "physical",
+            "price": 24.99,
+            "opened": false
+          }
+        ],
+        "total": 49.49,
+        "refund_status": "Refunded"
+      }
+    ]
+  },
+  {
+    "id": "usr_021",
+    "name": "Daniel Kim",
+    "email": "daniel.kim@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-04-001",
+        "date": "2026-06-04T00:00:00Z",
+        "items": [
+          {
+            "name": "Online Course Access",
+            "type": "digital",
+            "price": 149.99,
+            "opened": false
+          }
+        ],
+        "total": 149.99,
+        "refund_status": "Denied"
+      },
+      {
+        "order_id": "ORD-2025-06-27-002",
+        "date": "2026-06-27T00:00:00Z",
+        "items": [
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          },
+          {
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
+            "opened": false
+          },
+          {
+            "name": "Gaming Headset",
+            "type": "physical",
+            "price": 59.99,
+            "opened": true
+          }
+        ],
+        "total": 79.97,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_022",
+    "name": "Ingrid Svensson",
+    "email": "ingrid.svensson@example.com",
+    "loyalty_tier": "Silver",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-23-001",
+        "date": "2026-06-23T00:00:00Z",
+        "items": [
+          {
+            "name": "Digital Guidebook",
+            "type": "digital",
+            "price": 19.99,
+            "opened": false
+          }
+        ],
+        "total": 19.99,
+        "refund_status": "Denied"
+      }
+    ]
+  },
+  {
+    "id": "usr_023",
+    "name": "Kwame Mensah",
+    "email": "kwame.mensah@example.com",
+    "loyalty_tier": "Gold",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-08-001",
+        "date": "2026-06-08T00:00:00Z",
+        "items": [
+          {
+            "name": "External SSD 1TB",
+            "type": "physical",
+            "price": 129.99,
+            "opened": false
+          },
+          {
+            "name": "Smart Watch Pro",
+            "type": "physical",
+            "price": 249.99,
+            "opened": false
+          }
+        ],
+        "total": 379.98,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-05-25-002",
+        "date": "2026-05-25T00:00:00Z",
+        "items": [
+          {
+            "name": "Smart Watch Pro",
+            "type": "physical",
+            "price": 249.99,
+            "opened": false
+          }
+        ],
+        "total": 249.99,
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "id": "usr_024",
+    "name": "Olivia Rossi",
+    "email": "olivia.rossi@example.com",
+    "loyalty_tier": "Silver",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-29-001",
+        "date": "2026-06-29T00:00:00Z",
+        "items": [
+          {
+            "name": "Laptop Stand",
+            "type": "physical",
+            "price": 39.99,
+            "opened": false
+          }
+        ],
+        "total": 39.99,
+        "refund_status": "Refunded"
+      }
+    ]
+  },
+  {
+    "id": "usr_025",
+    "name": "Samir Ahmed",
+    "email": "samir.ahmed@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-27-001",
+        "date": "2026-06-27T00:00:00Z",
+        "items": [
+          {
+            "name": "Noise-Canceling Earbuds",
+            "type": "physical",
+            "price": 159.99,
+            "opened": true
+          },
+          {
+            "name": "Gaming Mouse",
+            "type": "physical",
+            "price": 79.99,
+            "opened": false
+          }
+        ],
+        "total": 239.98,
+        "refund_status": "None"
+      },
+      {
+        "order_id": "ORD-2025-07-01-002",
+        "date": "2026-07-01T00:00:00Z",
+        "items": [
+          {
+            "name": "Online Course Access",
+            "type": "digital",
+            "price": 149.99,
             "opened": false
           },
           {
@@ -142,230 +1094,43 @@
             "opened": false
           }
         ],
-        "total": 29.98,
+        "total": 169.98,
         "refund_status": "Denied"
       }
     ]
   },
   {
-    "id": "usr_006",
-    "name": "Ethan Rodriguez",
-    "email": "ethan.rodriguez@example.com",
-    "loyalty_tier": "Gold",
-    "order_history": [
-      {
-        "order_id": "ORD-2025-03-10-001",
-        "date": "2025-03-10T00:00:00Z",
-        "items": [
-          {
-            "name": "Digital Access Pass",
-            "type": "digital",
-            "price": 49.99,
-            "opened": false
-          }
-        ],
-        "total": 49.99,
-        "refund_status": "Denied"
-      },
-      {
-        "order_id": "ORD-2025-03-14-002",
-        "date": "2025-03-14T00:00:00Z",
-        "items": [
-          {
-            "name": "Ergonomic Keyboard",
-            "type": "physical",
-            "price": 129.99,
-            "opened": false
-          },
-          {
-            "name": "Mechanical Keyboard",
-            "type": "physical",
-            "price": 149.99,
-            "opened": true
-          }
-        ],
-        "total": 279.98,
-        "refund_status": "Refunded",
-        "refund_transaction_id": "TXN-1D0C33A87965",
-        "refund_amount": 2025.0,
-        "refund_date": "2026-07-05T05:04:08.226615"
-      }
-    ]
-  },
-  {
-    "id": "usr_007",
-    "name": "Amelia Jackson",
-    "email": "amelia.jackson@example.com",
-    "loyalty_tier": "Silver",
-    "order_history": [
-      {
-        "order_id": "ORD-2025-04-06-001",
-        "date": "2025-04-06T00:00:00Z",
-        "items": [
-          {
-            "name": "Webcam HD",
-            "type": "physical",
-            "price": 69.99,
-            "opened": false
-          }
-        ],
-        "total": 69.99,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-04-13-002",
-        "date": "2025-04-13T00:00:00Z",
-        "items": [
-          {
-            "name": "Wireless Charging Pad",
-            "type": "physical",
-            "price": 24.99,
-            "opened": false
-          },
-          {
-            "name": "Mechanical Keyboard",
-            "type": "physical",
-            "price": 149.99,
-            "opened": true
-          }
-        ],
-        "total": 174.98,
-        "refund_status": "Refunded"
-      }
-    ]
-  },
-  {
-    "id": "usr_008",
-    "name": "Emma Chen",
-    "email": "emma.chen@example.com",
+    "id": "usr_026",
+    "name": "María Fernanda López",
+    "email": "maría.fernanda.lópez@example.com",
     "loyalty_tier": "Standard",
     "order_history": [
       {
-        "order_id": "ORD-2025-04-03-001",
-        "date": "2025-04-03T00:00:00Z",
+        "order_id": "ORD-2025-06-01-001",
+        "date": "2026-06-01T00:00:00Z",
         "items": [
           {
-            "name": "E-Book Bundle",
-            "type": "digital",
-            "price": 29.99,
-            "opened": false
-          },
-          {
-            "name": "Webcam HD",
+            "name": "Organic Coffee Beans",
             "type": "physical",
-            "price": 69.99,
-            "opened": false
+            "price": 24.5,
+            "opened": true
           }
         ],
-        "total": 99.98,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-03-03-002",
-        "date": "2025-03-03T00:00:00Z",
-        "items": [
-          {
-            "name": "Wireless Charging Pad",
-            "type": "physical",
-            "price": 24.99,
-            "opened": false
-          },
-          {
-            "name": "Webcam HD",
-            "type": "physical",
-            "price": 69.99,
-            "opened": false
-          }
-        ],
-        "total": 94.98,
+        "total": 24.5,
         "refund_status": "Denied"
       }
     ]
   },
   {
-    "id": "usr_009",
-    "name": "William Wilson",
-    "email": "william.wilson@example.com",
+    "id": "usr_027",
+    "name": "Tariq Mansour",
+    "email": "tariq.mansour@example.com",
     "loyalty_tier": "Standard",
     "order_history": [
       {
-        "order_id": "ORD-2025-03-04-001",
-        "date": "2025-03-04T00:00:00Z",
+        "order_id": "ORD-2025-06-04-001",
+        "date": "2026-06-04T00:00:00Z",
         "items": [
-          {
-            "name": "Gaming Headset",
-            "type": "physical",
-            "price": 59.99,
-            "opened": true
-          }
-        ],
-        "total": 59.99,
-        "refund_status": "Denied"
-      },
-      {
-        "order_id": "ORD-2025-03-14-002",
-        "date": "2025-03-14T00:00:00Z",
-        "items": [
-          {
-            "name": "Gaming Headset",
-            "type": "physical",
-            "price": 59.99,
-            "opened": true
-          },
-          {
-            "name": "Gaming Mouse",
-            "type": "physical",
-            "price": 79.99,
-            "opened": false
-          }
-        ],
-        "total": 139.98,
-        "refund_status": "Denied"
-      }
-    ]
-  },
-  {
-    "id": "usr_010",
-    "name": "Charlotte Walker",
-    "email": "charlotte.walker@example.com",
-    "loyalty_tier": "Gold",
-    "order_history": [
-      {
-        "order_id": "ORD-2025-03-01-001",
-        "date": "2025-03-01T00:00:00Z",
-        "items": [
-          {
-            "name": "Noise-Canceling Earbuds",
-            "type": "physical",
-            "price": 159.99,
-            "opened": true
-          },
-          {
-            "name": "Noise-Canceling Earbuds",
-            "type": "physical",
-            "price": 159.99,
-            "opened": true
-          },
-          {
-            "name": "Noise-Canceling Earbuds",
-            "type": "physical",
-            "price": 159.99,
-            "opened": true
-          }
-        ],
-        "total": 479.97,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-03-19-002",
-        "date": "2025-03-19T00:00:00Z",
-        "items": [
-          {
-            "name": "Smart Home Hub",
-            "type": "physical",
-            "price": 119.99,
-            "opened": true
-          },
           {
             "name": "Laptop Stand",
             "type": "physical",
@@ -373,33 +1138,19 @@
             "opened": false
           },
           {
-            "name": "Gaming Headset",
+            "name": "Monitor Light Bar",
             "type": "physical",
-            "price": 59.99,
-            "opened": true
+            "price": 34.99,
+            "opened": false
           }
         ],
-        "total": 219.97,
-        "refund_status": "Pending"
-      }
-    ]
-  },
-  {
-    "id": "usr_011",
-    "name": "Alice Brown",
-    "email": "alice.brown@example.com",
-    "loyalty_tier": "Silver",
-    "order_history": [
+        "total": 74.98,
+        "refund_status": "Denied"
+      },
       {
-        "order_id": "ORD-2025-03-06-001",
-        "date": "2025-03-06T00:00:00Z",
+        "order_id": "ORD-2025-07-02-002",
+        "date": "2026-07-02T00:00:00Z",
         "items": [
-          {
-            "name": "Wireless Charging Pad",
-            "type": "physical",
-            "price": 24.99,
-            "opened": false
-          },
           {
             "name": "Monitor Light Bar",
             "type": "physical",
@@ -407,20 +1158,48 @@
             "opened": false
           }
         ],
-        "total": 59.98,
+        "total": 34.99,
+        "refund_status": "Refunded"
+      }
+    ]
+  },
+  {
+    "id": "usr_028",
+    "name": "Bella Thompson",
+    "email": "bella.thompson@example.com",
+    "loyalty_tier": "Standard",
+    "order_history": [
+      {
+        "order_id": "ORD-2025-06-19-001",
+        "date": "2026-06-19T00:00:00Z",
+        "items": [
+          {
+            "name": "Mechanical Keyboard",
+            "type": "physical",
+            "price": 149.99,
+            "opened": true
+          },
+          {
+            "name": "Ergonomic Chair",
+            "type": "physical",
+            "price": 299.99,
+            "opened": false
+          }
+        ],
+        "total": 449.98,
         "refund_status": "None"
       }
     ]
   },
   {
-    "id": "usr_012",
-    "name": "Robert Martinez",
-    "email": "robert.martinez@example.com",
-    "loyalty_tier": "Silver",
+    "id": "usr_029",
+    "name": "Emmanuel Nwankwo",
+    "email": "emmanuel.nwankwo@example.com",
+    "loyalty_tier": "Gold",
     "order_history": [
       {
-        "order_id": "ORD-2025-03-04-001",
-        "date": "2025-03-04T00:00:00Z",
+        "order_id": "ORD-2025-05-31-001",
+        "date": "2026-05-31T00:00:00Z",
         "items": [
           {
             "name": "Gaming Headset",
@@ -429,46 +1208,32 @@
             "opened": true
           },
           {
-            "name": "USB-C Docking Station",
+            "name": "Ergonomic Keyboard",
             "type": "physical",
-            "price": 99.99,
-            "opened": true
+            "price": 129.99,
+            "opened": false
           },
           {
-            "name": "Mechanical Keyboard",
+            "name": "Laptop Stand",
             "type": "physical",
-            "price": 149.99,
-            "opened": true
+            "price": 39.99,
+            "opened": false
           }
         ],
-        "total": 309.97,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-02-27-002",
-        "date": "2025-02-27T00:00:00Z",
-        "items": [
-          {
-            "name": "Mechanical Keyboard",
-            "type": "physical",
-            "price": 149.99,
-            "opened": true
-          }
-        ],
-        "total": 149.99,
-        "refund_status": "Pending"
+        "total": 229.97,
+        "refund_status": "None"
       }
     ]
   },
   {
-    "id": "usr_013",
-    "name": "Isabella Martinez",
-    "email": "isabella.martinez@example.com",
-    "loyalty_tier": "Silver",
+    "id": "usr_030",
+    "name": "Cecilia Álvarez",
+    "email": "cecilia.álvarez@example.com",
+    "loyalty_tier": "Standard",
     "order_history": [
       {
-        "order_id": "ORD-2025-04-02-001",
-        "date": "2025-04-02T00:00:00Z",
+        "order_id": "ORD-2025-06-01-001",
+        "date": "2026-06-01T00:00:00Z",
         "items": [
           {
             "name": "Webcam HD",
@@ -478,134 +1243,20 @@
           }
         ],
         "total": 69.99,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-03-08-002",
-        "date": "2025-03-08T00:00:00Z",
-        "items": [
-          {
-            "name": "Gaming Mouse",
-            "type": "physical",
-            "price": 79.99,
-            "opened": false
-          },
-          {
-            "name": "Monitor Light Bar",
-            "type": "physical",
-            "price": 34.99,
-            "opened": false
-          },
-          {
-            "name": "E-Book Bundle",
-            "type": "digital",
-            "price": 29.99,
-            "opened": false
-          }
-        ],
-        "total": 144.97,
-        "refund_status": "Pending"
-      }
-    ]
-  },
-  {
-    "id": "usr_014",
-    "name": "Liam White",
-    "email": "liam.white@example.com",
-    "loyalty_tier": "Gold",
-    "order_history": [
-      {
-        "order_id": "ORD-2025-04-14-001",
-        "date": "2025-04-14T00:00:00Z",
-        "items": [
-          {
-            "name": "Digital Access Pass",
-            "type": "digital",
-            "price": 49.99,
-            "opened": false
-          }
-        ],
-        "total": 49.99,
         "refund_status": "Denied"
       },
       {
-        "order_id": "ORD-2025-03-14-002",
-        "date": "2025-03-14T00:00:00Z",
+        "order_id": "ORD-2025-07-02-002",
+        "date": "2026-07-02T00:00:00Z",
         "items": [
           {
-            "name": "USB-C Docking Station",
-            "type": "physical",
-            "price": 99.99,
-            "opened": true
-          },
-          {
-            "name": "Gaming Mouse",
-            "type": "physical",
-            "price": 79.99,
-            "opened": false
-          },
-          {
-            "name": "External SSD 1TB",
-            "type": "physical",
-            "price": 129.99,
+            "name": "Subscription Monthly",
+            "type": "digital",
+            "price": 9.99,
             "opened": false
           }
         ],
-        "total": 309.97,
-        "refund_status": "None"
-      }
-    ]
-  },
-  {
-    "id": "usr_015",
-    "name": "David Patel",
-    "email": "david.patel@example.com",
-    "loyalty_tier": "Standard",
-    "order_history": [
-      {
-        "order_id": "ORD-2025-03-21-001",
-        "date": "2025-03-21T00:00:00Z",
-        "items": [
-          {
-            "name": "Organic Coffee Beans",
-            "type": "physical",
-            "price": 24.5,
-            "opened": true
-          },
-          {
-            "name": "Webcam HD",
-            "type": "physical",
-            "price": 69.99,
-            "opened": false
-          },
-          {
-            "name": "Wireless Headphones",
-            "type": "physical",
-            "price": 89.99,
-            "opened": true
-          }
-        ],
-        "total": 184.48,
-        "refund_status": "Pending"
-      },
-      {
-        "order_id": "ORD-2025-03-09-002",
-        "date": "2025-03-09T00:00:00Z",
-        "items": [
-          {
-            "name": "Wireless Headphones",
-            "type": "physical",
-            "price": 89.99,
-            "opened": true
-          },
-          {
-            "name": "Ergonomic Keyboard",
-            "type": "physical",
-            "price": 129.99,
-            "opened": false
-          }
-        ],
-        "total": 219.98,
+        "total": 9.99,
         "refund_status": "Denied"
       }
     ]
