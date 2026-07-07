@@ -29,8 +29,13 @@
                     </p>
                 </div>
             </div>
-            <div class="text-sm text-gray-500">
-                Customer Portal
+            <div class="flex items-center space-x-3">
+                <button id="new-session-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
+                    New Session
+                </button>
+                <div class="text-sm text-gray-500">
+                    Customer Portal
+                </div>
             </div>
         </header>
 
@@ -68,6 +73,7 @@
         const chatWindow = document.getElementById('chat-window');
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
+        const newSessionBtn = document.getElementById('new-session-btn');
         const BACKEND_URL = 'http://localhost:8050';
 
         // Persist threadId across page refreshes
@@ -92,6 +98,18 @@
             wrapper.appendChild(bubble);
             chatWindow.appendChild(wrapper);
             chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function clearChat() {
+            chatWindow.innerHTML = '';
+            // Add initial bot message
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-start';
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble bg-gray-200 text-gray-800 p-3 rounded-2xl rounded-tl-none';
+            bubble.textContent = 'Hello! I\'m your AI Support Assistant. How can I help you today?';
+            wrapper.appendChild(bubble);
+            chatWindow.appendChild(wrapper);
         }
 
         async function sendMessage(text) {
@@ -119,6 +137,17 @@
             }
         }
 
+        function startNewSession() {
+            // Generate new thread ID
+            threadId = Math.random().toString(36).substring(7);
+            localStorage.setItem('support_thread_id', threadId);
+            
+            // Clear chat UI
+            clearChat();
+            
+            console.log('New session started with thread_id:', threadId);
+        }
+
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = userInput.value.trim();
@@ -142,6 +171,13 @@
             if (indicator) indicator.remove();
 
             appendMessage(botResponse);
+        });
+
+        // New session button handler
+        newSessionBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to start a new session? Your current conversation will be cleared.')) {
+                startNewSession();
+            }
         });
     </script>
 </body>
