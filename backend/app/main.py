@@ -19,7 +19,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AI
 from langchain_core.tools import tool, ToolException
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
-from langgraph.prebuilt import ToolNode
+from langgraph.prebuilt import ToolNode, create_react_agent
 from pydantic import BaseModel
 
 # Pre-build graph at module level for efficiency
@@ -129,12 +129,18 @@ trace_broadcaster = _TraceBroadcaster()
 def _get_llm() -> ChatOpenAI:
     """Get configured LLM client."""
     config = _load_llm_config()
+    # Support both config formats
+    model = config.get("model") or config.get("model_name", "Qwen3-Coder-Next-MLX-6bit")
+    base_url = config.get("base_url") or config.get("url", "http://localhost:8080/v1")
+    api_key = config.get("api_key", "omlx-om5hh4rsln2h3f8w")
+    max_tokens = config.get("max_tokens", 1024)
+    temperature = config.get("temperature", 0.7)
     return ChatOpenAI(
-        model=config.get("model", "Qwen3-Coder-Next-MLX-6bit"),
-        base_url=config.get("base_url", "http://localhost:8080/v1"),
-        api_key=config.get("api_key", "omlx-om5hh4rsln2h3f8w"),
-        max_tokens=config.get("max_tokens", 1024),
-        temperature=config.get("temperature", 0.7),
+        model=model,
+        base_url=base_url,
+        api_key=api_key,
+        max_tokens=max_tokens,
+        temperature=temperature,
     )
 
 
@@ -168,8 +174,8 @@ def _find_order_by_id(order_id: str) -> tuple:
 # LangChain Tools (LLM-driven operations)
 # ---------------------------------------------------------------------------
 
-@tool(description="Look up customer profile by customer ID (e.g., usr_001) or email address. Returns customer details including loyalty tier, order count, and order history.", response_format="content_and_artifact")
-def get_customer_profile(customer_id: str) -> tuple[str, dict]:
+@tool(description="Look up customer profile by customer ID (e.g., usr_001) or email address. Returns customer details including loyalty tier, order count, and order history.", response_format="content")
+def get_customer_profile(customer_id: str) -> str:
     """Look up a customer profile from CRM data by ID or email."""
     customer = _find_customer_by_identifier(customer_id)
     
@@ -178,7 +184,7 @@ def get_customer_profile(customer_id: str) -> tuple[str, dict]:
             "found": False,
             "error": f"Customer not found for identifier: {customer_id}",
             "suggestion": "Please provide a valid customer ID (e.g., usr_001) or email address",
-        }, default=str), {"found": False, "error": f"Customer not found: {customer_id}"}
+        }, default=str)
     
     profile = {
         "found": True,
@@ -190,15 +196,19 @@ def get_customer_profile(customer_id: str) -> tuple[str, dict]:
         "order_history": customer.get("order_history", []),
     }
     
-    return json.dumps(profile, default=str), profile
+    return json.dumps(profile, default=str)
 
 
-@tool(description="Check if an order is eligible for refund. Returns order details, days since purchase, and refund eligibility factors.", response_format="content_and_artifact")
-def check_order_eligibility(order_id: str) -> tuple[str, dict]:
+@tool(description="Check if an order is eligible for refund. Returns order details, days since purchase, and refund eligibility factors. Include current_date parameter for accurate calculations.", response_format="content")
+def check_order_eligibility(order_id: str, current_date: str = None) -> str:
     """
     Check if an order is eligible for refund.
     Returns factual data about the order including days since purchase, order status, and item details.
     Does NOT make the refund decision - that's for the LLM based on this data.
+    
+    Args:
+        order_id: The order ID to check
+        current_date: Optional current date in YYYY-MM-DD format. If not provided, uses system date.
     """
     order, customer = _find_order_by_id(order_id)
     
@@ -209,7 +219,7 @@ def check_order_eligibility(order_id: str) -> tuple[str, dict]:
             "error": f"Order {order_id} not found in CRM",
             "days_since_purchase": None,
             "is_eligible": False,
-        }, default=str), {"found": False, "error": f"Order {order_id} not found"}
+        }, default=str)
     
     order_date_str = order.get("order_date", "")
     try:
@@ -221,10 +231,18 @@ def check_order_eligibility(order_id: str) -> tuple[str, dict]:
             "error": f"Could not parse order date: {order_date_str}",
             "days_since_purchase": None,
             "is_eligible": False,
-        }, default=str), {"found": False, "error": "Could not parse order date"}
+        }, default=str)
     
-    now = datetime.utcnow()
-    days_since_purchase = (now - order_date).days
+    # Use provided current_date or system date
+    if current_date:
+        try:
+            current_dt = datetime.strptime(current_date, "%Y-%m-%d")
+        except ValueError:
+            current_dt = datetime.utcnow()
+    else:
+        current_dt = datetime.utcnow()
+    
+    days_since_purchase = (current_dt - order_date).days
     
     # Compute eligibility windows
     within_30_days = days_since_purchase <= 30
@@ -257,23 +275,11 @@ def check_order_eligibility(order_id: str) -> tuple[str, dict]:
         "total_amount": order.get("total_amount", 0),
         "items": items_data,
         "is_eligible": within_60_days and order.get("status") not in ("Refunded", "Cancelled"),
-    }, default=str), {
-        "found": True,
-        "order_id": order_id,
-        "customer_name": customer.get("name", "") if customer else "",
-        "customer_email": customer.get("email", "") if customer else "",
-        "days_since_purchase": days_since_purchase,
-        "within_30_day_window": within_30_days,
-        "within_60_day_window": within_60_days,
-        "order_status": order.get("status", ""),
-        "total_amount": order.get("total_amount", 0),
-        "items": items_data,
-        "is_eligible": within_60_days and order.get("status") not in ("Refunded", "Cancelled"),
-    }
+    }, default=str)
 
 
-@tool(description="Process a refund for an order. Returns transaction details or error if refund cannot be processed.", response_format="content_and_artifact")
-def process_refund(order_id: str, refund_amount: float, reason: str) -> tuple[str, dict]:
+@tool(description="Process a refund for an order. Returns transaction details or error if refund cannot be processed.", response_format="content")
+def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
     """
     Process a refund transaction for an order.
     Updates order status to 'Refunded' and returns transaction ID.
@@ -286,7 +292,7 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> tuple[st
             "success": False,
             "error": f"Order {order_id} not found",
             "transaction_id": None,
-        }, default=str), {"success": False, "error": f"Order {order_id} not found"}
+        }, default=str)
     
     # Check if already refunded
     if order.get("status") == "Refunded" or order.get("refund_status") == "Full Refund":
@@ -294,7 +300,7 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> tuple[st
             "success": False,
             "error": f"Order {order_id} has already been refunded",
             "transaction_id": None,
-        }, default=str), {"success": False, "error": "Order already refunded"}
+        }, default=str)
     
     # Simulated 503 on odd digit amounts: (amount * 100) is odd
     digit_check = int(refund_amount * 100)
@@ -306,7 +312,7 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> tuple[st
             "success": False,
             "error": f"Payment service unavailable (amount validation failed)",
             "transaction_id": None,
-        }, default=str), {"success": False, "error": "Payment service temporarily unavailable"}
+        }, default=str)
     
     # Process refund
     order["status"] = "Refunded"
@@ -322,13 +328,7 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> tuple[st
         "amount": refund_amount,
         "status": "Refunded",
         "reason": reason,
-    }, default=str), {
-        "success": True,
-        "transaction_id": transaction_id,
-        "order_id": order_id,
-        "amount": refund_amount,
-        "status": "Refunded",
-    }
+    }, default=str)
 
 
 @tool(description="Escalate an issue to a human customer service representative. Use when the LLM cannot make a decision, customer requests supervisor, or refund amount exceeds $500.")
@@ -347,6 +347,18 @@ def escalate_to_human(reason: str) -> str:
     }, default=str)
 
 
+@tool(description="Get the current date and time. Use this to calculate days since purchase for order eligibility.")
+def get_current_datetime() -> str:
+    """
+    Get the current date and time for calculating order eligibility.
+    Returns ISO formatted datetime string.
+    """
+    return json.dumps({
+        "current_datetime": datetime.utcnow().isoformat() + "Z",
+        "current_date": datetime.utcnow().strftime("%Y-%m-%d"),
+    }, default=str)
+
+
 # ---------------------------------------------------------------------------
 # System Prompt with Tool Instructions
 # ---------------------------------------------------------------------------
@@ -354,37 +366,54 @@ def escalate_to_human(reason: str) -> str:
 def _get_system_prompt() -> str:
     """Build the system prompt with agent persona and policy rules."""
     policy_rules = get_policy_rules()
+    # Get current date for accurate calculations
+    current_date = datetime.utcnow().strftime("%Y-%m-%d")
     return f"""You are a firm but empathetic e-commerce customer service assistant.
+
+CURRENT DATE: {current_date}
 
 Your capabilities:
 - Look up customer profiles by ID or email
 - Check order eligibility for refunds
 - Process refunds when eligible
 - Escalate complex issues to humans
+- Get current date/time for accurate calculations
 
 REFUND POLICY (from policy_rules.md):
 {policy_rules}
 
 CRITICAL RULES:
 1. ALWAYS start by looking up the customer's profile to verify their identity
-2. ALWAYS check order eligibility BEFORE processing any refund
-3. Only approve refunds that meet the policy requirements
-4. For amounts over $500 or when policy is unclear, escalate to human
-5. Be empathetic but firm about policy restrictions
+2. ALWAYS get current date using get_current_datetime tool
+3. ALWAYS check order eligibility using check_order_eligibility tool (include current_date)
+4. Only approve refunds that meet the policy requirements
+5. For amounts over $500 or when policy is unclear, escalate to human
+6. Be empathetic but firm about policy restrictions
 
-DECISION FLOW:
-1. If customer identity is unclear: Ask for customer ID or email
-2. Look up customer profile using get_customer_profile tool
-3. If they want a refund: Ask for order ID
-4. Check order eligibility using check_order_eligibility tool
-5. If eligible: Process refund using process_refund tool
-6. If not eligible or unsure: Explain why and offer escalation
+ORDER REFUND FLOW:
+1. Verify customer identity with get_customer_profile
+2. Get current date with get_current_datetime
+3. If order ID provided: Check eligibility with check_order_eligibility (include current_date)
+4. If order not provided: Ask customer for order ID or list their orders
+5. Check order eligibility and show items to customer
+6. Ask customer which items they want to refund
+7. Calculate refund amounts (15% restocking fee for opened items)
+8. If eligible: Process refund using process_refund tool
+9. If not eligible or unsure: Explain why and offer escalation
+
+ITEM-LEVEL REFUNDS:
+- Customers can select specific items to refund
+- Unopened items: Full refund
+- Opened items: 15% restocking fee applied
+- Digital/subscription items: Non-refundable
+- Calculate partial refunds based on selected items
 
 RESPONSE REQUIREMENTS:
 - State decisions clearly: approved, denied, or escalated
 - Include transaction IDs when refunds are processed
 - Explain denial reasons with specific policy references
-- Use escalation_id when human intervention is needed"""
+- Use escalation_id when human intervention is needed
+- For partial refunds: Show itemized breakdown with amounts"""
 
 
 # ---------------------------------------------------------------------------
@@ -407,18 +436,29 @@ class AgentState(TypedDict):
 
 def node_handle_tool_calls(state: AgentState) -> AgentState:
     """Route to tool execution for LLM tool calls."""
-    trace_broadcaster.broadcast("agent", "Processing tool calls", {})
+    messages = state.get("messages", [])
+    
+    # Get the last assistant message with tool calls
+    tool_calls_to_execute = []
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage) and hasattr(msg, 'tool_calls') and msg.tool_calls:
+            tool_calls_to_execute = msg.tool_calls
+            break
+    
+    # Trace: tools being invoked
+    trace_broadcaster.broadcast("agent", "Executing tool calls", {
+        "tool_call_count": len(tool_calls_to_execute),
+        "tool_calls": [
+            {"name": tc.get("name", "unknown"), "args": tc.get("args", {}), "id": tc.get("id", "unknown")}
+            for tc in tool_calls_to_execute
+        ],
+    })
+    
     return state
 
 
 def node_generate_response(state: AgentState) -> AgentState:
     """Generate final response after tools have been called."""
-    trace_broadcaster.broadcast("agent", "Generating final response", {})
-    
-    # If response is already set in state, use it
-    if state.get("response"):
-        return state
-    
     # Extract conversation from state
     messages = state.get("messages", [])
     
@@ -447,10 +487,23 @@ def node_generate_response(state: AgentState) -> AgentState:
     if not any(isinstance(m, SystemMessage) for m in langchain_messages):
         langchain_messages.insert(0, SystemMessage(content=system_prompt))
     
+    # Trace: generating response with conversation context
+    trace_broadcaster.broadcast("agent", "Generating final response", {
+        "message_count": len(langchain_messages),
+        "message_types": [msg.__class__.__name__ for msg in langchain_messages],
+        "has_tool_messages": any(isinstance(m, ToolMessage) for m in langchain_messages),
+    })
+    
     try:
         # Invoke LLM synchronously (LangGraph's ToolNode handles async context)
         response = llm.invoke(langchain_messages)
         state["response"] = response.content
+        
+        # Trace: response generated
+        trace_broadcaster.broadcast("agent", "Response generated", {
+            "response_length": len(response.content) if response.content else 0,
+            "response_preview": response.content[:100] if response.content else None,
+        })
     except Exception as e:
         state["response"] = (
             "I'm sorry, but I'm experiencing technical difficulties. "
@@ -471,10 +524,44 @@ tools = [
     check_order_eligibility,
     process_refund,
     escalate_to_human,
+    get_current_datetime,
 ]
 
-# Create the tool node
-tool_node = ToolNode(tools)
+# Create the tool node with tracing
+class TracingToolNode(ToolNode):
+    """ToolNode that broadcasts tool execution events."""
+    
+    def _apply(self, state, input):
+        # Get tool calls from input
+        tool_calls = []
+        if hasattr(input, 'tool_calls') and input.tool_calls:
+            tool_calls = input.tool_calls
+        elif isinstance(input, dict) and 'tool_calls' in input:
+            tool_calls = input['tool_calls']
+        
+        # Trace tool execution
+        if tool_calls:
+            trace_broadcaster.broadcast("tools", "Tool execution started", {
+                "tool_call_count": len(tool_calls),
+                "tool_calls": [
+                    {"name": tc.get("name", "unknown"), "args": tc.get("args", {}), "id": tc.get("id", "unknown")}
+                    for tc in tool_calls
+                ],
+            })
+        
+        # Execute tools
+        result = super()._apply(state, input)
+        
+        # Trace tool completion
+        if tool_calls:
+            trace_broadcaster.broadcast("tools", "Tool execution completed", {
+                "tool_call_count": len(tool_calls),
+                "results_count": len(result.get("messages", [])),
+            })
+        
+        return result
+
+tool_node = TracingToolNode(tools)
 
 
 # ---------------------------------------------------------------------------
@@ -488,10 +575,13 @@ def should_call_tools(state: AgentState) -> str:
     # Check if there are tool calls in the last message
     if messages:
         last_msg = messages[-1]
-        if isinstance(last_msg, dict):
+        # Check for ToolMessage (tool results ready for LLM)
+        if isinstance(last_msg, ToolMessage) or hasattr(last_msg, 'tool_call_id'):
+            return "agent"
+        elif isinstance(last_msg, dict):
             # Check for tool_call_id which indicates this was a tool response
             if last_msg.get("role") == "tool":
-                return "generate_response"
+                return "agent"
         elif hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
             return "tools"
     
@@ -503,35 +593,127 @@ def should_call_tools(state: AgentState) -> str:
 # ---------------------------------------------------------------------------
 
 def build_agent_graph() -> StateGraph:
-    """Build the LangGraph agent with bound tools."""
-    graph = StateGraph(AgentState)
+    """Build the LangGraph agent with bound tools using create_react_agent."""
+    # Get LLM and bind tools
+    llm = _get_llm()
+    llm_with_tools = llm.bind_tools(tools)
     
-    # Add nodes
-    graph.add_node("tools", node_handle_tool_calls)
+    # Create a simple graph that handles tool calling
+    # We'll use a manual approach since create_react_agent has different state management
+    def agent_node(state: AgentState) -> AgentState:
+        """Run the agent and return updated state."""
+        # Get messages from state
+        messages = state.get("messages", [])
+        
+        # Convert dict messages to LangChain messages
+        langchain_messages = []
+        for msg in messages:
+            if isinstance(msg, dict):
+                if msg.get("role") == "system":
+                    langchain_messages.append(SystemMessage(content=msg.get("content", "")))
+                elif msg.get("role") == "human":
+                    langchain_messages.append(HumanMessage(content=msg.get("content", "")))
+                elif msg.get("role") == "assistant":
+                    langchain_messages.append(AIMessage(content=msg.get("content", "")))
+                elif msg.get("role") == "tool":
+                    langchain_messages.append(ToolMessage(content=msg.get("content", ""), tool_call_id=msg.get("tool_call_id", "")))
+            elif isinstance(msg, BaseMessage):
+                langchain_messages.append(msg)
+        
+        # Add current date system prompt if not already present
+        # This ensures LLM has accurate date for eligibility calculations
+        system_prompt = _get_system_prompt()
+        if not any(isinstance(m, SystemMessage) for m in langchain_messages):
+            langchain_messages.insert(0, SystemMessage(content=system_prompt))
+        
+        # Trace: agent started
+        trace_broadcaster.broadcast("agent", "Agent processing message", {
+            "message_count": len(messages),
+            "message_types": [msg.__class__.__name__ if hasattr(msg, '__class__') else type(msg).__name__ for msg in messages[-3:]],  # Last 3 messages
+        })
+        
+        # Invoke LLM with tools
+        response = llm_with_tools.invoke(langchain_messages)
+        
+        # Trace: LLM response
+        tool_calls_info = []
+        if hasattr(response, 'tool_calls') and response.tool_calls:
+            tool_calls_info = [{"name": tc.get("name", "unknown"), "args": tc.get("args", {})} for tc in response.tool_calls]
+        
+        trace_broadcaster.broadcast("agent", "LLM response received", {
+            "content": response.content[:200] if response.content else None,
+            "has_tool_calls": len(tool_calls_info) > 0,
+            "tool_calls": tool_calls_info,
+        })
+        
+        # Add response to messages
+        state["messages"].append(response)
+        
+        # Check if there are tool calls in the response
+        if hasattr(response, 'tool_calls') and response.tool_calls:
+            state["has_tool_calls"] = True
+        else:
+            state["has_tool_calls"] = False
+        
+        return state
+    
+    def route_after_agent(state: AgentState) -> str:
+        """Route based on whether agent wants to call tools or has tool results."""
+        messages = state.get("messages", [])
+        
+        if not messages:
+            return "generate_response"
+        
+        last_msg = messages[-1]
+        
+        # Check if the last message has tool calls
+        if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+            # LLM wants to call tools
+            trace_broadcaster.broadcast("routing", "Routing to tools", {
+                "decision": "tool_calls_detected",
+                "tool_call_count": len(last_msg.tool_calls),
+                "tool_names": [tc.get("name", "unknown") for tc in last_msg.tool_calls],
+            })
+            return "tools"
+        elif isinstance(last_msg, ToolMessage):
+            # Tool results are in history, LLM should process them
+            trace_broadcaster.broadcast("routing", "Routing to agent with tool results", {
+                "decision": "tool_result_received",
+                "tool_call_id": getattr(last_msg, 'tool_call_id', None),
+                "content_length": len(last_msg.content) if last_msg.content else 0,
+            })
+            return "agent"
+        
+        # No tool calls and no tool results, generate response
+        trace_broadcaster.broadcast("routing", "Routing to generate_response", {
+            "decision": "no_more_tools",
+            "last_message_type": last_msg.__class__.__name__,
+        })
+        return "generate_response"
+    
+    graph = StateGraph(AgentState)
+    graph.add_node("agent", agent_node)
+    graph.add_node("tools", tool_node)
     graph.add_node("generate_response", node_generate_response)
     
-    # Set entry point
-    graph.set_entry_point("generate_response")
+    graph.set_entry_point("agent")
     
-    # Add edges
-    # From generate_response, check if tools are needed
     graph.add_conditional_edges(
-        "generate_response",
-        should_call_tools,
+        "agent",
+        route_after_agent,
         {
             "tools": "tools",
-            "generate_response": END,
+            "generate_response": "generate_response",
         },
     )
     
-    # Tools node loops back to generate_response
-    graph.add_edge("tools", "generate_response")
+    graph.add_edge("tools", "agent")
     
     return graph
 
 
 # Pre-build graph at module level for efficiency (one-time initialization)
-agent_graph = build_agent_graph().compile()
+agent_graph = None
 
 
 # ---------------------------------------------------------------------------
@@ -592,9 +774,12 @@ async def chat(request: ChatRequest):
         "response": None,
     }
     
-    # Use pre-built compiled graph
+    # Compile graph at runtime (since build_agent_graph() is called)
+    graph = build_agent_graph()
+    compiled = graph.compile()
+    
     try:
-        result = agent_graph.invoke(state)
+        result = compiled.invoke(state)
         return ChatResponse(response=result.get("response", "I'm sorry, I couldn't process your request."))
     except Exception as e:
         trace_broadcaster.broadcast("error", f"Agent loop error: {str(e)}", {"error": str(e)})
