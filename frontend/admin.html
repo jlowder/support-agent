@@ -271,8 +271,8 @@
             connectionStatus.textContent = 'Connecting...';
             connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-700';
             
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'http:';
-            const url = `${protocol}//localhost:8050/admin/trace`;
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            const url = '/admin/trace'; // Use relative path to route through frontend server
             
             try {
                 const es = new EventSource(url);
@@ -282,6 +282,17 @@
                     connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700';
                 };
                 
+                // Handle 'trace' events (named events from the SSE stream)
+                es.addEventListener('trace', (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addTraceEvent(data);
+                    } catch (e) {
+                        console.error('Failed to parse trace event:', e);
+                    }
+                });
+                
+                // Also handle default onmessage for any unnamed events
                 es.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);

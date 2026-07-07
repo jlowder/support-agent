@@ -102,8 +102,13 @@ class _TraceBroadcaster:
             self._subscriptions.remove(q)
 
     def broadcast(self, component: str, message: str, payload: Optional[dict] = None) -> None:
+        # Use Z suffix for UTC timezone (ISO 8601)
+        # datetime.now(timezone.utc).isoformat() returns something like 2026-07-07T21:28:50.780583+00:00
+        # We need to replace +00:00 with Z for valid JSON timestamp
+        ts = datetime.now(timezone.utc).isoformat()
+        clean_timestamp = ts.replace('+00:00', 'Z')
         event = {
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            "timestamp": clean_timestamp,
             "type": "trace",
             "component": component,
             "message": message,
@@ -345,7 +350,7 @@ def escalate_to_human(reason: str) -> str:
         "escalation_id": escalation_id,
         "status": "logged",
         "reason": reason,
-        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
         "priority": "high",
     }, default=str)
 
@@ -693,7 +698,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
     }
 
 

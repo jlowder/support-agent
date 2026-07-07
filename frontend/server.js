@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3300;
+const BACKEND_URL = 'http://localhost:8050';
 const FRONTEND_DIR = path.resolve(__dirname);
 
 const server = http.createServer((req, res) => {
@@ -20,6 +21,45 @@ const server = http.createServer((req, res) => {
     
     // Route handling
     let filePath;
+    
+    // Proxy SSE endpoint to backend
+    if (req.url === '/admin/trace') {
+        const proxyReq = http.request({
+            hostname: 'localhost',
+            port: 8050,
+            path: '/admin/trace',
+            method: 'GET',
+            headers: {
+                'Host': 'localhost:8050',
+                'Accept': 'text/event-stream'
+            }
+        }, (proxyRes) => {
+            // Copy headers from backend to client
+            res.writeHead(proxyRes.statusCode, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*' // Add CORS headers
+            });
+            
+            proxyRes.on('data', (chunk) => {
+                res.write(chunk);
+            });
+            
+            proxyRes.on('end', () => {
+                res.end();
+            });
+        });
+        
+        proxyReq.on('error', (err) => {
+            console.error('Proxy error:', err);
+            res.writeHead(502);
+            res.end('Bad Gateway');
+        });
+        
+        proxyReq.end();
+        return;
+    }
     if (req.url === '/' || req.url === '/index.html') {
         filePath = path.join(FRONTEND_DIR, 'index.html');
     } else if (req.url === '/admin.html') {
