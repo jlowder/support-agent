@@ -1,17 +1,8 @@
 """
-Support Agent - LangGraph-based customer service agent with LLM-driven decisions.
+Support Agent - LLM-driven customer service agent using LangChain tools.
 
-Tool Functions (importable directly):
-- get_user_profile_fn(customer_id)
-- check_policy_validity_fn(order_id, check_type)
-- process_refund_transaction_fn(order_id, amount)
-- escalate_to_human_fn(reason)
-
-API Endpoints:
-- POST /chat - Primary chat endpoint (runs agent loop)
-- GET /admin/trace - SSE stream for admin trace panel
-- POST /api/voice/ingress - Voice stub
-- GET /health - Health check
+All CRM lookups and refund decisions are made by the LLM via bound tools.
+The agent uses LangGraph for state management and tool orchestration.
 """
 
 import asyncio
@@ -21,21 +12,26 @@ import re
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional, TypedDict
+from typing import Any, AsyncGenerator, Dict, List, Optional, TypedDict, cast
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, BaseMessage
+from langchain_core.tools import tool, ToolException
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
+from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel
+
+# Pre-build graph at module level for efficiency
+
 from sse_starlette.sse import EventSourceResponse
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-CRM_PATH = BASE_DIR / "local_crm.json"
-LLM_CONFIG_PATH = BASE_DIR / "llm_config.json"
+CRM_PATH = BASE_DIR.parent.parent / "local_crm.json"
+LLM_CONFIG_PATH = BASE_DIR.parent.parent / "llm_config.json"
 POLICY_RULES_PATH = BASE_DIR / "policy_rules.md"
 
 # ---------------------------------------------------------------------------
@@ -107,7 +103,8 @@ class _TraceBroadcaster:
             "message": message,
             "payload": payload or {},
         }
-        for q in list(self._subscriptions):
+        # Create a copy of subscriptions to avoid mutation issues
+        for q in list(self._subscriptions.copy()):
             try:
                 q.put_nowait(event)
             except Exception:
@@ -126,51 +123,37 @@ trace_broadcaster = _TraceBroadcaster()
 
 
 # ---------------------------------------------------------------------------
-# Tool Functions (standalone, importable)
+# LLM Client
 # ---------------------------------------------------------------------------
 
-def get_user_profile_fn(customer_id: str) -> str:
-    """Look up a customer profile from CRM data."""
+def _get_llm() -> ChatOpenAI:
+    """Get configured LLM client."""
+    config = _load_llm_config()
+    return ChatOpenAI(
+        model=config.get("model", "Qwen3-Coder-Next-MLX-6bit"),
+        base_url=config.get("base_url", "http://localhost:8080/v1"),
+        api_key=config.get("api_key", "omlx-om5hh4rsln2h3f8w"),
+        max_tokens=config.get("max_tokens", 1024),
+        temperature=config.get("temperature", 0.7),
+    )
+
+
+# ---------------------------------------------------------------------------
+# CRM Data Helpers
+# ---------------------------------------------------------------------------
+
+def _find_customer_by_identifier(identifier: str) -> Optional[dict]:
+    """Find a customer by ID (usr_XXX) or email address."""
     crm = get_crm()
-
-    # Use customers array (new CRM structure)
     customers = crm.get("customers", [])
-
-    # Build customer_map directly from customers
-    customer_map = {}
     for customer in customers:
-        cust_id = customer.get("id", "")
-        email = customer.get("email", "")
-
-        customer_data = {
-            "id": cust_id,
-            "customer_email": email,
-            "customer_name": customer.get("name", ""),
-            "loyalty_tier": customer.get("loyalty_tier", "standard"),
-            "orders_count": len(customer.get("order_history", [])),
-            "order_history": customer.get("order_history", []),
-        }
-
-        # Map both customer ID and email
-        customer_map[cust_id] = customer_data
-        customer_map[email] = customer_data
-
-    # Look up customer by ID or email
-    profile = customer_map.get(customer_id)
-
-    if profile:
-        profile["found"] = True
-        return json.dumps(profile, default=str)
-
-    return json.dumps({
-        "found": False,
-        "error": f"Customer not found for identifier: {customer_id}",
-        "suggestion": "Please provide a valid customer ID (e.g., usr_001) or email address",
-    }, default=str)
+        if customer.get("id") == identifier or customer.get("email") == identifier:
+            return customer
+    return None
 
 
-def _find_order_in_customers(order_id: str):
-    """Find an order by ID in the customers-based CRM structure.
+def _find_order_by_id(order_id: str) -> tuple:
+    """Find an order and its associated customer by order_id.
     Returns (order, customer) tuple, or (None, None) if not found."""
     crm = get_crm()
     customers = crm.get("customers", [])
@@ -181,23 +164,53 @@ def _find_order_in_customers(order_id: str):
     return None, None
 
 
-def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
-    """
-    Factual tool that gathers policy-relevant data about an order.
-    Returns JSON with order_id, valid, days_since_purchase, and other relevant fields.
-    Does NOT make policy decisions - that's the LLM's job.
-    """
-    crm = get_crm()
-    order, customer = _find_order_in_customers(order_id)
+# ---------------------------------------------------------------------------
+# LangChain Tools (LLM-driven operations)
+# ---------------------------------------------------------------------------
 
+@tool(description="Look up customer profile by customer ID (e.g., usr_001) or email address. Returns customer details including loyalty tier, order count, and order history.", response_format="content_and_artifact")
+def get_customer_profile(customer_id: str) -> tuple[str, dict]:
+    """Look up a customer profile from CRM data by ID or email."""
+    customer = _find_customer_by_identifier(customer_id)
+    
+    if not customer:
+        return json.dumps({
+            "found": False,
+            "error": f"Customer not found for identifier: {customer_id}",
+            "suggestion": "Please provide a valid customer ID (e.g., usr_001) or email address",
+        }, default=str), {"found": False, "error": f"Customer not found: {customer_id}"}
+    
+    profile = {
+        "found": True,
+        "id": customer.get("id", ""),
+        "customer_email": customer.get("email", ""),
+        "customer_name": customer.get("name", ""),
+        "loyalty_tier": customer.get("loyalty_tier", "standard"),
+        "orders_count": len(customer.get("order_history", [])),
+        "order_history": customer.get("order_history", []),
+    }
+    
+    return json.dumps(profile, default=str), profile
+
+
+@tool(description="Check if an order is eligible for refund. Returns order details, days since purchase, and refund eligibility factors.", response_format="content_and_artifact")
+def check_order_eligibility(order_id: str) -> tuple[str, dict]:
+    """
+    Check if an order is eligible for refund.
+    Returns factual data about the order including days since purchase, order status, and item details.
+    Does NOT make the refund decision - that's for the LLM based on this data.
+    """
+    order, customer = _find_order_by_id(order_id)
+    
     if not order:
         return json.dumps({
             "order_id": order_id,
             "valid": False,
             "error": f"Order {order_id} not found in CRM",
             "days_since_purchase": None,
-        }, default=str)
-
+            "is_eligible": False,
+        }, default=str), {"found": False, "error": f"Order {order_id} not found"}
+    
     order_date_str = order.get("order_date", "")
     try:
         order_date = datetime.strptime(order_date_str, "%Y-%m-%d")
@@ -207,15 +220,16 @@ def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
             "valid": False,
             "error": f"Could not parse order date: {order_date_str}",
             "days_since_purchase": None,
-        }, default=str)
-
+            "is_eligible": False,
+        }, default=str), {"found": False, "error": "Could not parse order date"}
+    
     now = datetime.utcnow()
     days_since_purchase = (now - order_date).days
-
-    # Compute eligibility windows (factual data)
+    
+    # Compute eligibility windows
     within_30_days = days_since_purchase <= 30
     within_60_days = days_since_purchase <= 60
-
+    
     # Check item conditions
     items_data = []
     for item in order.get("items", []):
@@ -226,21 +240,10 @@ def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
             "quantity": item.get("quantity", 1),
             "price": item.get("price", 0),
             "category": item.get("category", ""),
-            "has_return_requests": len(item.get("return_requests", [])) > 0,
+            "is_digital": item.get("item_type") in ("digital", "subscription"),
         }
         items_data.append(item_info)
-
-    # Check return history
-    return_requests = []
-    for item in order.get("items", []):
-        for rr in item.get("return_requests", []):
-            return_requests.append({
-                "item_name": item.get("name", ""),
-                "status": rr.get("status", ""),
-                "reason": rr.get("reason", ""),
-                "amount": rr.get("refund_amount", 0),
-            })
-
+    
     return json.dumps({
         "order_id": order_id,
         "valid": True,
@@ -253,80 +256,86 @@ def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
         "within_60_day_window": within_60_days,
         "total_amount": order.get("total_amount", 0),
         "items": items_data,
-        "return_history": return_requests,
-        "check_type": check_type,
-    }, default=str)
+        "is_eligible": within_60_days and order.get("status") not in ("Refunded", "Cancelled"),
+    }, default=str), {
+        "found": True,
+        "order_id": order_id,
+        "customer_name": customer.get("name", "") if customer else "",
+        "customer_email": customer.get("email", "") if customer else "",
+        "days_since_purchase": days_since_purchase,
+        "within_30_day_window": within_30_days,
+        "within_60_day_window": within_60_days,
+        "order_status": order.get("status", ""),
+        "total_amount": order.get("total_amount", 0),
+        "items": items_data,
+        "is_eligible": within_60_days and order.get("status") not in ("Refunded", "Cancelled"),
+    }
 
 
-def process_refund_transaction_fn(order_id: str, amount: float) -> str:
+@tool(description="Process a refund for an order. Returns transaction details or error if refund cannot be processed.", response_format="content_and_artifact")
+def process_refund(order_id: str, refund_amount: float, reason: str) -> tuple[str, dict]:
     """
-    Process a refund transaction. Updates order status to 'Refunded'.
-    Includes retry logic - fails on first attempt if (amount * 100) is odd.
-    Returns mock transaction ID on success.
+    Process a refund transaction for an order.
+    Updates order status to 'Refunded' and returns transaction ID.
+    Note: This tool performs validation - returns error if order not found or already refunded.
     """
-    crm = get_crm()
-
-    # Find order and its location in the nested structure
-    order = None
-    customer_idx = None
-    order_idx = None
-    for ci, customer in enumerate(crm.get("customers", [])):
-        for oi, o in enumerate(customer.get("order_history", [])):
-            if o.get("order_id") == order_id:
-                order = o
-                customer_idx = ci
-                order_idx = oi
-                break
-        if order:
-            break
-
+    order, customer = _find_order_by_id(order_id)
+    
     if not order:
         return json.dumps({
             "success": False,
             "error": f"Order {order_id} not found",
             "transaction_id": None,
-        }, default=str)
-
-    # Simulated 503 on odd digit amounts: (amount * 100) is odd
-    digit_check = int(amount * 100)
-    is_odd = digit_check % 2 != 0
-
-    max_retries = 3
-    last_error = None
-
-    for attempt in range(max_retries):
-        if is_odd and attempt == 0:
-            # First attempt fails with simulated 503
-            last_error = f"Simulated 503 Service Unavailable (odd digit amount: {digit_check})"
-            if attempt < max_retries - 1:
-                continue  # retry on next attempt
-            break
-
-        # Success path: update order status in nested structure
-        crm["customers"][customer_idx]["order_history"][order_idx]["status"] = "Refunded"
-        crm["customers"][customer_idx]["order_history"][order_idx]["refund_status"] = "Refunded"
-
-        transaction_id = f"refund_{uuid.uuid4().hex[:12]}"
+        }, default=str), {"success": False, "error": f"Order {order_id} not found"}
+    
+    # Check if already refunded
+    if order.get("status") == "Refunded" or order.get("refund_status") == "Full Refund":
         return json.dumps({
-            "success": True,
-            "transaction_id": transaction_id,
-            "order_id": order_id,
-            "amount": amount,
-            "status": "Refunded",
-            "attempts": attempt + 1,
-        }, default=str)
-
+            "success": False,
+            "error": f"Order {order_id} has already been refunded",
+            "transaction_id": None,
+        }, default=str), {"success": False, "error": "Order already refunded"}
+    
+    # Simulated 503 on odd digit amounts: (amount * 100) is odd
+    digit_check = int(refund_amount * 100)
+    is_odd = digit_check % 2 != 0
+    
+    if is_odd:
+        # Simulate occasional failure
+        return json.dumps({
+            "success": False,
+            "error": f"Payment service unavailable (amount validation failed)",
+            "transaction_id": None,
+        }, default=str), {"success": False, "error": "Payment service temporarily unavailable"}
+    
+    # Process refund
+    order["status"] = "Refunded"
+    order["refund_status"] = "Full Refund"
+    order["refund_amount"] = refund_amount
+    
+    transaction_id = f"refund_{uuid.uuid4().hex[:12]}"
+    
     return json.dumps({
-        "success": False,
-        "error": last_error or "Max retries exceeded",
-        "transaction_id": None,
+        "success": True,
+        "transaction_id": transaction_id,
         "order_id": order_id,
-    }, default=str)
+        "amount": refund_amount,
+        "status": "Refunded",
+        "reason": reason,
+    }, default=str), {
+        "success": True,
+        "transaction_id": transaction_id,
+        "order_id": order_id,
+        "amount": refund_amount,
+        "status": "Refunded",
+    }
 
 
-def escalate_to_human_fn(reason: str) -> str:
+@tool(description="Escalate an issue to a human customer service representative. Use when the LLM cannot make a decision, customer requests supervisor, or refund amount exceeds $500.")
+def escalate_to_human(reason: str) -> str:
     """
-    Create an escalation record. Returns JSON with escalation_id and status 'logged'.
+    Create an escalation record for a human representative.
+    Returns escalation ID that can be shared with customer.
     """
     escalation_id = f"ESC-{uuid.uuid4().hex[:8].upper()}"
     return json.dumps({
@@ -334,8 +343,48 @@ def escalate_to_human_fn(reason: str) -> str:
         "status": "logged",
         "reason": reason,
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "priority": "high" if "supervisor" in reason.lower() else "medium",
+        "priority": "high",
     }, default=str)
+
+
+# ---------------------------------------------------------------------------
+# System Prompt with Tool Instructions
+# ---------------------------------------------------------------------------
+
+def _get_system_prompt() -> str:
+    """Build the system prompt with agent persona and policy rules."""
+    policy_rules = get_policy_rules()
+    return f"""You are a firm but empathetic e-commerce customer service assistant.
+
+Your capabilities:
+- Look up customer profiles by ID or email
+- Check order eligibility for refunds
+- Process refunds when eligible
+- Escalate complex issues to humans
+
+REFUND POLICY (from policy_rules.md):
+{policy_rules}
+
+CRITICAL RULES:
+1. ALWAYS start by looking up the customer's profile to verify their identity
+2. ALWAYS check order eligibility BEFORE processing any refund
+3. Only approve refunds that meet the policy requirements
+4. For amounts over $500 or when policy is unclear, escalate to human
+5. Be empathetic but firm about policy restrictions
+
+DECISION FLOW:
+1. If customer identity is unclear: Ask for customer ID or email
+2. Look up customer profile using get_customer_profile tool
+3. If they want a refund: Ask for order ID
+4. Check order eligibility using check_order_eligibility tool
+5. If eligible: Process refund using process_refund tool
+6. If not eligible or unsure: Explain why and offer escalation
+
+RESPONSE REQUIREMENTS:
+- State decisions clearly: approved, denied, or escalated
+- Include transaction IDs when refunds are processed
+- Explain denial reasons with specific policy references
+- Use escalation_id when human intervention is needed"""
 
 
 # ---------------------------------------------------------------------------
@@ -343,762 +392,146 @@ def escalate_to_human_fn(reason: str) -> str:
 # ---------------------------------------------------------------------------
 
 class AgentState(TypedDict):
-    customer_id: Optional[str]
-    customer_email: Optional[str]
-    customer_name: Optional[str]
     customer_profile: Optional[dict]
-    order_id: Optional[str]
-    amount: Optional[float]
-    messages: List[dict]  # conversation history
+    order_info: Optional[dict]
     refund_result: Optional[dict]
-    authenticated: bool
-    order_selected: bool
-    order_history: Optional[list]
-    response: str
+    messages: List[BaseMessage]  # conversation history
     needs_human: bool
     error: Optional[str]
-
-
-# ---------------------------------------------------------------------------
-# LLM initialization
-# ---------------------------------------------------------------------------
-
-def _get_llm() -> ChatOpenAI:
-    """Get configured LLM client."""
-    config = _load_llm_config()
-    return ChatOpenAI(
-        model=config.get("model", "local-model"),
-        base_url=config.get("base_url", "http://localhost:8080/v1"),
-        api_key=config.get("api_key", "not-needed"),
-        max_tokens=config.get("max_tokens", 1024),
-        temperature=config.get("temperature", 0.3),
-    )
-
-
-def _get_system_prompt() -> str:
-    """Build the system prompt with agent persona and policy rules."""
-    policy_rules = get_policy_rules()
-    return f"""You are a firm but empathetic e-commerce customer service representative.
-
-Your role:
-- Help customers with refund requests
-- Verify customer identity before processing any requests
-- Make refund decisions based on company policy (see below)
-- Use tools to gather facts, then use your judgment to decide
-
-REFUND POLICY RULES:
-{policy_rules}
-
-IMPORTANT DECISION RULES:
-- When a customer provides an order_id and amount, check policy validity using the check_policy_validity_fn tool
-- Only approve refunds that comply with the policy rules above
-- If the refund does NOT comply with policy, respond with "cannot" or "unable" and explain why based on policy
-- If the refund DOES comply, respond with "refund" or "success" language
-- For amounts over $500, or when in doubt, escalate to a human using escalate_to_human_fn
-- If the customer is not authenticated (no valid customer_id), ask for their customer ID or email
-- If the customer doesn't provide an order_id, list their order history using list_orders equivalent
-- Always be empathetic but firm about policy
-
-TOOL USAGE:
-- get_user_profile_fn: Use to verify customer identity. Pass customer_email or customer_id.
-- check_policy_validity_fn: Use to get factual data about an order's eligibility. Pass order_id and check_type.
-- process_refund_transaction_fn: Use ONLY after policy check passes. Pass order_id and amount.
-- escalate_to_human_fn: Use when policy is ambiguous, amount > $500, or customer requests supervisor.
-
-RESPONSE FORMAT:
-- Give a clear, empathetic response in natural language
-- State the decision (approved/denied) clearly
-- If approved, include the transaction ID
-- If denied, explain which policy rule was violated
-- If escalating, explain that a human will follow up"""
+    response: Optional[str]  # final response to return
 
 
 # ---------------------------------------------------------------------------
 # Agent Nodes
 # ---------------------------------------------------------------------------
 
-def node_init(state: AgentState) -> AgentState:
-    """Initialize the agent loop."""
-    trace_broadcaster.broadcast(
-        "init",
-        "Agent loop initialized",
-        {"customer_id": state.get("customer_id")},
-    )
-    return state
-
-
-def node_authenticate(state: AgentState) -> AgentState:
-    """Authenticate the customer using CRM lookup."""
-    customer_id = state.get("customer_id")
-    messages = state.get("messages", [])
-
-    trace_broadcaster.broadcast(
-        "authenticate",
-        f"Authenticating customer: {customer_id}",
-        {"customer_id": customer_id},
-    )
-
-    if not customer_id:
-        # Scan messages for customer ID or email pattern
-        # Matches: usr_001, usr_047, or any valid email address
-        for message in messages:
-            content = message.get("content", "")
-            match = re.search(r'(usr_\d+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', content, re.IGNORECASE)
-            if match:
-                customer_id = match.group(1)
-                state["customer_id"] = customer_id
-                trace_broadcaster.broadcast(
-                    "authenticate",
-                    f"Extracted customer_id from message: {customer_id}",
-                    {"customer_id": customer_id},
-                )
-                break
-
-        if not customer_id:
-            # No customer_id found at all - ask for it
-            trace_broadcaster.broadcast(
-                "authenticate",
-                "No customer_id found in input",
-                {},
-            )
-            state["authenticated"] = False
-            return state
-
-    # Look up customer
-    profile = get_user_profile_fn(customer_id)
-    profile = json.loads(profile)  # Parse JSON string response into dict
-    state["customer_profile"] = profile
-
-    if profile.get("found"):
-        state["authenticated"] = True
-        state["customer_email"] = profile.get("customer_email", customer_id)
-        state["customer_name"] = profile.get("customer_name", "")
-        trace_broadcaster.broadcast(
-            "authenticate",
-            f"Customer authenticated: {profile.get('customer_name')}",
-            {"customer_email": profile.get("customer_email")},
-        )
-    else:
-        state["authenticated"] = False
-        state["error"] = profile.get("error", "Customer not found")
-        trace_broadcaster.broadcast(
-            "authenticate",
-            f"Authentication failed: {profile.get('error')}",
-            {"error": profile.get("error")},
-        )
-
-    return state
-
-
-def node_request_auth_info(state: AgentState) -> AgentState:
-    """Request customer authentication info."""
-    trace_broadcaster.broadcast(
-        "authenticate",
-        "Requesting authentication info from customer",
-        {},
-    )
-
-    state["response"] = (
-        "I'd be happy to help you with your refund request! "
-        "Could you please provide your customer ID (e.g., usr_001) or email address "
-        "so I can look up your account?"
-    )
-    return state
-
-
-def node_list_orders(state: AgentState) -> AgentState:
-    """List customer's order history and ask them to select one."""
-    customer_email = state.get("customer_email")
-    crm = get_crm()
-
-    # Get customer's orders from their order_history
-    customer_orders = []
-    for customer in crm.get("customers", []):
-        if customer.get("email") == customer_email:
-            customer_orders = customer.get("order_history", [])
-            break
-
-    state["order_history"] = customer_orders
-
-    if not customer_orders:
-        state["response"] = (
-            "I wasn't able to find any orders associated with your account. "
-            "Could you provide an order ID directly (e.g., ORD-000001)?"
-        )
-        trace_broadcaster.broadcast(
-            "list_orders",
-            "No orders found for customer",
-            {"customer_email": customer_email},
-        )
-        return state
-
-    # Format order list for display
-    order_list = []
-    for i, o in enumerate(customer_orders, 1):
-        order_list.append(
-            f"{i}. {o['order_id']} - {o.get('order_date', 'N/A')} - "
-            f"${o.get('total_amount', 0):.2f} - Status: {o.get('status', 'N/A')}"
-        )
-
-    state["response"] = (
-        f"I found {len(customer_orders)} order(s) in your history. "
-        "Which order would you like to request a refund for? "
-        "Please provide the order ID (e.g., ORD-000001):\n\n"
-        + "\n".join(order_list)
-    )
-
-    trace_broadcaster.broadcast(
-        "list_orders",
-        f"Listed {len(customer_orders)} orders for customer",
-        {"orders": len(customer_orders)},
-    )
-    return state
-
-
-def node_extract(state: AgentState) -> AgentState:
-    """Extract order_id and amount from customer message using regex + LLM fallback."""
-    messages = state.get("messages", [])
-    state["order_selected"] = True
-
-    # Get the latest human message
-    human_msgs = [m for m in messages if m.get("role") == "human"]
-    latest_human = human_msgs[-1].get("content", "") if human_msgs else ""
-
-    order_id = None
-    amount = None
-
-    # Try regex extraction first (fast, no LLM dependency)
-    order_id_match = re.search(r'(ORD-\d{6})', latest_human, re.IGNORECASE)
-    if order_id_match:
-        order_id = order_id_match.group(1).upper()  # Normalize to uppercase
-
-    # Try to extract amount if present
-    amount_match = re.search(r'\$(\d+\.?\d*)', latest_human)
-    if amount_match:
-        amount = float(amount_match.group(1))
-
-    # Only try LLM if regex didn't find an order ID
-    if not order_id:
-        try:
-            llm = _get_llm()
-            system = SystemMessage(content=(
-                "Extract the order_id and amount from the customer's message. "
-                "Return JSON with keys: order_id (string), amount (float). "
-                "If either is missing, set it to null."
-            ))
-            response = llm.invoke([system, HumanMessage(content=latest_human)])
-            content = response.content
-            # Try to parse JSON
-            try:
-                extracted = json.loads(content)
-            except json.JSONDecodeError:
-                # Try to find JSON in the response
-                match = re.search(r'\{[^}]+\}', content)
-                if match:
-                    extracted = json.loads(match.group())
-                else:
-                    extracted = {"order_id": None, "amount": None}
-            order_id = extracted.get("order_id") or order_id
-            amount = extracted.get("amount") if extracted.get("amount") is not None else amount
-        except Exception as e:
-            trace_broadcaster.broadcast(
-                "extract",
-                f"LLM extraction failed: {str(e)}",
-                {"error": str(e)},
-            )
-            # Keep regex-extracted values (may be None)
-
-    state["order_id"] = order_id
-    state["amount"] = amount
-
-    trace_broadcaster.broadcast(
-        "extract",
-        f"Extracted: order_id={order_id}, amount={amount}",
-        {"order_id": order_id, "amount": amount},
-    )
-
-    return state
-
-
-def node_show_items(state: AgentState) -> AgentState:
-    """Show order line items and ask customer to select which to refund."""
-    order_id = state.get("order_id")
-
-    if not order_id:
-        state["response"] = "I'm sorry, but I couldn't identify an order ID."
-        return state
-
-    # Get order details with items
-    policy_data_str = check_policy_validity_fn(order_id, "full")
-    policy_data = json.loads(policy_data_str)
-
-    items = policy_data.get("items", [])
-    if not items:
-        state["response"] = f"No items found in order {order_id}."
-        return state
-
-    # Format items for display
-    item_lines = []
-    for i, item in enumerate(items, 1):
-        item_name = item.get("name", "Unknown Item")
-        quantity = item.get("quantity", 1)
-        price = item.get("price", 0)
-        item_type = item.get("item_type", "physical")
-        is_opened = item.get("is_opened", False)
-
-        # Determine status
-        if item_type in ("digital", "subscription"):
-            status = "Non-refundable"
-        elif is_opened:
-            status = "Opened (15% restocking fee)"
-        else:
-            status = "Unopened (Full refund)"
-
-        item_lines.append(
-            f"  {i}. {item_name} - Qty: {quantity} - ${price:.2f} each - {status}"
-        )
-
-    state["response"] = (
-        f"Here are the items in order {order_id}:\n\n"
-        + "\n".join(item_lines) +
-        "\n\nWhich items would you like to refund? "
-        "Please provide the item numbers (e.g., '1, 3' or 'all')."
-    )
-
-    # Store items in state for later use
-    state["order_items"] = items
-    state["order_items_formatted"] = item_lines
-
-    return state
-
-
-def node_select_items(state: AgentState) -> AgentState:
-    """Process customer's item selection and calculate refund amount."""
-    order_id = state.get("order_id")
-    items = state.get("order_items", [])
-
-    if not items:
-        state["response"] = "No items found in this order."
-        return state
-
-    # Get customer's selection
-    messages = state.get("messages", [])
-    human_msgs = [m for m in messages if m.get("role") == "human"]
-    latest_human = human_msgs[-1].get("content", "") if human_msgs else ""
-
-    # Parse selection (e.g., "1, 3" or "all")
-    selected_indices = []
-    if latest_human.lower().strip() in ("all", "everything", "the whole order"):
-        selected_indices = list(range(len(items)))
-    else:
-        numbers = re.findall(r'\d+', latest_human)
-        selected_indices = [int(n) - 1 for n in numbers if 1 <= int(n) <= len(items)]
-
-    if not selected_indices:
-        state["response"] = "I didn't understand your selection. Please provide item numbers (e.g., '1, 3') or 'all'."
-        state["_select_error"] = True
-        return state
-
-    # Calculate refund per item using rule-based policy
-    approved_items = []
-    denied_items = []
-    total_refund = 0.0
-
-    for idx in selected_indices:
-        if idx >= len(items):
-            continue
-
-        item = items[idx]
-        item_name = item.get("name", "Unknown")
-        item_type = item.get("item_type", "physical")
-        is_opened = item.get("is_opened", False)
-        price = item.get("price", 0)
-        quantity = item.get("quantity", 1)
-
-        # Check non-refundable items
-        if item_type in ("digital", "subscription"):
-            denied_items.append((item, "Digital/subscription items are non-refundable"))
-            continue
-
-        # Calculate refund amount
-        if is_opened:
-            refund_amount = price * quantity * 0.85  # 15% restocking fee
-        else:
-            refund_amount = price * quantity  # Full refund
-
-        approved_items.append((item, refund_amount))
-        total_refund += refund_amount
-
-    # Update state
-    state["selected_items"] = approved_items
-    state["denied_items"] = denied_items
-    state["amount"] = total_refund
-    state["refund_result"] = {
-        "approved_items": [(i.get("name"), a) for i, a in approved_items],
-        "denied_items": [(i.get("name"), r) for i, r in denied_items],
-        "total_refund": total_refund,
-        "approved": len(denied_items) == 0,
-    }
-
-    # Build response
-    response_parts = []
-    if approved_items:
-        response_parts.append(f"Approved refund of ${total_refund:.2f} for:")
-        for item, amount in approved_items:
-            response_parts.append(f"  - {item.get('name')}: ${amount:.2f}")
-
-    if denied_items:
-        response_parts.append("\nDenied items:")
-        for item, reason in denied_items:
-            response_parts.append(f"  - {item.get('name')}: {reason}")
-
-    state["response"] = "\n".join(response_parts)
-
-    # Clear any error flag on success
-    state.pop("_select_error", None)
-    return state
-
-
-def node_check_policy(state: AgentState) -> AgentState:
-    """Check policy validity using factual tool, then apply rule-based policy."""
-    order_id = state.get("order_id")
-    amount = state.get("amount")
-
-    # If amount not provided, get full order amount from CRM
-    if amount is None:
-        policy_data_str = check_policy_validity_fn(order_id, "full")
-        policy_data = json.loads(policy_data_str)
-        order_amount = policy_data.get("total_amount")
-        if order_amount:
-            amount = order_amount
-            state["amount"] = amount
-
-    if not order_id:
-        state["response"] = "I'm sorry, I couldn't identify an order ID from your message. " \
-                           "Could you please provide the order ID (e.g., ORD-000001)?"
-        return state
-
-    trace_broadcaster.broadcast(
-        "check_policy",
-        f"Checking policy for order: {order_id}",
-        {"order_id": order_id},
-    )
-
-    # Get factual policy data
-    policy_data_str = check_policy_validity_fn(order_id, "full")
-    policy_data = json.loads(policy_data_str)
-
-    # Validate order ownership - order must belong to authenticated customer
-    authenticated_email = state.get("customer_email")
-    order_email = policy_data.get("customer_email", "")
-    if authenticated_email and order_email and authenticated_email != order_email:
-        state["response"] = (
-            f"I'm sorry, but order {order_id} does not belong to your account. "
-            f"Refund requests can only be processed for orders associated with your account."
-        )
-        trace_broadcaster.broadcast(
-            "check_policy",
-            f"Order ownership mismatch: authenticated={authenticated_email}, order={order_email}",
-            {"authenticated_email": authenticated_email, "order_email": order_email},
-        )
-        return state
-
-    if not policy_data.get("valid"):
-        state["response"] = (
-            f"I'm sorry, but I cannot process a refund for order {order_id} "
-            f"because it does not meet our policy requirements. "
-            f"Error: {policy_data.get('error', 'Unknown error')}"
-        )
-        return state
-
-    # Rule-based policy check (no LLM dependency)
-    days_since = policy_data.get("days_since_purchase", 0)
-    within_30 = policy_data.get("within_30_day_window", False)
-    within_60 = policy_data.get("within_60_day_window", False)
-    order_status = policy_data.get("order_status", "")
-
-    # Basic approval logic
-    approved = False
-    reason = ""
-
-    if order_status == "Refunded":
-        approved = False
-        reason = "This order has already been refunded."
-    elif within_30:
-        approved = True
-        reason = "Order is within the 30-day full refund window."
-    elif within_60:
-        approved = True
-        reason = "Order is within the 60-day partial refund window."
-    else:
-        approved = False
-        reason = f"Order is {days_since} days old, which exceeds the refund policy window."
-
-    # Customer tier can extend the window
-    customer_tier = state.get("customer_profile", {}).get("loyalty_tier", "standard")
-    if customer_tier == "gold" and days_since <= 45:
-        approved = True
-        reason = "Gold tier member - extended 45-day refund window applies."
-
-    state["refund_result"] = {
-        "policy_data": policy_data,
-        "approved": approved,
-        "reason": reason,
-        "tier": customer_tier,
-    }
-
-    trace_broadcaster.broadcast(
-        "check_policy",
-        f"Policy decision: approved={approved}, reason={reason}",
-        {"approved": approved, "reason": reason},
-    )
-
-    return state
-
-
-def node_process(state: AgentState) -> AgentState:
-    """Process the refund transaction."""
-    order_id = state.get("order_id")
-    amount = state.get("amount")
-    approved = state.get("refund_result", {}).get("approved", False)
-
-    if not approved:
-        state["response"] = (
-            f"I'm sorry, but I cannot process a refund for order {order_id} "
-            f"because it does not meet our refund policy requirements. "
-            f"Reason: {state.get('refund_result', {}).get('reason', 'Policy violation')}. "
-            f"If you believe this is an error, I can escalate this to a human representative."
-        )
-        return state
-
-    if not order_id or amount is None:
-        state["response"] = "I'm sorry, but I need an order ID and refund amount to process this request."
-        return state
-
-    trace_broadcaster.broadcast(
-        "process",
-        f"Processing refund: ${amount:.2f} for order {order_id}",
-        {"order_id": order_id, "amount": amount},
-    )
-
-    result_str = process_refund_transaction_fn(order_id, amount)
-    result = json.loads(result_str)
-
-    state["refund_result"]["transaction"] = result
-
-    if result.get("success"):
-        state["response"] = (
-            f"Great news! Your refund of ${amount:.2f} for order {order_id} has been "
-            f"successfully processed. Transaction ID: {result.get('transaction_id')}. "
-            f"The refund should appear in your account within 5-7 business days."
-        )
-        trace_broadcaster.broadcast(
-            "process",
-            f"Refund successful: {result.get('transaction_id')}",
-            {"transaction_id": result.get("transaction_id")},
-        )
-    else:
-        # Try escalation on failure
-        reason = f"Refund processing failed for order {order_id}: {result.get('error', 'Unknown error')}"
-        esc_result = escalate_to_human_fn(reason)
-
-        state["response"] = (
-            f"I'm sorry, but we encountered an issue processing your refund of ${amount:.2f} "
-            f"for order {order_id}. "
-            f"I've escalated this to a human representative who will follow up with you soon. "
-            f"Reference: {esc_result.get('escalation_id')}"
-        )
-
-        state["needs_human"] = True
-        trace_broadcaster.broadcast(
-            "process",
-            f"Refund failed, escalation created: {esc_result.get('escalation_id')}",
-            {"escalation_id": esc_result.get("escalation_id")},
-        )
-
+def node_handle_tool_calls(state: AgentState) -> AgentState:
+    """Route to tool execution for LLM tool calls."""
+    trace_broadcaster.broadcast("agent", "Processing tool calls", {})
     return state
 
 
 def node_generate_response(state: AgentState) -> AgentState:
-    """Generate final response using LLM (for unhandled cases)."""
-    trace_broadcaster.broadcast(
-        "generate_response",
-        "Generating final response",
-        {},
-    )
-
-    # If response is already set, use it
+    """Generate final response after tools have been called."""
+    trace_broadcaster.broadcast("agent", "Generating final response", {})
+    
+    # If response is already set in state, use it
     if state.get("response"):
         return state
-
-    # Fallback: generate a response using LLM
+    
+    # Extract conversation from state
+    messages = state.get("messages", [])
+    
+    # Get LLM
     llm = _get_llm()
-    system = SystemMessage(content=_get_system_prompt())
-
-    # For local LLMs, first message must be HumanMessage (user query)
-    # Extract actual user input from state messages if available
-    customer_input = ""
-    if state.get("messages"):
-        for msg in state["messages"]:
-            if isinstance(msg, HumanMessage) and msg.content.strip():
-                customer_input = msg.content.strip()
-                break
-
-    messages = [
-        HumanMessage(content=customer_input or "Please help me with my refund request."),
-    ]
-
+    
+    # Build messages with system prompt
+    system_prompt = _get_system_prompt()
+    
+    # Convert state messages to LangChain format if needed
+    langchain_messages = []
+    for msg in messages:
+        if isinstance(msg, dict):
+            if msg.get("role") == "system":
+                langchain_messages.append(SystemMessage(content=msg.get("content", "")))
+            elif msg.get("role") == "human":
+                langchain_messages.append(HumanMessage(content=msg.get("content", "")))
+            elif msg.get("role") == "assistant":
+                langchain_messages.append(AIMessage(content=msg.get("content", "")))
+            elif msg.get("role") == "tool":
+                langchain_messages.append(ToolMessage(content=msg.get("content", ""), tool_call_id=msg.get("tool_call_id", "")))
+        elif isinstance(msg, BaseMessage):
+            langchain_messages.append(msg)
+    
+    # Add system prompt if not already present
+    if not any(isinstance(m, SystemMessage) for m in langchain_messages):
+        langchain_messages.insert(0, SystemMessage(content=system_prompt))
+    
     try:
-        response = llm.invoke(messages)
+        # Invoke LLM synchronously (LangGraph's ToolNode handles async context)
+        response = llm.invoke(langchain_messages)
         state["response"] = response.content
     except Exception as e:
         state["response"] = (
             "I'm sorry, but I'm experiencing technical difficulties. "
             "A human representative will follow up with you shortly."
         )
-        trace_broadcaster.broadcast(
-            "generate_response",
-            f"LLM response generation failed: {str(e)}",
-            {"error": str(e)},
-        )
-
+        trace_broadcaster.broadcast("error", f"Response generation failed: {str(e)}", {"error": str(e)})
+    
     return state
 
 
 # ---------------------------------------------------------------------------
-# LangGraph Router
+# Tool Execution Setup
 # ---------------------------------------------------------------------------
 
-def route_after_authenticate(state: AgentState) -> str:
-    """Route after authentication step."""
-    if state.get("authenticated"):
-        # Check if order_id is provided
-        if state.get("order_id"):
-            return "extract"
-        else:
-            return "list_orders"
-    else:
-        return "request_auth_info"
+# Create the tools list
+tools = [
+    get_customer_profile,
+    check_order_eligibility,
+    process_refund,
+    escalate_to_human,
+]
+
+# Create the tool node
+tool_node = ToolNode(tools)
 
 
-def route_after_list_orders(state: AgentState) -> str:
-    """After listing orders, wait for customer to provide order_id."""
-    # This is a terminal node - we return the response and let the client send another message
-    return "extract"
+# ---------------------------------------------------------------------------
+# Agent Router
+# ---------------------------------------------------------------------------
 
-
-def route_after_show_items(state: AgentState) -> str:
-    """After showing items, wait for customer selection."""
-    return "select_items"
-
-
-def route_after_extract(state: AgentState) -> str:
-    """After extraction, check if we have order_id and amount."""
-    if not state.get("order_id"):
-        state["response"] = "I couldn't find an order ID in your request. Could you please provide the order ID?"
-        return "generate_response"
-
-    # Show items first so customer can select which to refund
-    return "show_items"
-
-
-def route_after_check_policy(state: AgentState) -> str:
-    """After policy check, decide whether to process or deny."""
-    approved = state.get("refund_result", {}).get("approved", False)
-    if approved:
-        return "process"
-    else:
-        return "generate_response"
-
-
-def route_after_process(state: AgentState) -> str:
-    """After processing, end."""
+def should_call_tools(state: AgentState) -> str:
+    """Determine if the LLM wants to call tools based on tool calls in state."""
+    messages = state.get("messages", [])
+    
+    # Check if there are tool calls in the last message
+    if messages:
+        last_msg = messages[-1]
+        if isinstance(last_msg, dict):
+            # Check for tool_call_id which indicates this was a tool response
+            if last_msg.get("role") == "tool":
+                return "generate_response"
+        elif hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+            return "tools"
+    
     return "generate_response"
 
 
 # ---------------------------------------------------------------------------
-# Build Graph
+# Build Agent Graph
 # ---------------------------------------------------------------------------
 
 def build_agent_graph() -> StateGraph:
-    """Build the LangGraph state machine."""
+    """Build the LangGraph agent with bound tools."""
     graph = StateGraph(AgentState)
-
+    
     # Add nodes
-    graph.add_node("init", node_init)
-    graph.add_node("authenticate", node_authenticate)
-    graph.add_node("request_auth_info", node_request_auth_info)
-    graph.add_node("list_orders", node_list_orders)
-    graph.add_node("extract", node_extract)
-    graph.add_node("show_items", node_show_items)
-    graph.add_node("select_items", node_select_items)
-    graph.add_node("check_policy", node_check_policy)
-    graph.add_node("process", node_process)
+    graph.add_node("tools", node_handle_tool_calls)
     graph.add_node("generate_response", node_generate_response)
-
+    
     # Set entry point
-    graph.set_entry_point("init")
-
+    graph.set_entry_point("generate_response")
+    
     # Add edges
-    graph.add_edge("init", "authenticate")
-
-    # Authenticate -> either request_auth_info or list_orders/extract
+    # From generate_response, check if tools are needed
     graph.add_conditional_edges(
-        "authenticate",
-        route_after_authenticate,
+        "generate_response",
+        should_call_tools,
         {
-            "request_auth_info": "request_auth_info",
-            "list_orders": "list_orders",
-            "extract": "extract",
+            "tools": "tools",
+            "generate_response": END,
         },
     )
-
-    # request_auth_info -> end (response is set)
-    graph.add_edge("request_auth_info", "generate_response")
-
-    # list_orders -> extract (customer will provide order_id in next message)
-    graph.add_edge("list_orders", "extract")
-
-    # extract -> show_items or generate_response
-    graph.add_conditional_edges(
-        "extract",
-        route_after_extract,
-        {
-            "show_items": "show_items",
-            "generate_response": "generate_response",
-        },
-    )
-
-    # show_items -> select_items
-    graph.add_edge("show_items", "select_items")
-
-    # select_items -> check_policy (for ownership validation) or generate_response (if error)
-    graph.add_conditional_edges(
-        "select_items",
-        lambda s: "generate_response" if s.get("_select_error") else "check_policy",
-        {
-            "check_policy": "check_policy",
-            "generate_response": "generate_response",
-        },
-    )
-
-    # check_policy -> process or generate_response
-    graph.add_conditional_edges(
-        "check_policy",
-        route_after_check_policy,
-        {
-            "process": "process",
-            "generate_response": "generate_response",
-        },
-    )
-
-    # process -> generate_response
-    graph.add_edge("process", "generate_response")
-
-    # generate_response -> end
-    graph.add_edge("generate_response", END)
-
+    
+    # Tools node loops back to generate_response
+    graph.add_edge("tools", "generate_response")
+    
     return graph
+
+
+# Pre-build graph at module level for efficiency (one-time initialization)
+agent_graph = build_agent_graph().compile()
 
 
 # ---------------------------------------------------------------------------
@@ -1140,55 +573,31 @@ async def health_check():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Primary chat endpoint. Runs the full agent loop and returns the LLM-generated response.
+    Primary chat endpoint. Runs the LLM-driven agent with bound tools.
     """
-    # Build initial state
+    # Build initial state with proper defaults
+    messages = []
     if request.messages:
-        # Use provided conversation history, ensuring system prompt is included
-        if request.messages[0].get("role") == "system":
-            messages = request.messages + [{"role": "human", "content": request.message}]
-        else:
-            # Prepend system prompt; request.messages already contains the current user message
-            messages = [
-                {"role": "system", "content": _get_system_prompt()},
-            ] + request.messages
+        messages = request.messages + [{"role": "human", "content": request.message}]
     else:
-        # Fresh conversation - build from scratch
-        messages = [
-            {"role": "system", "content": _get_system_prompt()},
-            {"role": "human", "content": request.message},
-        ]
-
+        messages = [{"role": "human", "content": request.message}]
+    
     state: AgentState = {
-        "customer_id": request.customer_id,
-        "customer_email": None,
-        "customer_name": None,
         "customer_profile": None,
-        "order_id": None,
-        "amount": None,
-        "messages": messages,
+        "order_info": None,
         "refund_result": None,
-        "authenticated": False,
-        "order_selected": False,
-        "order_history": None,
-        "response": "",
+        "messages": messages,
         "needs_human": False,
         "error": None,
+        "response": None,
     }
-
-    # Build and run graph
-    graph = build_agent_graph()
-    compiled = graph.compile()
-
+    
+    # Use pre-built compiled graph
     try:
-        result = compiled.invoke(state)
+        result = agent_graph.invoke(state)
         return ChatResponse(response=result.get("response", "I'm sorry, I couldn't process your request."))
     except Exception as e:
-        trace_broadcaster.broadcast(
-            "error",
-            f"Agent loop error: {str(e)}",
-            {"error": str(e)},
-        )
+        trace_broadcaster.broadcast("error", f"Agent loop error: {str(e)}", {"error": str(e)})
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1208,7 +617,7 @@ async def admin_trace():
                 }
         finally:
             trace_broadcaster.unsubscribe(q)
-
+    
     return EventSourceResponse(event_generator())
 
 
