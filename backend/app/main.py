@@ -3,6 +3,8 @@ Support Agent - LLM-driven customer service agent using LangChain tools.
 
 All CRM lookups and refund decisions are made by the LLM via bound tools.
 The agent uses LangGraph for state management and tool orchestration.
+
+This code should be implemented according to the specification file ./spec.md
 """
 
 import asyncio
@@ -20,6 +22,7 @@ from langchain_core.tools import tool, ToolException
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode, create_react_agent
+from langchain_core.runnables.config import get_config_list, get_executor_for_config
 from pydantic import BaseModel
 
 # Pre-build graph at module level for efficiency
@@ -467,14 +470,15 @@ def get_current_datetime() -> str:
 def _get_system_prompt() -> str:
     """Build the system prompt with agent persona and policy rules."""
     policy_rules = get_policy_rules()
-    # Get current date for accurate calculations
-    current_date = datetime.utcnow().strftime("%Y-%m-%d")
+    # NOTE: CURRENT DATE is NOT hardcoded here because it changes per request.
+    # The LLM should call get_current_datetime() to get the actual current date.
+    # This ensures accurate eligibility calculations regardless of when the request is made.
     return f"""You are a firm but empathetic e-commerce customer service assistant.
 
-CURRENT DATE: {current_date}
+IMPORTANT: You MUST call get_current_datetime() first to get the current date before calculating order eligibility.
 
 CRITICAL FLOW (call tools in order, do NOT skip steps):
-1. get_current_datetime() - Get current date
+1. get_current_datetime() - Get current date (REQUIRED FIRST STEP)
 2. get_customer_profile(customer_id=...) - Use customer_id from extraction
 3. get_order_items(order_id=...) - Use order_id from extraction
 4. select_items_for_refund() - If user specified items
@@ -484,11 +488,12 @@ CRITICAL FLOW (call tools in order, do NOT skip steps):
 INSTRUCTIONS:
 - Extract: customer_id (usr_XXX), order_id (ORD-XXX), items from user message
 - Call tools in the order above - DO NOT skip steps
+- ALWAYS call get_current_datetime() as your FIRST tool call
 - Generate response ONLY after all tools are called
 
 AVAILABLE TOOLS:
 - get_customer_profile(customer_id: str) - Look up customer
-- get_current_datetime() - Get current date  
+- get_current_datetime() - Get current date (CALL THIS FIRST)
 - get_order_items(order_id: str) - Get order items
 - select_items_for_refund(order_id: str, item_selection: str) - Select items
 - process_refund(order_id: str, refund_amount: float, reason: str) - Process refund
@@ -612,15 +617,42 @@ tools = [
 
 # Create the tool node with tracing
 class TracingToolNode(ToolNode):
-    """ToolNode that broadcasts tool execution events."""
+    """ToolNode that broadcasts tool execution events and properly manages message history."""
     
-    def _apply(self, state, input):
-        # Get tool calls from input
-        tool_calls = []
-        if hasattr(input, 'tool_calls') and input.tool_calls:
-            tool_calls = input.tool_calls
-        elif isinstance(input, dict) and 'tool_calls' in input:
-            tool_calls = input['tool_calls']
+    def _func(
+        self,
+        input,
+        config,
+        *,
+        store=None,
+    ):
+        """Override _func to preserve conversation history."""
+        # Convert config dict to RunnableConfig if needed
+        from langchain_core.runnables import RunnableConfig
+        
+        # Filter config to only include valid RunnableConfig keys
+        valid_keys = {'tags', 'metadata', 'callbacks', 'run_name', 'max_concurrency', 'recursion_limit', 'configurable', 'run_id'}
+        if type(config).__name__ == 'dict':
+            filtered_config = {k: v for k, v in config.items() if k in valid_keys}
+            config = RunnableConfig(**filtered_config)
+        
+        # DEBUG: Log incoming state
+        print(f"DEBUG: BEFORE executor - config type = {type(config).__name__}, keys = {list(config.keys())}")
+        if isinstance(input, dict):
+            incoming_messages = input.get("messages", [])
+        elif hasattr(input, "__iter__"):
+            incoming_messages = list(input)
+        else:
+            incoming_messages = []
+        
+        trace_broadcaster.broadcast("tools", "ToolNode _func started", {
+            "incoming_message_count": len(incoming_messages),
+            "incoming_message_types": [type(m).__name__ if hasattr(m, '__class__') else type(m).__name__ for m in incoming_messages],
+            "input_type": type(input).__name__,
+        })
+        
+        # Parse tool calls from input
+        tool_calls, input_type = self._parse_input(input)
         
         # Trace tool execution
         if tool_calls:
@@ -632,15 +664,49 @@ class TracingToolNode(ToolNode):
                 ],
             })
         
-        # Execute tools
-        result = super()._apply(state, input)
+        # Get existing messages from input for history preservation
+        existing_messages = list(incoming_messages)
         
-        # Trace tool completion
-        if tool_calls:
-            trace_broadcaster.broadcast("tools", "Tool execution completed", {
-                "tool_call_count": len(tool_calls),
-                "results_count": len(result.get("messages", [])),
-            })
+        # Execute tools
+        config_list = get_config_list(config, len(tool_calls))
+        input_types = [input_type] * len(tool_calls)
+        with get_executor_for_config(config) as executor:
+            outputs = [
+                *executor.map(self._run_one, tool_calls, input_types, config_list)
+            ]
+        
+        # Combine tool outputs
+        raw_result = self._combine_tool_outputs(outputs, input_type)
+        
+        # DEBUG: Log result before merge
+        print(f"DEBUG: AFTER executor - raw_result type = {type(raw_result).__name__}")
+        if isinstance(raw_result, dict):
+            tool_results = raw_result.get("messages", [])
+        else:
+            tool_results = raw_result if isinstance(raw_result, list) else []
+        
+        trace_broadcaster.broadcast("tools", "ToolNode result before merge", {
+            "tool_result_count": len(tool_results),
+            "tool_result_types": [type(m).__name__ for m in tool_results],
+            "existing_message_count": len(existing_messages),
+            "raw_result_type": type(raw_result).__name__,
+        })
+        
+        # Merge tool results with existing messages to preserve conversation history
+        merged_messages = list(existing_messages) + list(tool_results)
+        
+        # Return merged messages in the expected format
+        if isinstance(raw_result, dict):
+            raw_result["messages"] = merged_messages
+            result = raw_result
+        else:
+            result = {self.messages_key: merged_messages}
+        
+        # DEBUG: Log final merged state
+        trace_broadcaster.broadcast("tools", "ToolNode _func completed", {
+            "merged_message_count": len(merged_messages),
+            "merged_message_types": [type(m).__name__ if hasattr(m, '__class__') else type(m).__name__ for m in merged_messages],
+        })
         
         return result
 
