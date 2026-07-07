@@ -193,22 +193,25 @@ def get_customer_profile(customer_id: str) -> str:
         "customer_name": customer.get("name", ""),
         "loyalty_tier": customer.get("loyalty_tier", "standard"),
         "orders_count": len(customer.get("order_history", [])),
+        # Include recent order details with items for eligibility evaluation
+        "recent_orders": customer.get("order_history", [])[:3],  # Last 3 orders with full item details
         "order_history": customer.get("order_history", []),
     }
     
     return json.dumps(profile, default=str)
 
 
-@tool(description="Check if an order is eligible for refund. Returns order details, days since purchase, and refund eligibility factors. Include current_date parameter for accurate calculations.", response_format="content")
-def check_order_eligibility(order_id: str, current_date: str = None) -> str:
+@tool(description="Get raw order items for an order. Returns item details including name, price, quantity, is_opened status, and item_type. No eligibility determination - just raw data for the LLM to evaluate.", response_format="content")
+def get_order_items(order_id: str) -> str:
     """
-    Check if an order is eligible for refund.
-    Returns factual data about the order including days since purchase, order status, and item details.
-    Does NOT make the refund decision - that's for the LLM based on this data.
+    Get raw order item data for an order.
+    Returns factual data about items - no eligibility determination.
+    The LLM should use policy rules to determine eligibility.
     
     Args:
-        order_id: The order ID to check
-        current_date: Optional current date in YYYY-MM-DD format. If not provided, uses system date.
+        order_id: The order ID to get items for
+    Returns:
+        JSON with order items including: name, price, quantity, is_opened, item_type, category
     """
     order, customer = _find_order_by_id(order_id)
     
@@ -217,38 +220,18 @@ def check_order_eligibility(order_id: str, current_date: str = None) -> str:
             "order_id": order_id,
             "valid": False,
             "error": f"Order {order_id} not found in CRM",
-            "days_since_purchase": None,
-            "is_eligible": False,
         }, default=str)
     
+    # Get current date
+    current_dt = datetime.utcnow()
     order_date_str = order.get("order_date", "")
     try:
         order_date = datetime.strptime(order_date_str, "%Y-%m-%d")
+        days_since_purchase = (current_dt - order_date).days
     except ValueError:
-        return json.dumps({
-            "order_id": order_id,
-            "valid": False,
-            "error": f"Could not parse order date: {order_date_str}",
-            "days_since_purchase": None,
-            "is_eligible": False,
-        }, default=str)
+        days_since_purchase = None
     
-    # Use provided current_date or system date
-    if current_date:
-        try:
-            current_dt = datetime.strptime(current_date, "%Y-%m-%d")
-        except ValueError:
-            current_dt = datetime.utcnow()
-    else:
-        current_dt = datetime.utcnow()
-    
-    days_since_purchase = (current_dt - order_date).days
-    
-    # Compute eligibility windows
-    within_30_days = days_since_purchase <= 30
-    within_60_days = days_since_purchase <= 60
-    
-    # Check item conditions
+    # Build items list with all relevant data for eligibility calculation
     items_data = []
     for item in order.get("items", []):
         item_info = {
@@ -258,23 +241,17 @@ def check_order_eligibility(order_id: str, current_date: str = None) -> str:
             "quantity": item.get("quantity", 1),
             "price": item.get("price", 0),
             "category": item.get("category", ""),
-            "is_digital": item.get("item_type") in ("digital", "subscription"),
+            "item_id": item.get("item_id", ""),
         }
         items_data.append(item_info)
     
     return json.dumps({
         "order_id": order_id,
         "valid": True,
-        "customer_name": customer.get("name", "") if customer else "",
-        "customer_email": customer.get("email", "") if customer else "",
-        "order_status": order.get("status", ""),
         "order_date": order_date_str,
         "days_since_purchase": days_since_purchase,
-        "within_30_day_window": within_30_days,
-        "within_60_day_window": within_60_days,
-        "total_amount": order.get("total_amount", 0),
+        "order_status": order.get("status", ""),
         "items": items_data,
-        "is_eligible": within_60_days and order.get("status") not in ("Refunded", "Cancelled"),
     }, default=str)
 
 
@@ -347,6 +324,130 @@ def escalate_to_human(reason: str) -> str:
     }, default=str)
 
 
+@tool(description="Select specific items from an order for refund. Takes order_id and item description/pattern to find matching items. Use this when customer specifies which items they want to return.")
+def select_items_for_refund(order_id: str, item_selection: str) -> str:
+    """
+    Select specific items from an order for refund.
+    Returns matched items with their details and refund eligibility.
+    
+    Args:
+        order_id: The order ID containing the items
+        item_selection: Description of items to select (e.g., 'water bottle', 'all items', 'first item')
+    
+    Returns:
+        JSON string with matched items and their details
+    """
+    order, customer = _find_order_by_id(order_id)
+    if not order:
+        return json.dumps({
+            "found": False,
+            "error": f"Order not found: {order_id}",
+        }, default=str)
+    
+    items = order.get("items", [])
+    if not items:
+        return json.dumps({
+            "found": False,
+            "error": "No items found in this order",
+        }, default=str)
+    
+    # Parse item selection
+    # Support patterns like:
+    # - "water bottle" - match items containing this text
+    # - "all items" - return all items
+    # - "first item", "second item", etc. - select by index
+    # - "item 1", "item 2" - select by 1-indexed position
+    
+    item_selection_lower = item_selection.lower().strip()
+    matched_items = []
+    
+    # Handle "all items"
+    if "all items" in item_selection_lower or item_selection_lower == "all":
+        matched_items = items
+    # Handle numeric selection (1-indexed)
+    elif item_selection_lower.startswith("item "):
+        try:
+            idx = int(item_selection_lower.split()[1]) - 1  # Convert to 0-indexed
+            if 0 <= idx < len(items):
+                matched_items = [items[idx]]
+            else:
+                return json.dumps({
+                    "found": False,
+                    "error": f"Invalid item number: {item_selection}. Order has {len(items)} items.",
+                }, default=str)
+        except (ValueError, IndexError):
+            # Try to find matching text
+            for item in items:
+                item_name = item.get("name", "").lower()
+                if item_selection_lower in item_name or item_name in item_selection_lower:
+                    matched_items.append(item)
+                    break
+    # Handle "first", "second", etc.
+    elif "first" in item_selection_lower:
+        matched_items = [items[0]] if items else []
+    elif "second" in item_selection_lower:
+        matched_items = [items[1]] if len(items) > 1 else []
+    elif "third" in item_selection_lower:
+        matched_items = [items[2]] if len(items) > 2 else []
+    # Handle "item 1", "item 2", etc.
+    elif any(f"item {i}" in item_selection_lower for i in range(1, 10)):
+        for i in range(1, 10):
+            if f"item {i}" in item_selection_lower:
+                idx = i - 1
+                if 0 <= idx < len(items):
+                    matched_items = [items[idx]]
+                break
+    # Handle text matching
+    else:
+        for item in items:
+            item_name = item.get("name", "").lower()
+            if item_selection_lower in item_name or item_name in item_selection_lower:
+                matched_items.append(item)
+                break
+    
+    if not matched_items:
+        return json.dumps({
+            "found": False,
+            "error": f"No items matched selection: '{item_selection}'. Available items: {[item.get('name', 'unnamed') for item in items]}",
+        }, default=str)
+    
+    # Build response with matched items
+    response = {
+        "found": True,
+        "order_id": order_id,
+        "matched_items": [],
+    }
+    
+    for item in matched_items:
+        item_detail = {
+            "name": item.get("name", "unnamed"),
+            "quantity": item.get("quantity", 1),
+            "price": item.get("price", 0),
+            "quantity": item.get("quantity", 1),
+            "is_opened": item.get("is_opened", False),
+            "category": item.get("category", ""),
+            "item_type": item.get("item_type", "physical"),
+            "eligibility": "eligible",
+            "refunded_amount": 0,
+        }
+        
+        # Calculate refund amount
+        base_price = item.get("price", 0) * item.get("quantity", 1)
+        if item.get("is_opened", False):
+            # 15% restocking fee for opened items
+            item_detail["restocking_fee"] = base_price * 0.15
+            item_detail["refunded_amount"] = base_price * 0.85
+        else:
+            item_detail["restocking_fee"] = 0
+            item_detail["refunded_amount"] = base_price
+        
+        response["matched_items"].append(item_detail)
+    
+    response["total_refund"] = sum(item["refunded_amount"] for item in response["matched_items"])
+    
+    return json.dumps(response, default=str)
+
+
 @tool(description="Get the current date and time. Use this to calculate days since purchase for order eligibility.")
 def get_current_datetime() -> str:
     """
@@ -372,53 +473,29 @@ def _get_system_prompt() -> str:
 
 CURRENT DATE: {current_date}
 
-Your capabilities:
-- Look up customer profiles by ID or email
-- Check order eligibility for refunds
-- Process refunds when eligible
-- Escalate complex issues to humans
-- Get current date/time for accurate calculations
+CRITICAL FLOW (call tools in order, do NOT skip steps):
+1. get_current_datetime() - Get current date
+2. get_customer_profile(customer_id=...) - Use customer_id from extraction
+3. get_order_items(order_id=...) - Use order_id from extraction
+4. select_items_for_refund() - If user specified items
+5. process_refund() - If eligible
+6. Generate response - ONLY at the end
 
-REFUND POLICY (from policy_rules.md):
-{policy_rules}
+INSTRUCTIONS:
+- Extract: customer_id (usr_XXX), order_id (ORD-XXX), items from user message
+- Call tools in the order above - DO NOT skip steps
+- Generate response ONLY after all tools are called
 
-CRITICAL RULES:
-1. ALWAYS start by looking up the customer's profile to verify their identity
-2. ALWAYS get current date using get_current_datetime tool
-3. ALWAYS check order eligibility using check_order_eligibility tool (include current_date)
-4. Only approve refunds that meet the policy requirements
-5. For amounts over $500 or when policy is unclear, escalate to human
-6. Be empathetic but firm about policy restrictions
+AVAILABLE TOOLS:
+- get_customer_profile(customer_id: str) - Look up customer
+- get_current_datetime() - Get current date  
+- get_order_items(order_id: str) - Get order items
+- select_items_for_refund(order_id: str, item_selection: str) - Select items
+- process_refund(order_id: str, refund_amount: float, reason: str) - Process refund
+- escalate_to_human(reason: str) - Escalate if needed
 
-ORDER REFUND FLOW:
-1. Verify customer identity with get_customer_profile
-2. Get current date with get_current_datetime
-3. If order ID provided: Check eligibility with check_order_eligibility (include current_date)
-4. If order not provided: Ask customer for order ID or list their orders
-5. Check order eligibility and show items to customer
-6. Ask customer which items they want to refund
-7. Calculate refund amounts (15% restocking fee for opened items)
-8. If eligible: Process refund using process_refund tool
-9. If not eligible or unsure: Explain why and offer escalation
+DO NOT write Python code - use proper tool calls only."""
 
-ITEM-LEVEL REFUNDS:
-- Customers can select specific items to refund
-- Unopened items: Full refund
-- Opened items: 15% restocking fee applied
-- Digital/subscription items: Non-refundable
-- Calculate partial refunds based on selected items
-
-RESPONSE REQUIREMENTS:
-- State decisions clearly: approved, denied, or escalated
-- Include transaction IDs when refunds are processed
-- Explain denial reasons with specific policy references
-- Use escalation_id when human intervention is needed
-- For partial refunds: Show itemized breakdown with amounts"""
-
-
-# ---------------------------------------------------------------------------
-# LangGraph State
-# ---------------------------------------------------------------------------
 
 class AgentState(TypedDict):
     customer_profile: Optional[dict]
@@ -465,6 +542,10 @@ def node_generate_response(state: AgentState) -> AgentState:
     # Get LLM
     llm = _get_llm()
     
+    # Bind tools for consistent tool calling behavior
+    # Use tool_choice='none' to prevent tool calls in final response
+    llm_with_tools = llm.bind_tools(tools, tool_choice='none')
+    
     # Build messages with system prompt
     system_prompt = _get_system_prompt()
     
@@ -496,7 +577,8 @@ def node_generate_response(state: AgentState) -> AgentState:
     
     try:
         # Invoke LLM synchronously (LangGraph's ToolNode handles async context)
-        response = llm.invoke(langchain_messages)
+        # Use llm_with_tools for consistent tool calling behavior
+        response = llm_with_tools.invoke(langchain_messages)
         state["response"] = response.content
         
         # Trace: response generated
@@ -521,10 +603,11 @@ def node_generate_response(state: AgentState) -> AgentState:
 # Create the tools list
 tools = [
     get_customer_profile,
-    check_order_eligibility,
+    get_order_items,
     process_refund,
     escalate_to_human,
     get_current_datetime,
+    select_items_for_refund,
 ]
 
 # Create the tool node with tracing
