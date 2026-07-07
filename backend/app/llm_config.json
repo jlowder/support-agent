@@ -1,7 +1,0 @@
-{
-  "model": "local-model",
-  "base_url": "http://localhost:8080/v1",
-  "api_key": "not-needed-for-local",
-  "max_tokens": 1024,
-  "temperature": 0.3
-}

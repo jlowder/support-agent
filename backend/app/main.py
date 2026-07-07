@@ -935,9 +935,17 @@ def node_generate_response(state: AgentState) -> AgentState:
     llm = _get_llm()
     system = SystemMessage(content=_get_system_prompt())
 
+    # For local LLMs, first message must be HumanMessage (user query)
+    # Extract actual user input from state messages if available
+    customer_input = ""
+    if state.get("messages"):
+        for msg in state["messages"]:
+            if isinstance(msg, HumanMessage) and msg.content.strip():
+                customer_input = msg.content.strip()
+                break
+
     messages = [
-        SystemMessage(content="You are a customer service representative. Respond to the customer."),
-        HumanMessage(content="Please help me with my refund request."),
+        HumanMessage(content=customer_input or "Please help me with my refund request."),
     ]
 
     try:
