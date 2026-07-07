@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Trace Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .trace-entry {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .component-authenticate { border-left-color: #3b82f6; }
+        .component-extract { border-left-color: #8b5cf6; }
+        .component-list_orders { border-left-color: #06b6d4; }
+        .component-check_policy { border-left-color: #f59e0b; }
+        .component-process { border-left-color: #10b981; }
+        .component-init { border-left-color: #6366f1; }
+        .component-agent { border-left-color: #ec4899; }
+        .component-tools { border-left-color: #14b8a6; }
+        .component-routing { border-left-color: #f97316; }
+        .component-error { border-left-color: #ef4444; }
+        
+        .payload-json {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .payload-key { color: #6b7280; }
+        .payload-string { color: #10b981; }
+        .payload-number { color: #3b82f6; }
+        .payload-boolean { color: #f59e0b; }
+        .payload-null { color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div id="app" class="flex flex-col h-screen max-w-7xl mx-auto p-4">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                    Admin
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-800">Admin Trace Console</h1>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gray-500">Status:</span>
+                        <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700" id="connection-status">
+                           Connecting...
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button id="clear-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                    Clear Console
+                </button>
+                <button id="export-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                    Export Logs
+                </button>
+            </div>
+        </header>
+
+        <!-- Trace Console -->
+        <main class="flex-1 flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div id="trace-window" class="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-sm">
+                <div class="text-gray-500 italic text-center py-8">
+                    Waiting for trace events...<br>
+                    Start a conversation to see trace logs
+                </div>
+            </div>
+        </main>
+
+        <!-- Stats Footer -->
+        <footer class="mt-4 grid grid-cols-4 gap-4">
+            <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Total Events</div>
+                <div class="text-2xl font-bold text-indigo-600" id="total-events">0</div>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Components</div>
+                <div class="text-2xl font-bold text-green-600" id="unique-components">0</div>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Errors</div>
+                <div class="text-2xl font-bold text-red-600" id="error-count">0</div>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                <div class="text-xs text-gray-500 uppercase tracking-wider">Last Event</div>
+                <div class="text-sm font-medium text-gray-700 truncate" id="last-event-time">-</div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const traceWindow = document.getElementById('trace-window');
+        const connectionStatus = document.getElementById('connection-status');
+        const clearBtn = document.getElementById('clear-btn');
+        const exportBtn = document.getElementById('export-btn');
+        
+        let eventCount = 0;
+        let errorCount = 0;
+        let uniqueComponents = new Set();
+        let allEvents = [];
+        let eventSource = null;
+
+        function updateStats() {
+            document.getElementById('total-events').textContent = eventCount;
+            document.getElementById('unique-components').textContent = uniqueComponents.size;
+            document.getElementById('error-count').textContent = errorCount;
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function highlightJson(obj, indent = 0) {
+            if (obj === null || obj === undefined) {
+                return '<span class="payload-null">null</span>';
+            }
+            
+            if (typeof obj === 'string') {
+                return `<span class="payload-string">"${escapeHtml(obj)}"</span>`;
+            }
+            
+            if (typeof obj === 'number') {
+                return `<span class="payload-number">${obj}</span>`;
+            }
+            
+            if (typeof obj === 'boolean') {
+                return `<span class="payload-boolean">${obj}</span>`;
+            }
+            
+            if (Array.isArray(obj)) {
+                if (obj.length === 0) {
+                    return '[]';
+                }
+                let result = '[\n';
+                obj.forEach((item, index) => {
+                    result += ' '.repeat(indent + 2) + highlightJson(item, indent + 2);
+                    if (index < obj.length - 1) {
+                        result += ',';
+                    }
+                    result += '\n';
+                });
+                return result + ' '.repeat(indent) + ']';
+            }
+            
+            if (typeof obj === 'object') {
+                const keys = Object.keys(obj);
+                if (keys.length === 0) {
+                    return '{}';
+                }
+                let result = '{\n';
+                keys.forEach((key, index) => {
+                    result += ' '.repeat(indent + 2) + 
+                              `<span class="payload-key">"${escapeHtml(key)}"</span>: ` + 
+                              highlightJson(obj[key], indent + 2);
+                    if (index < keys.length - 1) {
+                        result += ',';
+                    }
+                    result += '\n';
+                });
+                return result + ' '.repeat(indent) + '}';
+            }
+            
+            return String(obj);
+        }
+
+        function createTraceEntry(event) {
+            const componentClass = `component-${event.component || 'unknown'}`;
+            const isTrace = event.type === 'trace';
+            const isError = event.message?.toLowerCase().includes('error') || 
+                          event.type?.toLowerCase().includes('error') ||
+                          (event.payload && (event.payload.error || event.payload.error_message));
+            
+            const entry = document.createElement('div');
+            entry.className = `trace-entry border-l-4 rounded-r-lg p-4 mb-2 ${componentClass} ${
+                isError ? 'bg-red-50 border-red-500' : (isTrace ? 'bg-gray-50 border-gray-300' : 'bg-blue-50 border-blue-300')
+            }`;
+            
+            const timestamp = formatTimestamp(event.timestamp);
+            
+            let payloadHtml = '';
+            if (event.payload && Object.keys(event.payload).length > 0) {
+                payloadHtml = `<div class="mt-2 p-2 bg-white rounded border border-gray-200">
+                    <pre class="payload-json">${highlightJson(event.payload)}</pre>
+                </div>`;
+            }
+            
+            entry.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
+                                ${escapeHtml(event.component || 'unknown')}
+                            </span>
+                            <span class="text-xs text-gray-500">[${timestamp}]</span>
+                        </div>
+                        <div class="text-gray-800 font-medium">${escapeHtml(event.message || 'No message')}</div>
+                    </div>
+                    ${isError ? '<span class="text-red-500 text-xs font-bold px-2 py-1 rounded bg-red-100">ERROR</span>' : ''}
+                </div>
+                ${payloadHtml}
+            `;
+            
+            return entry;
+        }
+
+        function addTraceEvent(event) {
+            // Track unique components
+            if (event.component) {
+                uniqueComponents.add(event.component);
+            }
+            
+            // Track errors
+            if (event.message?.toLowerCase().includes('error') || 
+                event.type?.toLowerCase().includes('error') ||
+                (event.payload && (event.payload.error || event.payload.error_message))) {
+                errorCount++;
+            }
+            
+            eventCount++;
+            
+            // Store event
+            allEvents.push(event);
+            
+            // Update stats
+            updateStats();
+            
+            // Update last event time
+            document.getElementById('last-event-time').textContent = formatTimestamp(event.timestamp);
+            
+            // Remove placeholder if present
+            const placeholder = traceWindow.querySelector('.text-gray-500');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            // Add entry
+            const entry = createTraceEntry(event);
+            traceWindow.appendChild(entry);
+            traceWindow.scrollTop = traceWindow.scrollHeight;
+        }
+
+        function connectToTraceStream() {
+            connectionStatus.textContent = 'Connecting...';
+            connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-700';
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'http:';
+            const url = `${protocol}//localhost:8050/admin/trace`;
+            
+            try {
+                const es = new EventSource(url);
+                
+                es.onopen = () => {
+                    connectionStatus.textContent = 'Connected';
+                    connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700';
+                };
+                
+                es.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addTraceEvent(data);
+                    } catch (e) {
+                        console.error('Failed to parse trace event:', e);
+                    }
+                };
+                
+                es.onerror = (error) => {
+                    console.error('SSE error:', error);
+                    connectionStatus.textContent = 'Disconnected';
+                    connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700';
+                    
+                    // Retry after 3 seconds
+                    setTimeout(() => {
+                        connectToTraceStream();
+                    }, 3000);
+                };
+                
+                eventSource = es;
+            } catch (error) {
+                console.error('Failed to connect to trace stream:', error);
+                connectionStatus.textContent = 'Connection Failed';
+                connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700';
+            }
+        }
+
+        // Button handlers
+        clearBtn.addEventListener('click', () => {
+            traceWindow.innerHTML = '<div class="text-gray-500 italic text-center py-8">Console cleared. Waiting for new events...</div>';
+            eventCount = 0;
+            errorCount = 0;
+            uniqueComponents.clear();
+            allEvents = [];
+            updateStats();
+        });
+
+        exportBtn.addEventListener('click', () => {
+            const exportData = {
+                generated: new Date().toISOString(),
+                total_events: eventCount,
+                components: Array.from(uniqueComponents),
+                errors: errorCount,
+                events: allEvents
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `admin-traces-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Initialize
+        connectToTraceStream();
+    </script>
+</body>
+</html>

@@ -12,17 +12,20 @@ import json
 import os
 import re
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional, TypedDict, cast
+from typing import Any, AsyncGenerator, Dict, List, Optional, TypedDict, cast, Annotated
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, BaseMessage
 from langchain_core.tools import tool, ToolException
 from langchain_openai import ChatOpenAI
-from langgraph.graph import END, StateGraph
+from langgraph.graph import END, StateGraph, MessagesState
+from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, create_react_agent
-from langchain_core.runnables.config import get_config_list, get_executor_for_config
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables.config import get_config_list, get_executor_for_config, ensure_config
 from pydantic import BaseModel
 
 # Pre-build graph at module level for efficiency
@@ -100,7 +103,7 @@ class _TraceBroadcaster:
 
     def broadcast(self, component: str, message: str, payload: Optional[dict] = None) -> None:
         event = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "type": "trace",
             "component": component,
             "message": message,
@@ -173,6 +176,26 @@ def _find_order_by_id(order_id: str) -> tuple:
     return None, None
 
 
+def _ensure_base_messages(messages: List[Any]) -> List[BaseMessage]:
+    """Ensure all messages are proper BaseMessage objects."""
+    result = []
+    for msg in messages:
+        if isinstance(msg, BaseMessage):
+            result.append(msg)
+        elif isinstance(msg, dict):
+            role = msg.get("role")
+            content = msg.get("content", "")
+            if role == "system":
+                result.append(SystemMessage(content=content))
+            elif role == "human" or role == "user":
+                result.append(HumanMessage(content=content))
+            elif role == "assistant" or role == "ai":
+                result.append(AIMessage(content=content, tool_calls=msg.get("tool_calls")))
+            elif role == "tool":
+                result.append(ToolMessage(content=content, tool_call_id=msg.get("tool_call_id", "")))
+    return result
+
+
 # ---------------------------------------------------------------------------
 # LangChain Tools (LLM-driven operations)
 # ---------------------------------------------------------------------------
@@ -226,7 +249,7 @@ def get_order_items(order_id: str) -> str:
         }, default=str)
     
     # Get current date
-    current_dt = datetime.utcnow()
+    current_dt = datetime.now(timezone.utc).replace(tzinfo=None)
     order_date_str = order.get("order_date", "")
     try:
         order_date = datetime.strptime(order_date_str, "%Y-%m-%d")
@@ -322,7 +345,7 @@ def escalate_to_human(reason: str) -> str:
         "escalation_id": escalation_id,
         "status": "logged",
         "reason": reason,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "priority": "high",
     }, default=str)
 
@@ -451,16 +474,6 @@ def select_items_for_refund(order_id: str, item_selection: str) -> str:
     return json.dumps(response, default=str)
 
 
-@tool(description="Get the current date and time. Use this to calculate days since purchase for order eligibility.")
-def get_current_datetime() -> str:
-    """
-    Get the current date and time for calculating order eligibility.
-    Returns ISO formatted datetime string.
-    """
-    return json.dumps({
-        "current_datetime": datetime.utcnow().isoformat() + "Z",
-        "current_date": datetime.utcnow().strftime("%Y-%m-%d"),
-    }, default=str)
 
 
 # ---------------------------------------------------------------------------
@@ -470,135 +483,72 @@ def get_current_datetime() -> str:
 def _get_system_prompt() -> str:
     """Build the system prompt with agent persona and policy rules."""
     policy_rules = get_policy_rules()
-    # NOTE: CURRENT DATE is NOT hardcoded here because it changes per request.
-    # The LLM should call get_current_datetime() to get the actual current date.
-    # This ensures accurate eligibility calculations regardless of when the request is made.
+    current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     return f"""You are a firm but empathetic e-commerce customer service assistant.
 
-IMPORTANT: You MUST call get_current_datetime() first to get the current date before calculating order eligibility.
+IMPORTANT: Use the conversation history to remember customer details (ID, email, orders) and previous tool outputs. Do not ask for information already provided.
+
+CURRENT DATE: {current_date}
+
+REFUND POLICY RULES:
+{policy_rules}
 
 CRITICAL FLOW (call tools in order, do NOT skip steps):
-1. get_current_datetime() - Get current date (REQUIRED FIRST STEP)
-2. get_customer_profile(customer_id=...) - Use customer_id from extraction
-3. get_order_items(order_id=...) - Use order_id from extraction
-4. select_items_for_refund() - If user specified items
-5. process_refund() - If eligible
-6. Generate response - ONLY at the end
+1. get_customer_profile(customer_id=...) - Use customer_id from extraction or history
+2. get_order_items(order_id=...) - Use order_id from extraction or history
+3. select_items_for_refund() - If user specified items
+4. process_refund() - If eligible
+5. Generate response - ONLY at the end
 
 INSTRUCTIONS:
-- Extract: customer_id (usr_XXX), order_id (ORD-XXX), items from user message
-- Call tools in the order above - DO NOT skip steps
-- ALWAYS call get_current_datetime() as your FIRST tool call
-- Generate response ONLY after all tools are called
+- Extract: customer_id (usr_XXX), order_id (ORD-XXX), items from user message or conversation history.
+- Call tools in the order above - DO NOT skip steps.
+- Use the CURRENT DATE ({current_date}) for all eligibility calculations.
+- Generate response ONLY after all necessary tools have been called and their output processed.
+- If you have all information needed from previous turns, proceed directly to the next step in the flow.
+- NEVER mention "calling a tool", "let me call", or anything about your internal processing.
+- NEVER hallucinate tools that are not in the AVAILABLE TOOLS list.
+- If you need information, ask the customer directly.
 
 AVAILABLE TOOLS:
 - get_customer_profile(customer_id: str) - Look up customer
-- get_current_datetime() - Get current date (CALL THIS FIRST)
 - get_order_items(order_id: str) - Get order items
 - select_items_for_refund(order_id: str, item_selection: str) - Select items
 - process_refund(order_id: str, refund_amount: float, reason: str) - Process refund
 - escalate_to_human(reason: str) - Escalate if needed
 
-DO NOT write Python code - use proper tool calls only."""
+DO NOT write Python code. Use proper tool calls only.
+DO NOT hallucinate tool calls or "thinking" blocks like "Let me call the tool...". Just call the tool.
+YOUR FINAL RESPONSE TO THE CUSTOMER SHOULD ONLY BE THE TEXT YOU WANT THEM TO SEE."""
 
 
-class AgentState(TypedDict):
-    customer_profile: Optional[dict]
-    order_info: Optional[dict]
-    refund_result: Optional[dict]
-    messages: List[BaseMessage]  # conversation history
-    needs_human: bool
-    error: Optional[str]
-    response: Optional[str]  # final response to return
+class AgentState(MessagesState):
+    response: Optional[str]
 
 
 # ---------------------------------------------------------------------------
 # Agent Nodes
 # ---------------------------------------------------------------------------
 
-def node_handle_tool_calls(state: AgentState) -> AgentState:
-    """Route to tool execution for LLM tool calls."""
-    messages = state.get("messages", [])
+def node_generate_response(state: AgentState, config: RunnableConfig) -> dict:
+    """Extract final response from the last AI message."""
+    messages = _ensure_base_messages(state.get("messages", []))
+    thread_id = config.get("configurable", {}).get("thread_id", "unknown")
     
-    # Get the last assistant message with tool calls
-    tool_calls_to_execute = []
-    for msg in reversed(messages):
-        if isinstance(msg, AIMessage) and hasattr(msg, 'tool_calls') and msg.tool_calls:
-            tool_calls_to_execute = msg.tool_calls
-            break
-    
-    # Trace: tools being invoked
-    trace_broadcaster.broadcast("agent", "Executing tool calls", {
-        "tool_call_count": len(tool_calls_to_execute),
-        "tool_calls": [
-            {"name": tc.get("name", "unknown"), "args": tc.get("args", {}), "id": tc.get("id", "unknown")}
-            for tc in tool_calls_to_execute
-        ],
-    })
-    
-    return state
-
-
-def node_generate_response(state: AgentState) -> AgentState:
-    """Generate final response after tools have been called."""
-    # Extract conversation from state
-    messages = state.get("messages", [])
-    
-    # Get LLM
-    llm = _get_llm()
-    
-    # Bind tools for consistent tool calling behavior
-    # Use tool_choice='none' to prevent tool calls in final response
-    llm_with_tools = llm.bind_tools(tools, tool_choice='none')
-    
-    # Build messages with system prompt
-    system_prompt = _get_system_prompt()
-    
-    # Convert state messages to LangChain format if needed
-    langchain_messages = []
-    for msg in messages:
-        if isinstance(msg, dict):
-            if msg.get("role") == "system":
-                langchain_messages.append(SystemMessage(content=msg.get("content", "")))
-            elif msg.get("role") == "human":
-                langchain_messages.append(HumanMessage(content=msg.get("content", "")))
-            elif msg.get("role") == "assistant":
-                langchain_messages.append(AIMessage(content=msg.get("content", "")))
-            elif msg.get("role") == "tool":
-                langchain_messages.append(ToolMessage(content=msg.get("content", ""), tool_call_id=msg.get("tool_call_id", "")))
-        elif isinstance(msg, BaseMessage):
-            langchain_messages.append(msg)
-    
-    # Add system prompt if not already present
-    if not any(isinstance(m, SystemMessage) for m in langchain_messages):
-        langchain_messages.insert(0, SystemMessage(content=system_prompt))
-    
-    # Trace: generating response with conversation context
     trace_broadcaster.broadcast("agent", "Generating final response", {
-        "message_count": len(langchain_messages),
-        "message_types": [msg.__class__.__name__ for msg in langchain_messages],
-        "has_tool_messages": any(isinstance(m, ToolMessage) for m in langchain_messages),
+        "thread_id": thread_id,
+        "message_count": len(messages),
+        "message_types": [type(m).__name__ for m in messages],
+        "has_tool_messages": any(isinstance(m, ToolMessage) for m in messages),
     })
+
+    # Find the last AIMessage that is NOT a tool call
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage) and not (hasattr(msg, 'tool_calls') and msg.tool_calls):
+            return {"response": msg.content}
     
-    try:
-        # Invoke LLM synchronously (LangGraph's ToolNode handles async context)
-        # Use llm_with_tools for consistent tool calling behavior
-        response = llm_with_tools.invoke(langchain_messages)
-        state["response"] = response.content
-        
-        # Trace: response generated
-        trace_broadcaster.broadcast("agent", "Response generated", {
-            "response_length": len(response.content) if response.content else 0,
-            "response_preview": response.content[:100] if response.content else None,
-        })
-    except Exception as e:
-        state["response"] = (
-            "I'm sorry, but I'm experiencing technical difficulties. "
-            "A human representative will follow up with you shortly."
-        )
-        trace_broadcaster.broadcast("error", f"Response generation failed: {str(e)}", {"error": str(e)})
-    
-    return state
+    # Fallback if no appropriate message found
+    return {"response": "I'm sorry, I couldn't process your request."}
 
 
 # ---------------------------------------------------------------------------
@@ -611,258 +561,105 @@ tools = [
     get_order_items,
     process_refund,
     escalate_to_human,
-    get_current_datetime,
+    # Redundant - current date is now injected into system prompt
+    # get_current_datetime,
     select_items_for_refund,
 ]
 
-# Create the tool node with tracing
-class TracingToolNode(ToolNode):
-    """ToolNode that broadcasts tool execution events and properly manages message history."""
-    
-    def _func(
-        self,
-        input,
-        config,
-        *,
-        store=None,
-    ):
-        """Override _func to preserve conversation history."""
-        # Convert config dict to RunnableConfig if needed
-        from langchain_core.runnables import RunnableConfig
-        
-        # Filter config to only include valid RunnableConfig keys
-        valid_keys = {'tags', 'metadata', 'callbacks', 'run_name', 'max_concurrency', 'recursion_limit', 'configurable', 'run_id'}
-        if type(config).__name__ == 'dict':
-            filtered_config = {k: v for k, v in config.items() if k in valid_keys}
-            config = RunnableConfig(**filtered_config)
-        
-        # DEBUG: Log incoming state
-        print(f"DEBUG: BEFORE executor - config type = {type(config).__name__}, keys = {list(config.keys())}")
-        if isinstance(input, dict):
-            incoming_messages = input.get("messages", [])
-        elif hasattr(input, "__iter__"):
-            incoming_messages = list(input)
-        else:
-            incoming_messages = []
-        
-        trace_broadcaster.broadcast("tools", "ToolNode _func started", {
-            "incoming_message_count": len(incoming_messages),
-            "incoming_message_types": [type(m).__name__ if hasattr(m, '__class__') else type(m).__name__ for m in incoming_messages],
-            "input_type": type(input).__name__,
-        })
-        
-        # Parse tool calls from input
-        tool_calls, input_type = self._parse_input(input)
-        
-        # Trace tool execution
-        if tool_calls:
-            trace_broadcaster.broadcast("tools", "Tool execution started", {
-                "tool_call_count": len(tool_calls),
-                "tool_calls": [
-                    {"name": tc.get("name", "unknown"), "args": tc.get("args", {}), "id": tc.get("id", "unknown")}
-                    for tc in tool_calls
-                ],
-            })
-        
-        # Get existing messages from input for history preservation
-        existing_messages = list(incoming_messages)
-        
-        # Execute tools
-        config_list = get_config_list(config, len(tool_calls))
-        input_types = [input_type] * len(tool_calls)
-        with get_executor_for_config(config) as executor:
-            outputs = [
-                *executor.map(self._run_one, tool_calls, input_types, config_list)
-            ]
-        
-        # Combine tool outputs
-        raw_result = self._combine_tool_outputs(outputs, input_type)
-        
-        # DEBUG: Log result before merge
-        print(f"DEBUG: AFTER executor - raw_result type = {type(raw_result).__name__}")
-        if isinstance(raw_result, dict):
-            tool_results = raw_result.get("messages", [])
-        else:
-            tool_results = raw_result if isinstance(raw_result, list) else []
-        
-        trace_broadcaster.broadcast("tools", "ToolNode result before merge", {
-            "tool_result_count": len(tool_results),
-            "tool_result_types": [type(m).__name__ for m in tool_results],
-            "existing_message_count": len(existing_messages),
-            "raw_result_type": type(raw_result).__name__,
-        })
-        
-        # Merge tool results with existing messages to preserve conversation history
-        merged_messages = list(existing_messages) + list(tool_results)
-        
-        # Return merged messages in the expected format
-        if isinstance(raw_result, dict):
-            raw_result["messages"] = merged_messages
-            result = raw_result
-        else:
-            result = {self.messages_key: merged_messages}
-        
-        # DEBUG: Log final merged state
-        trace_broadcaster.broadcast("tools", "ToolNode _func completed", {
-            "merged_message_count": len(merged_messages),
-            "merged_message_types": [type(m).__name__ if hasattr(m, '__class__') else type(m).__name__ for m in merged_messages],
-        })
-        
-        return result
+# Use standard ToolNode
+tool_node = ToolNode(tools)
 
-tool_node = TracingToolNode(tools)
+def tools_node(state: AgentState, config: RunnableConfig) -> dict:
+    """Wrapper for ToolNode that adds tracing and ensures message objects."""
+    # Ensure messages are BaseMessage objects
+    messages = _ensure_base_messages(state.get("messages", []))
+    thread_id = config.get("configurable", {}).get("thread_id", "unknown")
 
-
-# ---------------------------------------------------------------------------
-# Agent Router
-# ---------------------------------------------------------------------------
-
-def should_call_tools(state: AgentState) -> str:
-    """Determine if the LLM wants to call tools based on tool calls in state."""
-    messages = state.get("messages", [])
-    
-    # Check if there are tool calls in the last message
+    # Extract tool calls from the last message
+    tool_calls = []
     if messages:
         last_msg = messages[-1]
-        # Check for ToolMessage (tool results ready for LLM)
-        if isinstance(last_msg, ToolMessage) or hasattr(last_msg, 'tool_call_id'):
-            return "agent"
-        elif isinstance(last_msg, dict):
-            # Check for tool_call_id which indicates this was a tool response
-            if last_msg.get("role") == "tool":
-                return "agent"
-        elif hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
-            return "tools"
-    
-    return "generate_response"
+        if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+            tool_calls = last_msg.tool_calls
+
+    # Trace tool execution
+    if tool_calls:
+        trace_broadcaster.broadcast("tools", "Tool execution started", {
+            "thread_id": thread_id,
+            "tool_call_count": len(tool_calls),
+            "tool_calls": [
+                {"name": tc.get("name", "unknown"), "args": tc.get("args", {}), "id": tc.get("id", "unknown")}
+                for tc in tool_calls
+            ],
+        })
+
+    # Run tool node
+    result = tool_node.invoke({"messages": messages}, config=config)
+
+    trace_broadcaster.broadcast("tools", "Tool execution completed", {
+        "thread_id": thread_id,
+        "result_type": type(result).__name__,
+    })
+
+    return result
 
 
 # ---------------------------------------------------------------------------
 # Build Agent Graph
 # ---------------------------------------------------------------------------
 
+# Shared checkpointer
+memory = MemorySaver()
+
 def build_agent_graph() -> StateGraph:
-    """Build the LangGraph agent with bound tools using create_react_agent."""
-    # Get LLM and bind tools
+    """Build the LangGraph agent with bound tools."""
     llm = _get_llm()
     llm_with_tools = llm.bind_tools(tools)
     
-    # Create a simple graph that handles tool calling
-    # We'll use a manual approach since create_react_agent has different state management
-    def agent_node(state: AgentState) -> AgentState:
-        """Run the agent and return updated state."""
-        # Get messages from state
-        messages = state.get("messages", [])
-        
-        # Convert dict messages to LangChain messages
-        langchain_messages = []
-        for msg in messages:
-            if isinstance(msg, dict):
-                if msg.get("role") == "system":
-                    langchain_messages.append(SystemMessage(content=msg.get("content", "")))
-                elif msg.get("role") == "human":
-                    langchain_messages.append(HumanMessage(content=msg.get("content", "")))
-                elif msg.get("role") == "assistant":
-                    langchain_messages.append(AIMessage(content=msg.get("content", "")))
-                elif msg.get("role") == "tool":
-                    langchain_messages.append(ToolMessage(content=msg.get("content", ""), tool_call_id=msg.get("tool_call_id", "")))
-            elif isinstance(msg, BaseMessage):
-                langchain_messages.append(msg)
-        
-        # Add current date system prompt if not already present
-        # This ensures LLM has accurate date for eligibility calculations
+    def agent_node(state: AgentState, config: RunnableConfig) -> dict:
+        # Ensure messages are BaseMessage objects (handling restored dicts)
+        messages = _ensure_base_messages(state.get("messages", []))
         system_prompt = _get_system_prompt()
-        if not any(isinstance(m, SystemMessage) for m in langchain_messages):
-            langchain_messages.insert(0, SystemMessage(content=system_prompt))
-        
-        # Trace: agent started
+        thread_id = config.get("configurable", {}).get("thread_id", "unknown")
+
+        # Build prompt with system message
+        langchain_messages = [SystemMessage(content=system_prompt)] + messages
+
         trace_broadcaster.broadcast("agent", "Agent processing message", {
+            "thread_id": thread_id,
             "message_count": len(messages),
-            "message_types": [msg.__class__.__name__ if hasattr(msg, '__class__') else type(msg).__name__ for msg in messages[-3:]],  # Last 3 messages
         })
         
-        # Invoke LLM with tools
-        response = llm_with_tools.invoke(langchain_messages)
-        
-        # Trace: LLM response
-        tool_calls_info = []
-        if hasattr(response, 'tool_calls') and response.tool_calls:
-            tool_calls_info = [{"name": tc.get("name", "unknown"), "args": tc.get("args", {})} for tc in response.tool_calls]
+        response = llm_with_tools.invoke(langchain_messages, config=config)
         
         trace_broadcaster.broadcast("agent", "LLM response received", {
-            "content": response.content[:200] if response.content else None,
-            "has_tool_calls": len(tool_calls_info) > 0,
-            "tool_calls": tool_calls_info,
+            "thread_id": thread_id,
+            "has_tool_calls": bool(getattr(response, 'tool_calls', None)),
         })
         
-        # Add response to messages
-        state["messages"].append(response)
-        
-        # Check if there are tool calls in the response
-        if hasattr(response, 'tool_calls') and response.tool_calls:
-            state["has_tool_calls"] = True
-        else:
-            state["has_tool_calls"] = False
-        
-        return state
+        return {"messages": [response]}
     
     def route_after_agent(state: AgentState) -> str:
-        """Route based on whether agent wants to call tools or has tool results."""
         messages = state.get("messages", [])
-        
-        if not messages:
-            return "generate_response"
-        
-        last_msg = messages[-1]
-        
-        # Check if the last message has tool calls
-        if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
-            # LLM wants to call tools
-            trace_broadcaster.broadcast("routing", "Routing to tools", {
-                "decision": "tool_calls_detected",
-                "tool_call_count": len(last_msg.tool_calls),
-                "tool_names": [tc.get("name", "unknown") for tc in last_msg.tool_calls],
-            })
+        if messages and getattr(messages[-1], 'tool_calls', None):
             return "tools"
-        elif isinstance(last_msg, ToolMessage):
-            # Tool results are in history, LLM should process them
-            trace_broadcaster.broadcast("routing", "Routing to agent with tool results", {
-                "decision": "tool_result_received",
-                "tool_call_id": getattr(last_msg, 'tool_call_id', None),
-                "content_length": len(last_msg.content) if last_msg.content else 0,
-            })
-            return "agent"
-        
-        # No tool calls and no tool results, generate response
-        trace_broadcaster.broadcast("routing", "Routing to generate_response", {
-            "decision": "no_more_tools",
-            "last_message_type": last_msg.__class__.__name__,
-        })
         return "generate_response"
     
     graph = StateGraph(AgentState)
     graph.add_node("agent", agent_node)
-    graph.add_node("tools", tool_node)
+    graph.add_node("tools", tools_node)
     graph.add_node("generate_response", node_generate_response)
     
     graph.set_entry_point("agent")
-    
-    graph.add_conditional_edges(
-        "agent",
-        route_after_agent,
-        {
-            "tools": "tools",
-            "generate_response": "generate_response",
-        },
-    )
-    
+    graph.add_conditional_edges("agent", route_after_agent, {"tools": "tools", "generate_response": "generate_response"})
     graph.add_edge("tools", "agent")
+    graph.add_edge("generate_response", END)
     
-    return graph
+    return graph.compile(checkpointer=memory)
 
 
-# Pre-build graph at module level for efficiency (one-time initialization)
-agent_graph = None
+# Initialize the graph once
+agent_graph = build_agent_graph()
 
 
 # ---------------------------------------------------------------------------
@@ -883,9 +680,8 @@ app.add_middleware(
 
 
 class ChatRequest(BaseModel):
-    customer_id: Optional[str] = None
     message: str
-    messages: Optional[List[dict]] = None  # Conversation history from frontend
+    thread_id: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -897,7 +693,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     }
 
 
@@ -906,31 +702,19 @@ async def chat(request: ChatRequest):
     """
     Primary chat endpoint. Runs the LLM-driven agent with bound tools.
     """
-    # Build initial state with proper defaults
-    messages = []
-    if request.messages:
-        messages = request.messages + [{"role": "human", "content": request.message}]
-    else:
-        messages = [{"role": "human", "content": request.message}]
+    thread_id = request.thread_id or str(uuid.uuid4())
+    config = {"configurable": {"thread_id": thread_id}}
     
-    state: AgentState = {
-        "customer_profile": None,
-        "order_info": None,
-        "refund_result": None,
-        "messages": messages,
-        "needs_human": False,
-        "error": None,
-        "response": None,
-    }
-    
-    # Compile graph at runtime (since build_agent_graph() is called)
-    graph = build_agent_graph()
-    compiled = graph.compile()
+    # Only send the new message, let LangGraph handle history via checkpointer
+    input_state = {"messages": [HumanMessage(content=request.message)]}
     
     try:
-        result = compiled.invoke(state)
+        # agent_graph is already compiled with checkpointer
+        result = agent_graph.invoke(input_state, config=config)
         return ChatResponse(response=result.get("response", "I'm sorry, I couldn't process your request."))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         trace_broadcaster.broadcast("error", f"Agent loop error: {str(e)}", {"error": str(e)})
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -980,6 +764,22 @@ async def startup():
 async def shutdown():
     """Clean up on shutdown."""
     trace_broadcaster.close_all()
+
+
+# ---------------------------------------------------------------------------
+# Aliases for testing
+# ---------------------------------------------------------------------------
+def get_user_profile_fn(customer_id: str) -> dict:
+    return json.loads(get_customer_profile.run(customer_id))
+
+def check_policy_validity_fn(order_id: str, check_type: str = "full") -> dict:
+    return json.loads(get_order_items.run(order_id))
+
+def process_refund_transaction_fn(order_id: str, amount: float) -> dict:
+    return json.loads(process_refund.run({"order_id": order_id, "refund_amount": amount, "reason": "Refund requested via test"}))
+
+def escalate_to_human_fn(reason: str) -> dict:
+    return json.loads(escalate_to_human.run(reason))
 
 
 # ---------------------------------------------------------------------------

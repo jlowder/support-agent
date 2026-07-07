@@ -14,10 +14,10 @@ from main import (
 
 def test_get_user_profile():
     print("Testing get_user_profile_fn...")
-    result = get_user_profile_fn("diana.p@email.com")
+    result = get_user_profile_fn("emily.j@example.net")
     print(f"  Result: {result}")
     assert result.get("found"), "Customer should be found"
-    assert result.get("customer_name") == "Diana Prince"
+    assert result.get("customer_name") == "Emily Johnson"
     print("  ✓ PASS")
 
 
@@ -32,10 +32,10 @@ def test_get_user_profile_not_found():
 
 def test_check_policy_validity():
     print("Testing check_policy_validity_fn...")
-    result = check_policy_validity_fn("ORD-000001", "full")
+    result = check_policy_validity_fn("ORD-000030", "full")
     print(f"  Result: {result}")
     assert result.get("valid"), "Order should be valid"
-    assert result.get("order_id") == "ORD-000001"
+    assert result.get("order_id") == "ORD-000030"
     assert result.get("days_since_purchase") is not None
     print("  ✓ PASS")
 
@@ -52,7 +52,8 @@ def test_check_policy_not_found():
 def test_process_refund_success():
     print("Testing process_refund_transaction_fn (success)...")
     # Use an even amount to avoid 503 simulation
-    result = process_refund_transaction_fn("ORD-000001", 100.00)
+    # ORD-000030 is already refunded in mock data, let's use ORD-000050
+    result = process_refund_transaction_fn("ORD-000050", 100.00)
     print(f"  Result: {result}")
     assert result.get("success"), "Refund should succeed"
     assert result.get("transaction_id") is not None
