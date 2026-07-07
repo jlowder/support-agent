@@ -130,48 +130,55 @@ trace_broadcaster = _TraceBroadcaster()
 # ---------------------------------------------------------------------------
 
 def get_user_profile_fn(customer_id: str) -> str:
-    """
-    Look up a customer profile from CRM data.
-    Groups orders by customer_email and synthesizes customer records with IDs like usr_001.
-    Returns JSON string (not dict) for test compatibility.
-    """
+    """Look up a customer profile from CRM data."""
     crm = get_crm()
-    orders = crm.get("orders", [])
 
-    # Group orders by customer_email
-    customer_orders = {}
-    for order in orders:
-        email = order.get("customer_email", "")
-        if email not in customer_orders:
-            customer_orders[email] = []
-        customer_orders[email].append(order)
+    # Use customers array (new CRM structure)
+    customers = crm.get("customers", [])
 
-    # Sort by email and assign sequential IDs (usr_001, usr_002, etc.)
-    sorted_emails = sorted(customer_orders.keys())
+    # Build customer_map directly from customers
     customer_map = {}
-    for idx, email in enumerate(sorted_emails, 1):
-        customer_id_synthesized = f"usr_{idx:03d}"
-        customer_map[customer_id_synthesized] = {
-            "id": customer_id_synthesized,
+    for customer in customers:
+        cust_id = customer.get("id", "")
+        email = customer.get("email", "")
+
+        customer_data = {
+            "id": cust_id,
             "customer_email": email,
-            "customer_name": customer_orders[email][0].get("customer_name", ""),
-            "orders_count": len(customer_orders[email]),
-            "order_history": customer_orders[email],
+            "customer_name": customer.get("name", ""),
+            "loyalty_tier": customer.get("loyalty_tier", "standard"),
+            "orders_count": len(customer.get("order_history", [])),
+            "order_history": customer.get("order_history", []),
         }
-        # Also map email to customer data
-        customer_map[email] = customer_map[customer_id_synthesized]
+
+        # Map both customer ID and email
+        customer_map[cust_id] = customer_data
+        customer_map[email] = customer_data
 
     # Look up customer by ID or email
-    customer_data = customer_map.get(customer_id)
+    profile = customer_map.get(customer_id)
 
-    if customer_data:
-        return json.dumps(customer_data, default=str)
+    if profile:
+        profile["found"] = True
+        return json.dumps(profile, default=str)
 
     return json.dumps({
         "found": False,
         "error": f"Customer not found for identifier: {customer_id}",
         "suggestion": "Please provide a valid customer ID (e.g., usr_001) or email address",
     }, default=str)
+
+
+def _find_order_in_customers(order_id: str):
+    """Find an order by ID in the customers-based CRM structure.
+    Returns (order, customer) tuple, or (None, None) if not found."""
+    crm = get_crm()
+    customers = crm.get("customers", [])
+    for customer in customers:
+        for order in customer.get("order_history", []):
+            if order.get("order_id") == order_id:
+                return order, customer
+    return None, None
 
 
 def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
@@ -181,13 +188,7 @@ def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
     Does NOT make policy decisions - that's the LLM's job.
     """
     crm = get_crm()
-    orders = crm.get("orders", [])
-
-    order = None
-    for o in orders:
-        if o.get("order_id") == order_id:
-            order = o
-            break
+    order, customer = _find_order_in_customers(order_id)
 
     if not order:
         return json.dumps({
@@ -243,8 +244,8 @@ def check_policy_validity_fn(order_id: str, check_type: str = "full") -> str:
     return json.dumps({
         "order_id": order_id,
         "valid": True,
-        "customer_name": order.get("customer_name", ""),
-        "customer_email": order.get("customer_email", ""),
+        "customer_name": customer.get("name", "") if customer else "",
+        "customer_email": customer.get("email", "") if customer else "",
         "order_status": order.get("status", ""),
         "order_date": order_date_str,
         "days_since_purchase": days_since_purchase,
@@ -264,14 +265,19 @@ def process_refund_transaction_fn(order_id: str, amount: float) -> str:
     Returns mock transaction ID on success.
     """
     crm = get_crm()
-    orders = crm.get("orders", [])
 
+    # Find order and its location in the nested structure
     order = None
+    customer_idx = None
     order_idx = None
-    for i, o in enumerate(orders):
-        if o.get("order_id") == order_id:
-            order = o
-            order_idx = i
+    for ci, customer in enumerate(crm.get("customers", [])):
+        for oi, o in enumerate(customer.get("order_history", [])):
+            if o.get("order_id") == order_id:
+                order = o
+                customer_idx = ci
+                order_idx = oi
+                break
+        if order:
             break
 
     if not order:
@@ -296,9 +302,9 @@ def process_refund_transaction_fn(order_id: str, amount: float) -> str:
                 continue  # retry on next attempt
             break
 
-        # Success path: update order status
-        orders[order_idx]["status"] = "Refunded"
-        orders[order_idx]["refund_status"] = "Refunded"
+        # Success path: update order status in nested structure
+        crm["customers"][customer_idx]["order_history"][order_idx]["status"] = "Refunded"
+        crm["customers"][customer_idx]["order_history"][order_idx]["refund_status"] = "Refunded"
 
         transaction_id = f"refund_{uuid.uuid4().hex[:12]}"
         return json.dumps({
@@ -433,17 +439,34 @@ def node_authenticate(state: AgentState) -> AgentState:
     )
 
     if not customer_id:
-        # No customer_id provided - ask for it
-        trace_broadcaster.broadcast(
-            "authenticate",
-            "No customer_id found in input",
-            {},
-        )
-        state["authenticated"] = False
-        return state
+        # Scan messages for customer ID or email pattern
+        # Matches: usr_001, usr_047, or any valid email address
+        for message in messages:
+            content = message.get("content", "")
+            match = re.search(r'(usr_\d+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', content, re.IGNORECASE)
+            if match:
+                customer_id = match.group(1)
+                state["customer_id"] = customer_id
+                trace_broadcaster.broadcast(
+                    "authenticate",
+                    f"Extracted customer_id from message: {customer_id}",
+                    {"customer_id": customer_id},
+                )
+                break
+
+        if not customer_id:
+            # No customer_id found at all - ask for it
+            trace_broadcaster.broadcast(
+                "authenticate",
+                "No customer_id found in input",
+                {},
+            )
+            state["authenticated"] = False
+            return state
 
     # Look up customer
     profile = get_user_profile_fn(customer_id)
+    profile = json.loads(profile)  # Parse JSON string response into dict
     state["customer_profile"] = profile
 
     if profile.get("found"):
@@ -487,13 +510,13 @@ def node_list_orders(state: AgentState) -> AgentState:
     """List customer's order history and ask them to select one."""
     customer_email = state.get("customer_email")
     crm = get_crm()
-    orders = crm.get("orders", [])
 
-    # Get customer's orders
-    customer_orders = [
-        o for o in orders
-        if o.get("customer_email") == customer_email
-    ]
+    # Get customer's orders from their order_history
+    customer_orders = []
+    for customer in crm.get("customers", []):
+        if customer.get("email") == customer_email:
+            customer_orders = customer.get("order_history", [])
+            break
 
     state["order_history"] = customer_orders
 
@@ -533,62 +556,222 @@ def node_list_orders(state: AgentState) -> AgentState:
 
 
 def node_extract(state: AgentState) -> AgentState:
-    """Extract order_id and amount from customer message using LLM."""
+    """Extract order_id and amount from customer message using regex + LLM fallback."""
     messages = state.get("messages", [])
     state["order_selected"] = True
 
-    # Use LLM to extract structured info from the latest customer message
-    llm = _get_llm()
-    system = SystemMessage(content=(
-        "Extract the order_id and amount from the customer's message. "
-        "Return JSON with keys: order_id (string), amount (float). "
-        "If either is missing, set it to null."
-    ))
-
     # Get the latest human message
     human_msgs = [m for m in messages if m.get("role") == "human"]
-    if human_msgs:
-        latest_human = human_msgs[-1].get("content", "")
-    else:
-        latest_human = ""
+    latest_human = human_msgs[-1].get("content", "") if human_msgs else ""
 
-    try:
-        response = llm.invoke([system, HumanMessage(content=latest_human)])
-        content = response.content
-        # Try to parse JSON
+    order_id = None
+    amount = None
+
+    # Try regex extraction first (fast, no LLM dependency)
+    order_id_match = re.search(r'(ORD-\d{6})', latest_human, re.IGNORECASE)
+    if order_id_match:
+        order_id = order_id_match.group(1).upper()  # Normalize to uppercase
+
+    # Try to extract amount if present
+    amount_match = re.search(r'\$(\d+\.?\d*)', latest_human)
+    if amount_match:
+        amount = float(amount_match.group(1))
+
+    # Only try LLM if regex didn't find an order ID
+    if not order_id:
         try:
-            extracted = json.loads(content)
-        except json.JSONDecodeError:
-            # Try to find JSON in the response
-            match = re.search(r'\{[^}]+\}', content)
-            if match:
-                extracted = json.loads(match.group())
-            else:
-                extracted = {"order_id": None, "amount": None}
-    except Exception as e:
-        trace_broadcaster.broadcast(
-            "extract",
-            f"LLM extraction failed: {str(e)}",
-            {"error": str(e)},
-        )
-        extracted = {"order_id": None, "amount": None}
+            llm = _get_llm()
+            system = SystemMessage(content=(
+                "Extract the order_id and amount from the customer's message. "
+                "Return JSON with keys: order_id (string), amount (float). "
+                "If either is missing, set it to null."
+            ))
+            response = llm.invoke([system, HumanMessage(content=latest_human)])
+            content = response.content
+            # Try to parse JSON
+            try:
+                extracted = json.loads(content)
+            except json.JSONDecodeError:
+                # Try to find JSON in the response
+                match = re.search(r'\{[^}]+\}', content)
+                if match:
+                    extracted = json.loads(match.group())
+                else:
+                    extracted = {"order_id": None, "amount": None}
+            order_id = extracted.get("order_id") or order_id
+            amount = extracted.get("amount") if extracted.get("amount") is not None else amount
+        except Exception as e:
+            trace_broadcaster.broadcast(
+                "extract",
+                f"LLM extraction failed: {str(e)}",
+                {"error": str(e)},
+            )
+            # Keep regex-extracted values (may be None)
 
-    state["order_id"] = extracted.get("order_id")
-    state["amount"] = extracted.get("amount")
+    state["order_id"] = order_id
+    state["amount"] = amount
 
     trace_broadcaster.broadcast(
         "extract",
-        f"Extracted: order_id={state.get('order_id')}, amount={state.get('amount')}",
-        {"order_id": state.get("order_id"), "amount": state.get("amount")},
+        f"Extracted: order_id={order_id}, amount={amount}",
+        {"order_id": order_id, "amount": amount},
     )
 
     return state
 
 
+def node_show_items(state: AgentState) -> AgentState:
+    """Show order line items and ask customer to select which to refund."""
+    order_id = state.get("order_id")
+
+    if not order_id:
+        state["response"] = "I'm sorry, but I couldn't identify an order ID."
+        return state
+
+    # Get order details with items
+    policy_data_str = check_policy_validity_fn(order_id, "full")
+    policy_data = json.loads(policy_data_str)
+
+    items = policy_data.get("items", [])
+    if not items:
+        state["response"] = f"No items found in order {order_id}."
+        return state
+
+    # Format items for display
+    item_lines = []
+    for i, item in enumerate(items, 1):
+        item_name = item.get("name", "Unknown Item")
+        quantity = item.get("quantity", 1)
+        price = item.get("price", 0)
+        item_type = item.get("item_type", "physical")
+        is_opened = item.get("is_opened", False)
+
+        # Determine status
+        if item_type in ("digital", "subscription"):
+            status = "Non-refundable"
+        elif is_opened:
+            status = "Opened (15% restocking fee)"
+        else:
+            status = "Unopened (Full refund)"
+
+        item_lines.append(
+            f"  {i}. {item_name} - Qty: {quantity} - ${price:.2f} each - {status}"
+        )
+
+    state["response"] = (
+        f"Here are the items in order {order_id}:\n\n"
+        + "\n".join(item_lines) +
+        "\n\nWhich items would you like to refund? "
+        "Please provide the item numbers (e.g., '1, 3' or 'all')."
+    )
+
+    # Store items in state for later use
+    state["order_items"] = items
+    state["order_items_formatted"] = item_lines
+
+    return state
+
+
+def node_select_items(state: AgentState) -> AgentState:
+    """Process customer's item selection and calculate refund amount."""
+    order_id = state.get("order_id")
+    items = state.get("order_items", [])
+
+    if not items:
+        state["response"] = "No items found in this order."
+        return state
+
+    # Get customer's selection
+    messages = state.get("messages", [])
+    human_msgs = [m for m in messages if m.get("role") == "human"]
+    latest_human = human_msgs[-1].get("content", "") if human_msgs else ""
+
+    # Parse selection (e.g., "1, 3" or "all")
+    selected_indices = []
+    if latest_human.lower().strip() in ("all", "everything", "the whole order"):
+        selected_indices = list(range(len(items)))
+    else:
+        numbers = re.findall(r'\d+', latest_human)
+        selected_indices = [int(n) - 1 for n in numbers if 1 <= int(n) <= len(items)]
+
+    if not selected_indices:
+        state["response"] = "I didn't understand your selection. Please provide item numbers (e.g., '1, 3') or 'all'."
+        state["_select_error"] = True
+        return state
+
+    # Calculate refund per item using rule-based policy
+    approved_items = []
+    denied_items = []
+    total_refund = 0.0
+
+    for idx in selected_indices:
+        if idx >= len(items):
+            continue
+
+        item = items[idx]
+        item_name = item.get("name", "Unknown")
+        item_type = item.get("item_type", "physical")
+        is_opened = item.get("is_opened", False)
+        price = item.get("price", 0)
+        quantity = item.get("quantity", 1)
+
+        # Check non-refundable items
+        if item_type in ("digital", "subscription"):
+            denied_items.append((item, "Digital/subscription items are non-refundable"))
+            continue
+
+        # Calculate refund amount
+        if is_opened:
+            refund_amount = price * quantity * 0.85  # 15% restocking fee
+        else:
+            refund_amount = price * quantity  # Full refund
+
+        approved_items.append((item, refund_amount))
+        total_refund += refund_amount
+
+    # Update state
+    state["selected_items"] = approved_items
+    state["denied_items"] = denied_items
+    state["amount"] = total_refund
+    state["refund_result"] = {
+        "approved_items": [(i.get("name"), a) for i, a in approved_items],
+        "denied_items": [(i.get("name"), r) for i, r in denied_items],
+        "total_refund": total_refund,
+        "approved": len(denied_items) == 0,
+    }
+
+    # Build response
+    response_parts = []
+    if approved_items:
+        response_parts.append(f"Approved refund of ${total_refund:.2f} for:")
+        for item, amount in approved_items:
+            response_parts.append(f"  - {item.get('name')}: ${amount:.2f}")
+
+    if denied_items:
+        response_parts.append("\nDenied items:")
+        for item, reason in denied_items:
+            response_parts.append(f"  - {item.get('name')}: {reason}")
+
+    state["response"] = "\n".join(response_parts)
+
+    # Clear any error flag on success
+    state.pop("_select_error", None)
+    return state
+
+
 def node_check_policy(state: AgentState) -> AgentState:
-    """Check policy validity using factual tool, then use LLM to make decision."""
+    """Check policy validity using factual tool, then apply rule-based policy."""
     order_id = state.get("order_id")
     amount = state.get("amount")
+
+    # If amount not provided, get full order amount from CRM
+    if amount is None:
+        policy_data_str = check_policy_validity_fn(order_id, "full")
+        policy_data = json.loads(policy_data_str)
+        order_amount = policy_data.get("total_amount")
+        if order_amount:
+            amount = order_amount
+            state["amount"] = amount
 
     if not order_id:
         state["response"] = "I'm sorry, I couldn't identify an order ID from your message. " \
@@ -602,7 +785,23 @@ def node_check_policy(state: AgentState) -> AgentState:
     )
 
     # Get factual policy data
-    policy_data = check_policy_validity_fn(order_id, "full")
+    policy_data_str = check_policy_validity_fn(order_id, "full")
+    policy_data = json.loads(policy_data_str)
+
+    # Validate order ownership - order must belong to authenticated customer
+    authenticated_email = state.get("customer_email")
+    order_email = policy_data.get("customer_email", "")
+    if authenticated_email and order_email and authenticated_email != order_email:
+        state["response"] = (
+            f"I'm sorry, but order {order_id} does not belong to your account. "
+            f"Refund requests can only be processed for orders associated with your account."
+        )
+        trace_broadcaster.broadcast(
+            "check_policy",
+            f"Order ownership mismatch: authenticated={authenticated_email}, order={order_email}",
+            {"authenticated_email": authenticated_email, "order_email": order_email},
+        )
+        return state
 
     if not policy_data.get("valid"):
         state["response"] = (
@@ -612,59 +811,46 @@ def node_check_policy(state: AgentState) -> AgentState:
         )
         return state
 
-    # Use LLM to make the policy decision based on factual data
-    llm = _get_llm()
-    system = SystemMessage(content=_get_system_prompt())
+    # Rule-based policy check (no LLM dependency)
+    days_since = policy_data.get("days_since_purchase", 0)
+    within_30 = policy_data.get("within_30_day_window", False)
+    within_60 = policy_data.get("within_60_day_window", False)
+    order_status = policy_data.get("order_status", "")
 
-    customer_msg = ""
-    human_msgs = [m for m in state.get("messages", []) if m.get("role") == "human"]
-    if human_msgs:
-        customer_msg = human_msgs[-1].get("content", "")
+    # Basic approval logic
+    approved = False
+    reason = ""
 
-    policy_check_msg = f"""POLICY CHECK RESULTS FOR ORDER {order_id}:
-- Days since purchase: {policy_data.get('days_since_purchase', 'N/A')}
-- Within 30-day window: {policy_data.get('within_30_day_window', False)}
-- Within 60-day window: {policy_data.get('within_60_day_window', False)}
-- Order status: {policy_data.get('order_status', 'N/A')}
-- Total amount: ${policy_data.get('total_amount', 0):.2f}
-- Items: {json.dumps(policy_data.get('items', []), indent=2)}
-- Return history: {json.dumps(policy_data.get('return_history', []), indent=2)}
+    if order_status == "Refunded":
+        approved = False
+        reason = "This order has already been refunded."
+    elif within_30:
+        approved = True
+        reason = "Order is within the 30-day full refund window."
+    elif within_60:
+        approved = True
+        reason = "Order is within the 60-day partial refund window."
+    else:
+        approved = False
+        reason = f"Order is {days_since} days old, which exceeds the refund policy window."
 
-CUSTOMER REQUEST: {customer_msg}
-
-Based on the policy rules and the factual data above, should I approve this refund of ${amount} for order {order_id}?
-Respond with JSON: {{"approved": true/false, "reason": "explanation"}}"""
-
-    try:
-        response = llm.invoke([system, HumanMessage(content=policy_check_msg)])
-        content = response.content
-        try:
-            decision = json.loads(content)
-        except json.JSONDecodeError:
-            match = re.search(r'\{[^}]+\}', content)
-            if match:
-                decision = json.loads(match.group())
-            else:
-                decision = {"approved": False, "reason": "Unable to process decision"}
-    except Exception as e:
-        trace_broadcaster.broadcast(
-            "check_policy",
-            f"LLM policy decision failed: {str(e)}",
-            {"error": str(e)},
-        )
-        decision = {"approved": False, "reason": f"System error: {str(e)}"}
+    # Customer tier can extend the window
+    customer_tier = state.get("customer_profile", {}).get("loyalty_tier", "standard")
+    if customer_tier == "gold" and days_since <= 45:
+        approved = True
+        reason = "Gold tier member - extended 45-day refund window applies."
 
     state["refund_result"] = {
         "policy_data": policy_data,
-        "llm_decision": decision,
-        "approved": decision.get("approved", False),
-        "reason": decision.get("reason", ""),
+        "approved": approved,
+        "reason": reason,
+        "tier": customer_tier,
     }
 
     trace_broadcaster.broadcast(
         "check_policy",
-        f"Policy decision: approved={decision.get('approved')}",
-        {"decision": decision},
+        f"Policy decision: approved={approved}, reason={reason}",
+        {"approved": approved, "reason": reason},
     )
 
     return state
@@ -695,7 +881,8 @@ def node_process(state: AgentState) -> AgentState:
         {"order_id": order_id, "amount": amount},
     )
 
-    result = process_refund_transaction_fn(order_id, amount)
+    result_str = process_refund_transaction_fn(order_id, amount)
+    result = json.loads(result_str)
 
     state["refund_result"]["transaction"] = result
 
@@ -792,18 +979,19 @@ def route_after_list_orders(state: AgentState) -> str:
     return "extract"
 
 
+def route_after_show_items(state: AgentState) -> str:
+    """After showing items, wait for customer selection."""
+    return "select_items"
+
+
 def route_after_extract(state: AgentState) -> str:
     """After extraction, check if we have order_id and amount."""
-    if state.get("order_id") and state.get("amount") is not None:
-        return "check_policy"
-    else:
-        # Need more info from customer
-        if not state.get("order_id"):
-            state["response"] = "I couldn't find an order ID in your message. " \
-                               "Could you please provide the order ID (e.g., ORD-000001)?"
-        if state.get("amount") is None:
-            state["response"] = "Could you also let me know the refund amount you're requesting?"
+    if not state.get("order_id"):
+        state["response"] = "I couldn't find an order ID in your request. Could you please provide the order ID?"
         return "generate_response"
+
+    # Show items first so customer can select which to refund
+    return "show_items"
 
 
 def route_after_check_policy(state: AgentState) -> str:
@@ -834,6 +1022,8 @@ def build_agent_graph() -> StateGraph:
     graph.add_node("request_auth_info", node_request_auth_info)
     graph.add_node("list_orders", node_list_orders)
     graph.add_node("extract", node_extract)
+    graph.add_node("show_items", node_show_items)
+    graph.add_node("select_items", node_select_items)
     graph.add_node("check_policy", node_check_policy)
     graph.add_node("process", node_process)
     graph.add_node("generate_response", node_generate_response)
@@ -861,10 +1051,23 @@ def build_agent_graph() -> StateGraph:
     # list_orders -> extract (customer will provide order_id in next message)
     graph.add_edge("list_orders", "extract")
 
-    # extract -> check_policy or generate_response
+    # extract -> show_items or generate_response
     graph.add_conditional_edges(
         "extract",
         route_after_extract,
+        {
+            "show_items": "show_items",
+            "generate_response": "generate_response",
+        },
+    )
+
+    # show_items -> select_items
+    graph.add_edge("show_items", "select_items")
+
+    # select_items -> check_policy (for ownership validation) or generate_response (if error)
+    graph.add_conditional_edges(
+        "select_items",
+        lambda s: "generate_response" if s.get("_select_error") else "check_policy",
         {
             "check_policy": "check_policy",
             "generate_response": "generate_response",
@@ -910,6 +1113,7 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     customer_id: Optional[str] = None
     message: str
+    messages: Optional[List[dict]] = None  # Conversation history from frontend
 
 
 class ChatResponse(BaseModel):
@@ -931,6 +1135,22 @@ async def chat(request: ChatRequest):
     Primary chat endpoint. Runs the full agent loop and returns the LLM-generated response.
     """
     # Build initial state
+    if request.messages:
+        # Use provided conversation history, ensuring system prompt is included
+        if request.messages[0].get("role") == "system":
+            messages = request.messages + [{"role": "human", "content": request.message}]
+        else:
+            # Prepend system prompt; request.messages already contains the current user message
+            messages = [
+                {"role": "system", "content": _get_system_prompt()},
+            ] + request.messages
+    else:
+        # Fresh conversation - build from scratch
+        messages = [
+            {"role": "system", "content": _get_system_prompt()},
+            {"role": "human", "content": request.message},
+        ]
+
     state: AgentState = {
         "customer_id": request.customer_id,
         "customer_email": None,
@@ -938,7 +1158,7 @@ async def chat(request: ChatRequest):
         "customer_profile": None,
         "order_id": None,
         "amount": None,
-        "messages": [{"role": "human", "content": request.message}],
+        "messages": messages,
         "refund_result": None,
         "authenticated": False,
         "order_selected": False,
@@ -947,11 +1167,6 @@ async def chat(request: ChatRequest):
         "needs_human": False,
         "error": None,
     }
-
-    # Add system message to context
-    state["messages"] = [
-        {"role": "system", "content": _get_system_prompt()},
-    ] + state["messages"]
 
     # Build and run graph
     graph = build_agent_graph()

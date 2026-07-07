@@ -70,6 +70,8 @@
         const userInput = document.getElementById('user-input');
         const BACKEND_URL = 'http://localhost:8050';
 
+        let messageHistory = [];
+
         function appendMessage(text, isUser = false) {
             const wrapper = document.createElement('div');
             wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
@@ -85,6 +87,12 @@
             wrapper.appendChild(bubble);
             chatWindow.appendChild(wrapper);
             chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            // Track in history
+            messageHistory.push({
+                role: isUser ? 'human' : 'assistant',
+                content: text
+            });
         }
 
         async function sendMessage(text) {
@@ -96,6 +104,7 @@
                     },
                     body: JSON.stringify({
                         message: text,
+                        messages: messageHistory,  // Send full conversation history
                         customer_id: null, // Can be extended to allow manual ID entry
                         email: null
                     }),
