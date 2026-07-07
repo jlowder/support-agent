@@ -90,6 +90,31 @@
             cursor: not-allowed;
         }
         
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #667eea;
+            color: #667eea;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 6px;
+            font-weight: 500;
+        }
+        
+        .copy-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: none;
+        }
+        
+        .copy-btn.copied {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -690,8 +715,16 @@
             returnStatusFilter.addEventListener('change', filterCustomers);
             loadBtn.addEventListener('click', loadFromPossibleLocations);
             
-            // Global delegated click listener for hierarchical expansion
+            // Global delegated click listener for hierarchical expansion and copy buttons
             document.addEventListener('click', (e) => {
+                // Handle copy button clicks
+                if (e.target.classList.contains('copy-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    copyToClipboard(e.target);
+                    return;
+                }
+                
                 const header = e.target.closest('.customer-header, .order-header, .item-header');
                 if (!header) return;
                 
@@ -866,7 +899,13 @@
                 <div class="customer-header">
                     <div class="customer-info">
                         <div class="customer-name">👤 ${escapeHtml(customer.name)}</div>
-                        <div class="customer-contact">${escapeHtml(customer.email)} | ${escapeHtml(customer.id)}</div>
+                        <div class="customer-contact">
+                            ${escapeHtml(customer.email)}
+                            <button class="copy-btn" data-field="email" data-value="${escapeHtml(customer.email)}" title="Copy email to clipboard">📋</button>
+                            |
+                            ${escapeHtml(customer.id)}
+                            <button class="copy-btn" data-field="id" data-value="${escapeHtml(customer.id)}" title="Copy user ID to clipboard">📋</button>
+                        </div>
                         <div class="customer-contact">${escapeHtml(customer.loyalty_tier || 'Standard')} ${getLoyaltyIcon(customer.loyalty_tier)} | ${escapeHtml(customer.address)}</div>
                     </div>
                     <div class="toggle-icon">▼</div>
@@ -908,7 +947,7 @@
                         <div class="order-meta">
                             <div class="meta-item">
                                 <span class="label">Date</span>
-                                <span class="value">${formatDate(order.order_date)}</span>
+                                <span class="value">${formatDate(order.order_date)} (${formatDaysAgo(order.order_date)})</span>
                             </div>
                             <div class="meta-item">
                                 <span class="label">Total</span>
@@ -1030,6 +1069,29 @@
             return text.replace(/[^a-zA-Z0-9_-]/g, '_');
         }
         
+        function copyToClipboard(button) {
+            const value = button.getAttribute('data-value');
+            const field = button.getAttribute('data-field');
+            
+            navigator.clipboard.writeText(value).then(() => {
+                // Show copied feedback
+                const originalText = button.textContent;
+                button.textContent = '✓';
+                button.classList.add('copied');
+                button.setAttribute('title', `${field} copied to clipboard`);
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                    button.setAttribute('title', `Copy ${field} to clipboard`);
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.setAttribute('title', 'Failed to copy');
+            });
+        }
+        
         function formatDate(dateString) {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -1043,6 +1105,26 @@
                 style: 'currency',
                 currency: 'USD'
             }).format(amount);
+        }
+        
+        function formatDaysAgo(dateString) {
+            const orderDate = new Date(dateString);
+            const today = new Date();
+            
+            // Reset to start of day for accurate day counting
+            orderDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+            
+            const diffTime = today - orderDate;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return 'Today';
+            } else if (diffDays === 1) {
+                return '1 day ago';
+            } else {
+                return `${diffDays} days ago`;
+            }
         }
     </script>
 </body>
