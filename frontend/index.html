@@ -26,6 +26,26 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        /* Mic button active state */
+        .mic-active .bg-gray-200 {
+            background: #ef4444;
+        }
+        .mic-active svg path {
+            stroke: #fff;
+        }
+        .recording-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -97,6 +117,14 @@
         const userInput = document.getElementById('user-input');
         const newSessionBtn = document.getElementById('new-session-btn');
         const voiceToggle = document.getElementById('voice-toggle');
+        
+        // Voice toggle handler
+        voiceToggle.addEventListener('change', (e) => {
+            voiceOutputEnabled = e.target.checked;
+            console.log('Voice output:', voiceOutputEnabled ? 'enabled' : 'disabled');
+        });
+        
+        const micBtn = document.getElementById('mic-btn');
         const BACKEND_URL = 'http://localhost:8050';
         const KOKORO_API_URL = 'http://katana:8025/v1/audio/speech';
 
@@ -110,6 +138,11 @@
         // Voice output state
         let voiceOutputEnabled = true;
         let currentAudio = null;
+        
+        // Mic state
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
 
         function appendMessage(text, isUser = false) {
             const wrapper = document.createElement('div');
@@ -135,6 +168,7 @@
 
         // Voice output using Kokoro TTS API
         async function speakMessage(text) {
+            console.log('speakMessage called, voiceOutputEnabled =', voiceOutputEnabled);
             // Cancel any current audio
             if (currentAudio) {
                 currentAudio.pause();
@@ -168,7 +202,6 @@
                     URL.revokeObjectURL(url);
                     currentAudio = null;
                 };
-                currentAudio.onended = null;
                 currentAudio.play().catch(err => {
                     console.error('Audio play error:', err);
                 });
@@ -180,8 +213,8 @@
                 
             } catch (error) {
                 console.error('Failed to speak message:', error);
-                // Fallback to browser's native TTS
-                if ('speechSynthesis' in window) {
+                // Fallback to browser's native TTS only if voice output is enabled
+                if (voiceOutputEnabled && 'speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.rate = 1.0;
                     utterance.pitch = 1.0;
@@ -243,13 +276,36 @@
             
             console.log('New session started with thread_id:', threadId);
         }
-
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        
+        // Extracted submit handler for reuse
+        async function handleChatSubmit() {
             const message = userInput.value.trim();
-            if (!message) return;
+            console.log('handleChatSubmit called with:', message);
+            if (!message) {
+                console.log('No message, returning');
+                return;
+            }
+            
+            // Reset mic button state if it's active
+            if (isRecording) {
+                isRecording = false;
+                if (mediaRecorder) {
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                if (recognition) {
+                    recognition.stop();
+                }
+                micBtn.classList.remove('mic-active');
+                micBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                `;
+                userInput.placeholder = 'Type your message...';
+            }
 
             appendMessage(message, true);
+            console.log('User message appended to chat');
             userInput.value = '';
 
             // Show typing indicator
@@ -261,24 +317,171 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             const botResponse = await sendMessage(message);
+            console.log('Bot response:', botResponse);
             
             // Remove typing indicator
             const indicator = document.getElementById('typing-indicator');
             if (indicator) indicator.remove();
 
             appendMessage(botResponse);
+        }
+        
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleChatSubmit();
         });
-
-        // Voice toggle handler
-        voiceToggle.addEventListener('change', (e) => {
-            voiceOutputEnabled = e.target.checked;
-            console.log('Voice output:', voiceOutputEnabled ? 'enabled' : 'disabled');
-        });
+        
+        // New session button handler
         newSessionBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to start a new session? Your current conversation will be cleared.')) {
                 startNewSession();
             }
         });
+        
+        // Mic button handler
+        micBtn.addEventListener('click', async () => {
+            if (isRecording) {
+                // Stop recording
+                stopRecording();
+            } else {
+                // Start recording
+                await startRecording();
+            }
+        });
+        
+        // Recording handlers
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    // Web Speech API recognition.onend will handle the auto-submit
+                    // Just reset UI
+                    console.log('Media recorder stopped');
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                // Update mic button UI
+                micBtn.classList.add('mic-active');
+                micBtn.innerHTML = `
+                    <div class="recording-indicator"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                `;
+                
+                // Also set up Web Speech API for live transcription
+                setupWebSpeechAPI(stream);
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                isRecording = false;
+                
+                // Reset mic button UI
+                micBtn.classList.remove('mic-active');
+                micBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                `;
+                userInput.placeholder = 'Type your message...';
+                
+                // Stop all audio tracks
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                // Stop Web Speech API recognition if active
+                if (recognition) {
+                    recognition.stop();
+                }
+                
+                // Now stop the media recorder after other cleanup
+                mediaRecorder.stop();
+            }
+        }
+        
+        // Set up Web Speech API for live transcription during recording
+        let recognition = null;
+        let recognitionActive = false;
+        
+        function setupWebSpeechAPI(stream) {
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    console.warn('Web Speech API not supported in this browser');
+                    return;
+                }
+                
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+                
+                recognition.onstart = () => {
+                    recognitionActive = true;
+                    console.log('Web Speech API recognition started');
+                };
+                
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
+                    }
+                    
+                    // Update input field with interim results for user feedback
+                    if (interimTranscript) {
+                        userInput.value = interimTranscript;
+                    }
+                    
+                    // Update input field with final result
+                    if (finalTranscript) {
+                        userInput.value = finalTranscript;
+                    }
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error('Web Speech API error:', event.error);
+                    recognitionActive = false;
+                };
+                
+                recognition.onend = () => {
+                    console.log('Web Speech API recognition ended');
+                    recognitionActive = false;
+                    
+                    // If we have a final result, automatically submit
+                    if (recognition && userInput.value.trim()) {
+                        const transcript = userInput.value.trim();
+                        console.log('Auto-submitting after silence:', transcript);
+                        handleChatSubmit();
+                    }
+                };
+                
+                recognition.start();
+                
+            } catch (error) {
+                console.error('Error setting up Web Speech API:', error);
+            }
+        }
     </script>
 </body>
 </html>
