@@ -1,5 +1,5 @@
 {
   "url": "http://localhost:8080/v1",
-  "api_key": "omlx-om5hh4rsln2h3f8w",
-  "model_name": "Qwen3-Coder-Next-MLX-6bit"
+  "api_key": "none",
+  "model_name": "model-name"
 }

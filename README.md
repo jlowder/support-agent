@@ -13,6 +13,7 @@ The agent handles customer refund requests:
 - Processes refunds with retry logic
 - Escalates to humans when needed
 - Streams actions to admins in real time
+- Optional voice input/output
 
 ## Structure
 
@@ -43,26 +44,33 @@ Send a refund request.
 ```bash
 curl -X POST http://localhost:8050/chat \
   -H "Content-Type: application/json" \
-  -d '{"customer_id": "diana.p@email.com", "message": "I want to refund order ORD-000001 for $100"}'
+  -d '{"message": "My email address is diana.p@email.com and I want to return the water bottle from my most recent order"}'
 ```
 
 ### GET /admin/trace
 
 Server-sent events for admin monitoring.
 
+```bash
+curl -N "http://localhost:8050/admin/trace"
+```
+
+
 ### GET /health
 
-Returns `{"status": "healthy"}`.
+Returns ` { "status": "healthy", "timestamp": "2026-07-08T12:28:54.319066Z" } `
 
 ## Data generation
 
 Generate CRM data with `datagen/generate-crm.py`:
 
 ```bash
-python3 datagen/generate-crm.py -n 50
+python3 datagen/generate-crm.py -n 15
 ```
 
 The `-n` flag controls customer count and always triggers LLM generation (if configured).
+
+Configure the LLM usage by exporting `LLM_URL`, `LLM_API_KEY` and `LLM_MODEL` environment variables.
 
 ## Tool functions
 
