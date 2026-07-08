@@ -314,7 +314,8 @@ class CRMDataGenerator:
             price = round(random.uniform(19.99, 499.99), 2)
             item_type: ItemType = "physical"
 
-        quantity = random.randint(1, 3)
+        # Quantity distribution: 70% quantity=1, 20% quantity=2, 10% quantity=3
+        quantity = random.choices([1, 2, 3], weights=[0.7, 0.2, 0.1])[0]
         is_opened = random.random() < 0.3  # 30% chance item was opened
 
         return OrderItem(
@@ -330,8 +331,9 @@ class CRMDataGenerator:
 
     def generate_return_request(self, item_index: int, item: OrderItem) -> Optional[ReturnRequest]:
         """Generate a return request for an item."""
-        # Only generate return requests for some items
-        if random.random() > 0.4:  # 40% chance
+        # Only generate return requests for a small percentage of items (realistic: ~10-15%)
+        # This means 85-90% of items have no return requests
+        if random.random() > 0.12:  # ~12% chance, realistic for purchased items
             return None
 
         # Digital items are non-refundable
@@ -341,9 +343,9 @@ class CRMDataGenerator:
         # Determine reason
         reason = random.choice(self.return_reasons)
 
-        # Determine status
+        # Determine status - mix of active and completed
         status_options = ["pending", "processing", "approved", "completed", "denied"]
-        weights = [0.3, 0.2, 0.2, 0.2, 0.1]  # More pending/processing
+        weights = [0.25, 0.15, 0.25, 0.25, 0.10]
         status = random.choices(status_options, weights=weights)[0]
 
         # Calculate refund amount
