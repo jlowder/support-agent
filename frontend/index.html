@@ -117,13 +117,13 @@
         const userInput = document.getElementById('user-input');
         const newSessionBtn = document.getElementById('new-session-btn');
         const voiceToggle = document.getElementById('voice-toggle');
-        
+
         // Voice toggle handler
         voiceToggle.addEventListener('change', (e) => {
             voiceOutputEnabled = e.target.checked;
             console.log('Voice output:', voiceOutputEnabled ? 'enabled' : 'disabled');
         });
-        
+
         const micBtn = document.getElementById('mic-btn');
         const BACKEND_URL = 'http://localhost:8050';
         const KOKORO_API_URL = 'http://katana:8025/v1/audio/speech';
@@ -138,7 +138,7 @@
         // Voice output state - defaults to false (off)
         let voiceOutputEnabled = false;
         let currentAudio = null;
-        
+
         // Mic state
         let isRecording = false;
         let mediaRecorder = null;
@@ -147,19 +147,19 @@
         function appendMessage(text, isUser = false) {
             const wrapper = document.createElement('div');
             wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
-            
+
             const bubble = document.createElement('div');
             bubble.className = `message-bubble p-3 rounded-2xl ${
-                isUser 
-                ? 'bg-blue-600 text-white rounded-tr-none' 
+                isUser
+                ? 'bg-blue-600 text-white rounded-tr-none'
                 : 'bg-gray-200 text-gray-800 rounded-tl-none'
             }`;
             bubble.textContent = text;
-            
+
             wrapper.appendChild(bubble);
             chatWindow.appendChild(wrapper);
             chatWindow.scrollTop = chatWindow.scrollHeight;
-            
+
             // Announce agent messages if voice output is enabled
             if (!isUser && voiceOutputEnabled) {
                 speakMessage(text);
@@ -174,7 +174,7 @@
                 currentAudio.pause();
                 currentAudio = null;
             }
-            
+
             try {
                 const response = await fetch(KOKORO_API_URL, {
                     method: 'POST',
@@ -184,19 +184,19 @@
                     body: JSON.stringify({
                         model: 'kokoro',
                         input: text,
-                        voice: 'af_bella',  // Default female voice
+                        voice: 'af_v0sarah',
                         response_format: 'mp3',
                         speed: 1.0,
                     }),
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`TTS API error: ${response.status}`);
                 }
-                
+
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
-                
+
                 currentAudio = new Audio(url);
                 currentAudio.onended = () => {
                     URL.revokeObjectURL(url);
@@ -205,12 +205,12 @@
                 currentAudio.play().catch(err => {
                     console.error('Audio play error:', err);
                 });
-                
+
                 // Revoke object URL after playback starts
                 setTimeout(() => {
                     URL.revokeObjectURL(url);
                 }, 1000);
-                
+
             } catch (error) {
                 console.error('Failed to speak message:', error);
                 // Fallback to browser's native TTS only if voice output is enabled
@@ -266,17 +266,17 @@
                 currentAudio.pause();
                 currentAudio = null;
             }
-            
+
             // Generate new thread ID
             threadId = Math.random().toString(36).substring(7);
             localStorage.setItem('support_thread_id', threadId);
-            
+
             // Clear chat UI
             clearChat();
-            
+
             console.log('New session started with thread_id:', threadId);
         }
-        
+
         // Extracted submit handler for reuse
         async function handleChatSubmit() {
             const message = userInput.value.trim();
@@ -285,7 +285,7 @@
                 console.log('No message, returning');
                 return;
             }
-            
+
             // Reset mic button state if it's active
             if (isRecording) {
                 isRecording = false;
@@ -318,26 +318,26 @@
 
             const botResponse = await sendMessage(message);
             console.log('Bot response:', botResponse);
-            
+
             // Remove typing indicator
             const indicator = document.getElementById('typing-indicator');
             if (indicator) indicator.remove();
 
             appendMessage(botResponse);
         }
-        
+
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             await handleChatSubmit();
         });
-        
+
         // New session button handler
         newSessionBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to start a new session? Your current conversation will be cleared.')) {
                 startNewSession();
             }
         });
-        
+
         // Mic button handler
         micBtn.addEventListener('click', async () => {
             if (isRecording) {
@@ -348,29 +348,29 @@
                 await startRecording();
             }
         });
-        
+
         // Recording handlers
         async function startRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-                
+
                 mediaRecorder.ondataavailable = (event) => {
                     if (event.data.size > 0) {
                         audioChunks.push(event.data);
                     }
                 };
-                
+
                 mediaRecorder.onstop = () => {
                     // Web Speech API recognition.onend will handle the auto-submit
                     // Just reset UI
                     console.log('Media recorder stopped');
                 };
-                
+
                 mediaRecorder.start();
                 isRecording = true;
-                
+
                 // Update mic button UI
                 micBtn.classList.add('mic-active');
                 micBtn.innerHTML = `
@@ -379,7 +379,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                     </svg>
                 `;
-                
+
                 // Also set up Web Speech API for live transcription
                 setupWebSpeechAPI(stream);
             } catch (error) {
@@ -387,11 +387,11 @@
                 alert('Could not access microphone. Please check permissions.');
             }
         }
-        
+
         function stopRecording() {
             if (mediaRecorder && isRecording) {
                 isRecording = false;
-                
+
                 // Reset mic button UI
                 micBtn.classList.remove('mic-active');
                 micBtn.innerHTML = `
@@ -400,24 +400,24 @@
                     </svg>
                 `;
                 userInput.placeholder = 'Type your message...';
-                
+
                 // Stop all audio tracks
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                
+
                 // Stop Web Speech API recognition if active
                 if (recognition) {
                     recognition.stop();
                 }
-                
+
                 // Now stop the media recorder after other cleanup
                 mediaRecorder.stop();
             }
         }
-        
+
         // Set up Web Speech API for live transcription during recording
         let recognition = null;
         let recognitionActive = false;
-        
+
         function setupWebSpeechAPI(stream) {
             try {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -425,21 +425,21 @@
                     console.warn('Web Speech API not supported in this browser');
                     return;
                 }
-                
+
                 recognition = new SpeechRecognition();
                 recognition.lang = 'en-US';
                 recognition.interimResults = true;
                 recognition.maxAlternatives = 1;
-                
+
                 recognition.onstart = () => {
                     recognitionActive = true;
                     console.log('Web Speech API recognition started');
                 };
-                
+
                 recognition.onresult = (event) => {
                     let interimTranscript = '';
                     let finalTranscript = '';
-                    
+
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
                             finalTranscript += event.results[i][0].transcript;
@@ -447,27 +447,27 @@
                             interimTranscript += event.results[i][0].transcript;
                         }
                     }
-                    
+
                     // Update input field with interim results for user feedback
                     if (interimTranscript) {
                         userInput.value = interimTranscript;
                     }
-                    
+
                     // Update input field with final result
                     if (finalTranscript) {
                         userInput.value = finalTranscript;
                     }
                 };
-                
+
                 recognition.onerror = (event) => {
                     console.error('Web Speech API error:', event.error);
                     recognitionActive = false;
                 };
-                
+
                 recognition.onend = () => {
                     console.log('Web Speech API recognition ended');
                     recognitionActive = false;
-                    
+
                     // If we have a final result, automatically submit
                     if (recognition && userInput.value.trim()) {
                         const transcript = userInput.value.trim();
@@ -475,9 +475,9 @@
                         handleChatSubmit();
                     }
                 };
-                
+
                 recognition.start();
-                
+
             } catch (error) {
                 console.error('Error setting up Web Speech API:', error);
             }
