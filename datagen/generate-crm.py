@@ -15,13 +15,14 @@ import os
 import random
 import string
 import uuid
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from dataclasses import dataclass, field, asdict
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional
 
 # Try to import requests; needed only when -n > 15 and env vars are set
 try:
     import requests  # noqa: F401
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -29,37 +30,169 @@ except ImportError:
 
 # Order status constants (lowercase per spec)
 OrderStatus = Literal["pending", "processing", "shipped", "delivered", "cancelled"]
-ReturnRequestStatus = Literal["pending", "approved", "denied", "processing", "completed"]
+ReturnRequestStatus = Literal[
+    "pending", "approved", "denied", "processing", "completed"
+]
 ItemType = Literal["physical", "digital"]
 LoyaltyTier = Literal["standard", "silver", "gold"]
 
 
 def _random_name() -> str:
     """Generate a random full name."""
-    first = random.choice(["James", "Mary", "Robert", "Patricia", "John", "Jennifer",
-                           "Michael", "Linda", "David", "Elizabeth", "William", "Barbara",
-                           "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah",
-                           "Christopher", "Karen", "Charles", "Lisa", "Daniel", "Nancy",
-                           "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra",
-                           "Donald", "Ashley", "Steven", "Kimberly", "Paul", "Emily",
-                           "Andrew", "Donna", "Joshua", "Michelle", "Kenneth", "Carol",
-                           "Kevin", "Amanda", "Brian", "Melissa", "George", "Deborah",
-                           "Timothy", "Stephanie", "Ronald", "Rebecca", "Edward", "Laura",
-                           "Jason", "Sharon", "Jeffrey", "Michelle", "Ryan", "Cynthia",
-                           "Jacob", "Kathleen", "Gary", "Amy", "Nicholas", "Angela",
-                           "Eric", "Shirley", "Jonathan", "Anna", "Stephen", "Brenda",
-                           "Larry", "Pamela", "Justin", "Emma", "Scott", "Nicole",
-                           "Brandon", "Helen", "Benjamin", "Samantha", "Samuel", "Katherine",
-                           "Raymond", "Christine", "Gregory", "Debra", "Alexander", "Rachel",
-                           "Patrick", "Carolyn", "Frank", "Janet", "Jack", "Catherine"])
-    last = random.choice(["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia",
-                          "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez",
-                          "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore",
-                          "Jackson", "Martin", "Lee", "Perez", "Thompson", "White",
-                          "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
-                          "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres",
-                          "Nguyen", "Hill", "Flores", "Green", "Adams", "Nelson", "Baker",
-                          "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts"])
+    first = random.choice(
+        [
+            "James",
+            "Mary",
+            "Robert",
+            "Patricia",
+            "John",
+            "Jennifer",
+            "Michael",
+            "Linda",
+            "David",
+            "Elizabeth",
+            "William",
+            "Barbara",
+            "Richard",
+            "Susan",
+            "Joseph",
+            "Jessica",
+            "Thomas",
+            "Sarah",
+            "Christopher",
+            "Karen",
+            "Charles",
+            "Lisa",
+            "Daniel",
+            "Nancy",
+            "Matthew",
+            "Betty",
+            "Anthony",
+            "Margaret",
+            "Mark",
+            "Sandra",
+            "Donald",
+            "Ashley",
+            "Steven",
+            "Kimberly",
+            "Paul",
+            "Emily",
+            "Andrew",
+            "Donna",
+            "Joshua",
+            "Michelle",
+            "Kenneth",
+            "Carol",
+            "Kevin",
+            "Amanda",
+            "Brian",
+            "Melissa",
+            "George",
+            "Deborah",
+            "Timothy",
+            "Stephanie",
+            "Ronald",
+            "Rebecca",
+            "Edward",
+            "Laura",
+            "Jason",
+            "Sharon",
+            "Jeffrey",
+            "Michelle",
+            "Ryan",
+            "Cynthia",
+            "Jacob",
+            "Kathleen",
+            "Gary",
+            "Amy",
+            "Nicholas",
+            "Angela",
+            "Eric",
+            "Shirley",
+            "Jonathan",
+            "Anna",
+            "Stephen",
+            "Brenda",
+            "Larry",
+            "Pamela",
+            "Justin",
+            "Emma",
+            "Scott",
+            "Nicole",
+            "Brandon",
+            "Helen",
+            "Benjamin",
+            "Samantha",
+            "Samuel",
+            "Katherine",
+            "Raymond",
+            "Christine",
+            "Gregory",
+            "Debra",
+            "Alexander",
+            "Rachel",
+            "Patrick",
+            "Carolyn",
+            "Frank",
+            "Janet",
+            "Jack",
+            "Catherine",
+        ]
+    )
+    last = random.choice(
+        [
+            "Smith",
+            "Johnson",
+            "Williams",
+            "Brown",
+            "Jones",
+            "Garcia",
+            "Miller",
+            "Davis",
+            "Rodriguez",
+            "Martinez",
+            "Hernandez",
+            "Lopez",
+            "Gonzalez",
+            "Wilson",
+            "Anderson",
+            "Thomas",
+            "Taylor",
+            "Moore",
+            "Jackson",
+            "Martin",
+            "Lee",
+            "Perez",
+            "Thompson",
+            "White",
+            "Harris",
+            "Sanchez",
+            "Clark",
+            "Ramirez",
+            "Lewis",
+            "Robinson",
+            "Walker",
+            "Young",
+            "Allen",
+            "King",
+            "Wright",
+            "Scott",
+            "Torres",
+            "Nguyen",
+            "Hill",
+            "Flores",
+            "Green",
+            "Adams",
+            "Nelson",
+            "Baker",
+            "Hall",
+            "Rivera",
+            "Campbell",
+            "Mitchell",
+            "Carter",
+            "Roberts",
+        ]
+    )
     return f"{first} {last}"
 
 
@@ -67,22 +200,72 @@ def _random_email(name: str) -> str:
     """Generate a random email from a name."""
     parts = name.lower().split()
     domains = ["email.com", "mail.com", "inbox.com", "outlook.com", "protonmail.com"]
-    return f"{parts[0]}.{parts[-1]}{random.randint(1,999)}@{random.choice(domains)}"
+    return f"{parts[0]}.{parts[-1]}{random.randint(1, 999)}@{random.choice(domains)}"
 
 
 def _random_address() -> str:
     """Generate a random street address."""
     street_num = random.randint(100, 9999)
-    streets = ["Main St", "Oak Ave", "Pine Rd", "Elm St", "Maple Dr", "Cedar Ln",
-               "Birch Way", "Spruce Ct", "Walnut Blvd", "Cherry Cir", "Park Ave",
-               "Lake Dr", "Hill Rd", "Forest Ln", "River Dr", "Sunset Blvd"]
-    cities = ["Springfield", "Portland", "Austin", "Denver", "Seattle", "Boston",
-              "Chicago", "Miami", "Atlanta", "Phoenix", "San Diego", "Dallas",
-              "Houston", "Minneapolis", "Tampa", "Raleigh", "Nashville", "Charlotte"]
-    states = ["IL", "OR", "TX", "CO", "WA", "MA", "IL", "FL", "GA", "AZ",
-              "CA", "TX", "TX", "MN", "FL", "NC", "TN", "NC"]
+    streets = [
+        "Main St",
+        "Oak Ave",
+        "Pine Rd",
+        "Elm St",
+        "Maple Dr",
+        "Cedar Ln",
+        "Birch Way",
+        "Spruce Ct",
+        "Walnut Blvd",
+        "Cherry Cir",
+        "Park Ave",
+        "Lake Dr",
+        "Hill Rd",
+        "Forest Ln",
+        "River Dr",
+        "Sunset Blvd",
+    ]
+    cities = [
+        "Springfield",
+        "Portland",
+        "Austin",
+        "Denver",
+        "Seattle",
+        "Boston",
+        "Chicago",
+        "Miami",
+        "Atlanta",
+        "Phoenix",
+        "San Diego",
+        "Dallas",
+        "Houston",
+        "Minneapolis",
+        "Tampa",
+        "Raleigh",
+        "Nashville",
+        "Charlotte",
+    ]
+    states = [
+        "IL",
+        "OR",
+        "TX",
+        "CO",
+        "WA",
+        "MA",
+        "IL",
+        "FL",
+        "GA",
+        "AZ",
+        "CA",
+        "TX",
+        "TX",
+        "MN",
+        "FL",
+        "NC",
+        "TN",
+        "NC",
+    ]
     idx = random.randint(0, len(streets) - 1)
-    return f"{street_num} {streets[idx]}, {cities[idx]}, {states[idx]} {random.randint(10000,99999)}"
+    return f"{street_num} {streets[idx]}, {cities[idx]}, {states[idx]} {random.randint(10000, 99999)}"
 
 
 def generate_customer_profile() -> dict:
@@ -102,12 +285,14 @@ def generate_customers_via_llm(count: int) -> List[dict]:
     llm_api_key = os.environ.get("LLM_API_KEY", "").strip()
 
     if not llm_url or not llm_model or not llm_api_key:
-        print("  [INFO] LLM_URL, LLM_MODEL, or LLM_API_KEY not set — falling back to random generation.")
+        print(
+            "  [INFO] LLM_URL, LLM_MODEL, or LLM_API_KEY not set — falling back to random generation."
+        )
         return [generate_customer_profile() for _ in range(count)]
 
     prompt = (
         f"Generate exactly {count} customer profiles as a JSON array. "
-        f"Each object must have: id (string like 'usr_xxx'), name (full name string), "
+        f"Each object must have: id (string like 'usr_xxx'), name (full name string, including diverse ethnicities with UTF-8 encoding), "
         f"email (unique email string), address (realistic mailing address string). "
         f"Return ONLY valid JSON, no markdown, no explanation."
     )
@@ -143,9 +328,11 @@ def generate_customers_via_llm(count: int) -> List[dict]:
 
 # ─── Dataclasses ────────────────────────────────────────────────────────
 
+
 @dataclass
 class Customer:
     """Represents a customer profile with loyalty tier."""
+
     id: str
     name: str
     email: str
@@ -167,6 +354,7 @@ class Customer:
 @dataclass
 class ReturnRequest:
     """Represents a return request for a specific item."""
+
     item_index: int
     request_date: str
     reason: str
@@ -180,6 +368,7 @@ class ReturnRequest:
 @dataclass
 class OrderItem:
     """Represents a single item in an order."""
+
     item_id: str
     name: str
     category: str
@@ -196,6 +385,7 @@ class OrderItem:
 @dataclass
 class Order:
     """Represents a customer order with multiple items."""
+
     order_id: str
     customer_name: str
     customer_email: str
@@ -221,6 +411,7 @@ class Order:
 
 
 # ─── Generator ──────────────────────────────────────────────────────────
+
 
 class CRMDataGenerator:
     """Generates realistic CRM data with hierarchical structure:
@@ -263,22 +454,24 @@ class CRMDataGenerator:
             "Not working as expected",
         ]
 
-    def generate_customer_profiles(self) -> List[Customer]:
-        """Generate customer profiles — random for <= 15, LLM for > 15."""
+    def generate_customer_profiles(self, use_llm: bool = False) -> List[Customer]:
+        """Generate customer profiles — random or LLM based on use_llm flag."""
         print(f"  Generating {self.num_customers} customer profiles...")
         profiles = []
 
-        if self.num_customers <= 15:
-            for _ in range(self.num_customers):
-                p = generate_customer_profile()
-                profiles.append(p)
-        else:
+        if use_llm:
             if HAS_REQUESTS:
                 profiles = generate_customers_via_llm(self.num_customers)
             else:
-                print("  [WARN] `requests` not installed; falling back to random generation.")
+                print(
+                    "  [WARN] `requests` not installed; falling back to random generation."
+                )
                 for _ in range(self.num_customers):
                     profiles.append(generate_customer_profile())
+        else:
+            for _ in range(self.num_customers):
+                p = generate_customer_profile()
+                profiles.append(p)
 
         # Assign loyalty tiers
         customers = []
@@ -329,7 +522,9 @@ class CRMDataGenerator:
             return_requests=[],
         )
 
-    def generate_return_request(self, item_index: int, item: OrderItem) -> Optional[ReturnRequest]:
+    def generate_return_request(
+        self, item_index: int, item: OrderItem
+    ) -> Optional[ReturnRequest]:
         """Generate a return request for an item."""
         # Only generate return requests for a small percentage of items (realistic: ~10-15%)
         # This means 85-90% of items have no return requests
@@ -366,7 +561,9 @@ class CRMDataGenerator:
 
         refund_date = None
         if status in ["approved", "processing", "completed"]:
-            refund_date = (request_date + timedelta(days=random.randint(3, 7))).strftime("%Y-%m-%d")
+            refund_date = (
+                request_date + timedelta(days=random.randint(3, 7))
+            ).strftime("%Y-%m-%d")
 
         transaction_id = None
         if status in ["approved", "completed"]:
@@ -385,7 +582,9 @@ class CRMDataGenerator:
 
     def generate_order(self, order_num: int) -> Order:
         """Generate a complete order with items and potential return requests."""
-        customer_name, customer_email, shipping_address, customer = self.get_customer_for_order()
+        customer_name, customer_email, shipping_address, customer = (
+            self.get_customer_for_order()
+        )
 
         order_id = f"ORD-{order_num:06d}"
         order_date = datetime.now() - timedelta(days=random.randint(0, 60))
@@ -427,17 +626,21 @@ class CRMDataGenerator:
         )
 
         # If any items have return requests, update order-level refund status
-        total_refund = sum(rr.refund_amount for item in items for rr in item.return_requests)
+        total_refund = sum(
+            rr.refund_amount for item in items for rr in item.return_requests
+        )
         if total_refund > 0:
             order.refund_amount = round(total_refund, 2)
-            order.refund_status = "Partial Refund" if total_refund < total_amount else "Full Refund"
+            order.refund_status = (
+                "Partial Refund" if total_refund < total_amount else "Full Refund"
+            )
 
         # Assign order to customer's order_history
         customer.order_history.append(order.to_dict())
 
         return order
 
-    def generate_data(self) -> dict:
+    def generate_data(self, use_llm: bool = False) -> dict:
         """Generate complete hierarchical CRM data.
 
         Structure:
@@ -449,7 +652,7 @@ class CRMDataGenerator:
         }
         """
         # Generate customer profiles with loyalty tiers
-        self.generate_customer_profiles()
+        self.generate_customer_profiles(use_llm=use_llm)
 
         # Generate orders and assign to customers
         orders = [self.generate_order(i + 1) for i in range(self.num_orders)]
@@ -464,16 +667,18 @@ class CRMDataGenerator:
 
     def save_json(self, data: dict, filename: str):
         """Save data to JSON file."""
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(data, f, indent=2)
 
     def save_csv(self, customers: List[Customer], filename: str):
         """Save data to CSV file (flat format for legacy compatibility)."""
         lines = []
-        header = ("order_id,customer_name,customer_email,order_date,total_amount,"
-                  "status,item_index,item_name,category,quantity,price,item_type,"
-                  "is_opened,return_request_date,return_reason,return_status,"
-                  "refund_amount,refund_date,transaction_id,restocking_fee_applied")
+        header = (
+            "order_id,customer_name,customer_email,order_date,total_amount,"
+            "status,item_index,item_name,category,quantity,price,item_type,"
+            "is_opened,return_request_date,return_reason,return_status,"
+            "refund_amount,refund_date,transaction_id,restocking_fee_applied"
+        )
         lines.append(header)
 
         for customer in customers:
@@ -493,14 +698,37 @@ class CRMDataGenerator:
                         str(item["price"]),
                         item["item_type"],
                         str(item["is_opened"]),
-                        "", "", "", "", "", "", "", "", "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
                     ]
                     lines.append(",".join(base))
 
                     for rr in item["return_requests"]:
                         rr_line = [
-                            "", "", "", "", "", "",
-                            "", "", "", "", "", "", "", "", "", "", "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
                             rr["request_date"],
                             f'"{rr["reason"]}"',
                             rr["status"],
@@ -511,11 +739,12 @@ class CRMDataGenerator:
                         ]
                         lines.append(",".join(rr_line))
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             f.write("\n".join(lines))
 
 
 # ─── CLI ────────────────────────────────────────────────────────────────
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -525,7 +754,7 @@ def main():
         "-n",
         type=int,
         default=15,
-        help="Number of customers to generate (default: 15). Uses LLM if > 15.",
+        help="Number of customers to generate (default: 15). Uses LLM if provided.",
     )
     args = parser.parse_args()
 
@@ -536,11 +765,14 @@ def main():
     print(f"Generating hierarchical CRM data ({args.n} customers, 50 orders)...")
 
     generator = CRMDataGenerator(num_orders=50, num_customers=args.n)
-    data = generator.generate_data()
+    # Always use LLM when -n is provided (which it always is)
+    data = generator.generate_data(use_llm=True)
 
     # Save JSON
     generator.save_json(data, json_path)
-    print(f"\nSaved {data['total_orders']} orders across {data['total_customers']} customers to {json_path}")
+    print(
+        f"\nSaved {data['total_orders']} orders across {data['total_customers']} customers to {json_path}"
+    )
 
     # Generate CSV for legacy compatibility
     generator.save_csv(generator.customers, csv_path)
@@ -564,14 +796,18 @@ def main():
     print(f"  Total Orders: {data['total_orders']}")
     print(f"  Total Items: {total_items}")
     print(f"  Total Return Requests: {total_return_requests}")
-    print(f"  Avg Orders per Customer: {data['total_orders'] / data['total_customers']:.1f}")
+    print(
+        f"  Avg Orders per Customer: {data['total_orders'] / data['total_customers']:.1f}"
+    )
     print(f"  Avg Items per Order: {total_items / data['total_orders']:.1f}")
 
     # Customer breakdown
     print(f"\n=== Customer Profiles ===")
     for customer in data["customers"]:
         num_orders = len(customer["order_history"])
-        print(f"  {customer['id']} | {customer['name']} | {customer['loyalty_tier']} | {num_orders} orders")
+        print(
+            f"  {customer['id']} | {customer['name']} | {customer['loyalty_tier']} | {num_orders} orders"
+        )
 
     # Loyalty tier distribution
     tier_counts = {}

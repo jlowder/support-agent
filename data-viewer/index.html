@@ -1023,7 +1023,7 @@
                                                     <span class="label">Reason:</span> ${escapeHtml(request.reason)}
                                                 </div>
                                                 <div class="detail-item">
-                                                    <span class="label">Refund Amount:</span> ${formatCurrency(request.refund_amount)}
+                                                    <span class="label">Refund Amount:</span> ${formatCurrency(request.refunded_amount || request.refund_amount || 0)}
                                                 </div>
                                                 ${request.refund_date ? `
                                                     <div class="detail-item">

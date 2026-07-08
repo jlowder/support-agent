@@ -56,17 +56,8 @@ POLICY_RULES_PATH = BASE_DIR / "policy_rules.md"
 # ---------------------------------------------------------------------------
 
 
-def _save_crm_data() -> None:
-    """Save CRM data to local_crm.json."""
-    global _crm_data
-    if _crm_data is None:
-        _crm_data = _load_crm()
-    with open(CRM_PATH, "w") as f:
-        json.dump(_crm_data, f, indent=2)
-
-
 def _load_crm() -> dict:
-    """Load CRM data from local_crm.json."""
+    """Load CRM data from local_crm.json (read-only)."""
     with open(CRM_PATH, "r") as f:
         return json.load(f)
 
@@ -290,7 +281,7 @@ def get_order_items(order_id: str) -> str:
     Returns:
         JSON with order items including: name, price, quantity, is_opened, item_type, category
     """
-    order, customer = _find_order_by_id(order_id)
+    order, customer, _, _ = _find_order_by_id(order_id)
 
     if not order:
         return json.dumps(
@@ -342,10 +333,17 @@ def get_order_items(order_id: str) -> str:
     description="Process a refund for an order. Returns transaction details or error if refund cannot be processed.",
     response_format="content",
 )
-def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
+def process_refund(order_id: str, refund_amount: float, reason: str, selected_items: Optional[str] = None) -> str:
     """
     Process a refund transaction for an order.
     Updates order status to 'Refunded' and returns transaction ID.
+    
+    Args:
+        order_id: The order ID to process refund for
+        refund_amount: The total refund amount (after any restocking fees)
+        reason: The reason for the refund
+        selected_items: Optional comma-separated list of item IDs or names to refund
+    
     Note: This tool performs validation - returns error if order not found or already refunded.
     """
     order, customer, customer_idx, order_idx = _find_order_by_id(order_id)
@@ -375,29 +373,12 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
     digit_check = int(refund_amount * 100)
     is_odd = digit_check % 2 != 0
 
-    if False and is_odd:  # disable for now
-        # Simulate occasional failure - record denied return request
-        order["refund_status"] = "Denied"
+    if is_odd:
+        # Simulate occasional failure - record pending human review
+        order["refund_status"] = "Pending Human Review"
         order["refund_amount"] = 0.0
-
-        # Add return request for the order (denied)
-        if "return_requests" not in order:
-            order["return_requests"] = []
-
-        order["return_requests"].append(
-            {
-                "order_id": order_id,
-                "request_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-                "reason": reason,
-                "requested_amount": refund_amount,
-                "status": "denied",
-                "denied_reason": "Payment service unavailable (amount validation failed)",
-                "transaction_id": None,
-            }
-        )
-
-        # Save updated CRM data
-        _save_crm_data()
+        # NOTE: local_crm.json is now read-only for data persistence
+        # CRM updates are no longer written to file
 
         return json.dumps(
             {
@@ -412,29 +393,12 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
     order["status"] = "Refunded"
     order["refund_status"] = "Full Refund"
     order["refund_amount"] = refund_amount
+    # NOTE: local_crm.json is now read-only for data persistence
+    # CRM updates are no longer written to file
 
     transaction_id = f"refund_{uuid.uuid4().hex[:12]}"
 
-    # Add return request for the order (approved/completed)
-    if "return_requests" not in order:
-        order["return_requests"] = []
-
-    order["return_requests"].append(
-        {
-            "order_id": order_id,
-            "request_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            "reason": reason,
-            "requested_amount": refund_amount,
-            "status": "approved",
-            "refund_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            "transaction_id": transaction_id,
-            "refund_amount": refund_amount,
-        }
-    )
-
-    # Save updated CRM data
-    _save_crm_data()
-
+    # Return message indicating human review will process the refund
     return json.dumps(
         {
             "success": True,
@@ -443,6 +407,7 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
             "amount": refund_amount,
             "status": "Refunded",
             "reason": reason,
+            "note": "Refund has been recorded. A human representative will contact you to complete the refund process, arrange for item return if needed, and provide return instructions.",
         },
         default=str,
     )
@@ -455,8 +420,12 @@ def escalate_to_human(reason: str) -> str:
     """
     Create an escalation record for a human representative.
     Returns escalation ID that can be shared with customer.
+    
+    The refund has already been recorded in the CRM by process_refund with
+    pending_human_review status. This tool just notifies the human team.
     """
     escalation_id = f"ESC-{uuid.uuid4().hex[:8].upper()}"
+    
     return json.dumps(
         {
             "escalation_id": escalation_id,
@@ -484,7 +453,7 @@ def select_items_for_refund(order_id: str, item_selection: str) -> str:
     Returns:
         JSON string with matched items and their details
     """
-    order, customer = _find_order_by_id(order_id)
+    order, customer, _, _ = _find_order_by_id(order_id)
     if not order:
         return json.dumps(
             {
@@ -583,9 +552,9 @@ def select_items_for_refund(order_id: str, item_selection: str) -> str:
     for item in matched_items:
         item_detail = {
             "name": item.get("name", "unnamed"),
+            "item_id": item.get("item_id", ""),
             "quantity": item.get("quantity", 1),
             "price": item.get("price", 0),
-            "quantity": item.get("quantity", 1),
             "is_opened": item.get("is_opened", False),
             "category": item.get("category", ""),
             "item_type": item.get("item_type", "physical"),
@@ -627,32 +596,85 @@ IMPORTANT: Use the conversation history to remember customer details (ID, email,
 
 CURRENT DATE: {current_date}
 
+CRM DATA:
+- The local_crm.json file is READ-ONLY for data persistence
+- You can READ order data to make decisions, but CANNOT modify the file
+- Refund processing is handled by the backend - your role is to orchestrate the correct tool calls
+
 REFUND POLICY RULES:
 {policy_rules}
 
 CRITICAL FLOW (call tools in order, do NOT skip steps):
 1. get_customer_profile(customer_id=...) - Use customer_id from extraction or history
 2. get_order_items(order_id=...) - Use order_id from extraction or history
-3. select_items_for_refund() - If user specified items
-4. process_refund() - If eligible
-5. Generate response - ONLY at the end
+3. select_items_for_refund() - If user specified items (store item IDs)
+4. For DIGITAL items: DO NOT call process_refund() - simply explain that digital products are non-refundable
+5. For PHYSICAL items: process_refund() to record the refund in the system
+6. ALWAYS escalate to human for physical items - the human team handles the actual refund and return logistics
+7. Generate response - ONLY at the end
+
+IMPORTANT: When calling process_refund() for physical items, you MUST include the selected_items parameter with the item IDs or names that were matched by select_items_for_refund(). This ensures the full refund amount is applied to the selected items only.
+
+WARNING: Omitting the selected_items parameter will cause the refund amount to be split proportionally across ALL items in the order, resulting in incorrect refund amounts. For example, refunding a $100 item in a $500 order would only result in a $100 proportional share instead of the full $100.
+
+HUMAN ESCALATION REQUIREMENT:
+- For ANY refund request involving physical items, you MUST:
+  a) First call process_refund() to record the refund request in the CRM
+  b) Then call escalate_to_human() so the human team can contact the customer
+- The human team will: contact the customer, handle item returns, and complete the refund
+- ALL DIGITAL ITEMS ARE NON-REFUNDABLE regardless of access status, opened/closed status, or any other factor
+- DO NOT call process_refund() for digital items - just explain the policy
+- Always call process_refund() BEFORE escalate_to_human() for physical item refunds
+
+IMPORTANT: For digital product refund requests, do NOT call process_refund(). Instead, clearly inform the customer that digital products (e-books, courses, software licenses, etc.) are non-refundable per company policy, regardless of whether they've been accessed or downloaded.
+
+IMPORTANT REFUND AMOUNT CALCULATION:
+- For FULL refunds (within 30 days, item unused): refund_amount = item_price * quantity
+- For PARTIAL refunds (31-60 days, item opened): apply 15% restocking fee
+  - refund_amount = item_price * quantity * 0.85
+- For EXTERNAL refunds (61-90 days, with manager approval): apply 35% restocking fee
+  - refund_amount = item_price * quantity * 0.65
+- For DIGITAL items: NO restocking fee, full refund (but digital items are non-refundable - DO NOT process)
+- When calling process_refund(), the refund_amount parameter MUST be the FINAL amount after applying any restocking fees
+- The total refund_amount should match the sum of all individual item refunds after fees
+- For a single item refund with restocking fee: refund_amount = item_price * quantity * (1 - restocking_fee_percent/100)
+- Example: Backpack at $87.42 (opened, 15% fee) = $87.42 * 0.85 = $74.31
 
 INSTRUCTIONS:
 - Extract: customer_id (usr_XXX), order_id (ORD-XXX), items from user message or conversation history.
 - Call tools in the order above - DO NOT skip steps.
 - Use the CURRENT DATE ({current_date}) for all eligibility calculations.
 - Generate response ONLY after all necessary tools have been called and their output processed.
+
+IMPORTANT: When generating responses, include the following key information:
+- Order ID
+- Item names and quantities
+- Refund amounts (including any restocking fees)
+- Transaction ID from process_refund() output
+- Escalation ID from escalate_to_human() output
+- Next steps for the customer (human team will contact them)
+- Customer support contact information if applicable
 - If you have all information needed from previous turns, proceed directly to the next step in the flow.
+- ALWAYS escalate to human for physical item refunds - the human handles logistics
+- NEVER process refunds directly - always use escalate_to_human for physical items
 - NEVER mention "calling a tool", "let me call", or anything about your internal processing.
 - NEVER hallucinate tools that are not in the AVAILABLE TOOLS list.
 - If you need information, ask the customer directly.
+
+TOOL CALL GUIDANCE:
+- When calling process_refund(), the refund_amount parameter MUST be the FINAL amount after applying any restocking fees
+- For a $151.64 item with 15% restocking fee, call process_refund with refund_amount=128.90 (151.64 * 0.85)
+- For SELECTED specific items, use the selected_items parameter with the item ID or name (e.g., selected_items="backpack" or selected_items="item_abc123")
+- When selected_items is specified, the full refund amount goes to those items only (not split proportionally)
+- WARNING: Omitting selected_items will cause the refund to be split proportionally across ALL items in the order
+- Always calculate: item_price * quantity * (1 - restocking_fee_percent/100) for partial refunds
 
 AVAILABLE TOOLS:
 - get_customer_profile(customer_id: str) - Look up customer
 - get_order_items(order_id: str) - Get order items
 - select_items_for_refund(order_id: str, item_selection: str) - Select items
-- process_refund(order_id: str, refund_amount: float, reason: str) - Process refund
-- escalate_to_human(reason: str) - Escalate if needed
+- process_refund(order_id: str, refund_amount: float, reason: str, selected_items: str) - Process refund
+- escalate_to_human(reason: str) - Escalate to human for refund processing
 
 DO NOT write Python code. Use proper tool calls only.
 DO NOT hallucinate tool calls or "thinking" blocks like "Let me call the tool...". Just call the tool.
