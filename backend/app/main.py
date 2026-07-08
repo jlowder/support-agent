@@ -56,6 +56,15 @@ POLICY_RULES_PATH = BASE_DIR / "policy_rules.md"
 # ---------------------------------------------------------------------------
 
 
+def _save_crm_data() -> None:
+    """Save CRM data to local_crm.json."""
+    global _crm_data
+    if _crm_data is None:
+        _crm_data = _load_crm()
+    with open(CRM_PATH, "w") as f:
+        json.dump(_crm_data, f, indent=2)
+
+
 def _load_crm() -> dict:
     """Load CRM data from local_crm.json."""
     with open(CRM_PATH, "r") as f:
@@ -190,14 +199,14 @@ def _find_customer_by_identifier(identifier: str) -> Optional[dict]:
 
 def _find_order_by_id(order_id: str) -> tuple:
     """Find an order and its associated customer by order_id.
-    Returns (order, customer) tuple, or (None, None) if not found."""
+    Returns (order, customer, customer_idx, order_idx) tuple, or (None, None, None, None) if not found."""
     crm = get_crm()
     customers = crm.get("customers", [])
-    for customer in customers:
-        for order in customer.get("order_history", []):
+    for customer_idx, customer in enumerate(customers):
+        for order_idx, order in enumerate(customer.get("order_history", [])):
             if order.get("order_id") == order_id:
-                return order, customer
-    return None, None
+                return order, customer, customer_idx, order_idx
+    return None, None, None, None
 
 
 def _ensure_base_messages(messages: List[Any]) -> List[BaseMessage]:
@@ -339,7 +348,7 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
     Updates order status to 'Refunded' and returns transaction ID.
     Note: This tool performs validation - returns error if order not found or already refunded.
     """
-    order, customer = _find_order_by_id(order_id)
+    order, customer, customer_idx, order_idx = _find_order_by_id(order_id)
 
     if not order:
         return json.dumps(
@@ -366,8 +375,30 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
     digit_check = int(refund_amount * 100)
     is_odd = digit_check % 2 != 0
 
-    if is_odd:
-        # Simulate occasional failure
+    if False and is_odd:  # disable for now
+        # Simulate occasional failure - record denied return request
+        order["refund_status"] = "Denied"
+        order["refund_amount"] = 0.0
+
+        # Add return request for the order (denied)
+        if "return_requests" not in order:
+            order["return_requests"] = []
+
+        order["return_requests"].append(
+            {
+                "order_id": order_id,
+                "request_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "reason": reason,
+                "requested_amount": refund_amount,
+                "status": "denied",
+                "denied_reason": "Payment service unavailable (amount validation failed)",
+                "transaction_id": None,
+            }
+        )
+
+        # Save updated CRM data
+        _save_crm_data()
+
         return json.dumps(
             {
                 "success": False,
@@ -383,6 +414,26 @@ def process_refund(order_id: str, refund_amount: float, reason: str) -> str:
     order["refund_amount"] = refund_amount
 
     transaction_id = f"refund_{uuid.uuid4().hex[:12]}"
+
+    # Add return request for the order (approved/completed)
+    if "return_requests" not in order:
+        order["return_requests"] = []
+
+    order["return_requests"].append(
+        {
+            "order_id": order_id,
+            "request_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "reason": reason,
+            "requested_amount": refund_amount,
+            "status": "approved",
+            "refund_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "transaction_id": transaction_id,
+            "refund_amount": refund_amount,
+        }
+    )
+
+    # Save updated CRM data
+    _save_crm_data()
 
     return json.dumps(
         {
