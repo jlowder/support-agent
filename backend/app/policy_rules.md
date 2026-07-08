@@ -11,17 +11,10 @@
 3. Orders older than 60 days are not eligible for refunds
 4. **ALL digital products are non-refundable regardless of access status or opening status**
 5. Damaged or defective physical products are eligible for refund regardless of timing
-6. "Changed mind" returns within 30 days are eligible for full refund for physical items
-7. Restocking fees (15%) apply to opened physical items after 14 days
-
-## Validation Checks
-- `purchase_date`: Check if within 30-day full refund window
-- `product_type`: Verify digital vs physical eligibility
-- `item_condition`: Check if opened/closed affects refund amount
-- `return_history`: Check for duplicate refund requests
+6. Restocking fees (15%) apply to opened physical items after 14 days
 
 ## Escalation Triggers
 - Customer requests supervisor
-- Refund amount exceeds $500
 - System errors persist after retries
 - Ambiguous policy edge cases
+- Successful refund
