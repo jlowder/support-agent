@@ -12,6 +12,20 @@
         .message-bubble {
             max-width: 80%;
         }
+        /* Toggle Switch Styles */
+        #voice-toggle:checked + .block {
+            background: #4ade80;
+        }
+        #voice-toggle:checked + .block + .absolute {
+            transform: translateX(16px);
+        }
+        .voice-indicator {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -30,6 +44,14 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3">
+                <label class="flex items-center cursor-pointer space-x-2">
+                    <div class="relative">
+                        <input type="checkbox" id="voice-toggle" class="sr-only" checked>
+                        <div class="block w-10 h-6 bg-gray-300 rounded-full"></div>
+                        <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform translate-x-0"></div>
+                    </div>
+                    <span class="text-sm text-gray-700 font-medium">Voice Output</span>
+                </label>
                 <button id="new-session-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
                     New Session
                 </button>
@@ -74,7 +96,9 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
         const newSessionBtn = document.getElementById('new-session-btn');
+        const voiceToggle = document.getElementById('voice-toggle');
         const BACKEND_URL = 'http://localhost:8050';
+        const KOKORO_API_URL = 'http://katana:8025/v1/audio/speech';
 
         // Persist threadId across page refreshes
         let threadId = localStorage.getItem('support_thread_id');
@@ -82,6 +106,10 @@
             threadId = Math.random().toString(36).substring(7);
             localStorage.setItem('support_thread_id', threadId);
         }
+
+        // Voice output state
+        let voiceOutputEnabled = true;
+        let currentAudio = null;
 
         function appendMessage(text, isUser = false) {
             const wrapper = document.createElement('div');
@@ -98,6 +126,68 @@
             wrapper.appendChild(bubble);
             chatWindow.appendChild(wrapper);
             chatWindow.scrollTop = chatWindow.scrollHeight;
+            
+            // Announce agent messages if voice output is enabled
+            if (!isUser && voiceOutputEnabled) {
+                speakMessage(text);
+            }
+        }
+
+        // Voice output using Kokoro TTS API
+        async function speakMessage(text) {
+            // Cancel any current audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            try {
+                const response = await fetch(KOKORO_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'kokoro',
+                        input: text,
+                        voice: 'af_bella',  // Default female voice
+                        response_format: 'mp3',
+                        speed: 1.0,
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`TTS API error: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                currentAudio = new Audio(url);
+                currentAudio.onended = () => {
+                    URL.revokeObjectURL(url);
+                    currentAudio = null;
+                };
+                currentAudio.onended = null;
+                currentAudio.play().catch(err => {
+                    console.error('Audio play error:', err);
+                });
+                
+                // Revoke object URL after playback starts
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Failed to speak message:', error);
+                // Fallback to browser's native TTS
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
         }
 
         function clearChat() {
@@ -138,6 +228,12 @@
         }
 
         function startNewSession() {
+            // Cancel any current audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
             // Generate new thread ID
             threadId = Math.random().toString(36).substring(7);
             localStorage.setItem('support_thread_id', threadId);
@@ -173,7 +269,11 @@
             appendMessage(botResponse);
         });
 
-        // New session button handler
+        // Voice toggle handler
+        voiceToggle.addEventListener('change', (e) => {
+            voiceOutputEnabled = e.target.checked;
+            console.log('Voice output:', voiceOutputEnabled ? 'enabled' : 'disabled');
+        });
         newSessionBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to start a new session? Your current conversation will be cleared.')) {
                 startNewSession();
