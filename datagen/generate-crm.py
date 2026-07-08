@@ -753,8 +753,8 @@ def main():
     parser.add_argument(
         "-n",
         type=int,
-        default=15,
-        help="Number of customers to generate (default: 15). Uses LLM if provided.",
+        default=None,
+        help="Number of customers to generate (default: 15 with random generation). Uses LLM when specified.",
     )
     args = parser.parse_args()
 
@@ -762,11 +762,12 @@ def main():
     json_path = os.path.join(script_dir, "..", "local_crm.json")
     csv_path = os.path.join(script_dir, "crm_orders.csv")
 
-    print(f"Generating hierarchical CRM data ({args.n} customers, 50 orders)...")
+    print(f"Generating hierarchical CRM data ({args.n or 15} customers, 50 orders)...")
 
-    generator = CRMDataGenerator(num_orders=50, num_customers=args.n)
-    # Always use LLM when -n is provided (which it always is)
-    data = generator.generate_data(use_llm=True)
+    num_customers = args.n if args.n is not None else 15
+    generator = CRMDataGenerator(num_orders=50, num_customers=num_customers)
+    # Use LLM only when -n is explicitly provided
+    data = generator.generate_data(use_llm=args.n is not None)
 
     # Save JSON
     generator.save_json(data, json_path)
