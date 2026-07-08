@@ -114,6 +114,8 @@
         let uniqueComponents = new Set();
         let allEvents = [];
         let eventSource = null;
+        let isConnecting = false;
+        let reconnectDelay = 5000; // Start with 5 second delay
 
         function updateStats() {
             document.getElementById('total-events').textContent = eventCount;
@@ -198,6 +200,9 @@
                           event.type?.toLowerCase().includes('error') ||
                           (event.payload && (event.payload.error || event.payload.error_message));
             
+            const isAgent = event.component === 'agent';
+            const isTools = event.component === 'tools';
+            
             const entry = document.createElement('div');
             entry.className = `trace-entry border-l-4 rounded-r-lg p-4 mb-2 ${componentClass} ${
                 isError ? 'bg-red-50 border-red-500' : (isTrace ? 'bg-gray-50 border-gray-300' : 'bg-blue-50 border-blue-300')
@@ -205,11 +210,106 @@
             
             const timestamp = formatTimestamp(event.timestamp);
             
+            // Format component badge with title
+            const componentTitle = event.component === 'agent' ? 'LLM Agent' : 
+                                   event.component === 'tools' ? 'Tools' : 
+                                   event.component === 'routing' ? 'Routing' : 
+                                   event.component === 'process' ? 'Process' : 
+                                   event.component === 'extract' ? 'Extract' : 
+                                   event.component === 'authenticate' ? 'Auth' : 
+                                   event.component === 'init' ? 'Init' : 
+                                   event.component.charAt(0).toUpperCase() + event.component.slice(1);
+            
+            // Format message with emoji prefix
+            const messagePrefix = isTools ? '⚙️ ' : (isAgent ? '🤖 ' : (isError ? '❌ ' : 'ℹ️ '));
+            
             let payloadHtml = '';
             if (event.payload && Object.keys(event.payload).length > 0) {
-                payloadHtml = `<div class="mt-2 p-2 bg-white rounded border border-gray-200">
-                    <pre class="payload-json">${highlightJson(event.payload)}</pre>
-                </div>`;
+                // Build detailed payload view based on component
+                let payloadContent = '';
+                
+                if (isAgent && event.payload.content) {
+                    payloadContent += `<div class="mb-2"><strong class="text-gray-700">LLM Response Content:</strong><div class="p-2 bg-blue-50 rounded border border-blue-200 mt-1">${escapeHtml(String(event.payload.content))}</div></div>`;
+                }
+                
+                if (event.payload.tool_calls && Array.isArray(event.payload.tool_calls)) {
+                    payloadContent += '<div class="mb-2"><strong class="text-gray-700">Tool Calls:</strong><ul class="mt-1 ml-4 space-y-1">';
+                    event.payload.tool_calls.forEach((tc, idx) => {
+                        const toolName = escapeHtml(tc.name || 'unknown');
+                        payloadContent += `<li class="text-sm">
+                            <span class="font-mono bg-blue-600 text-white px-2 py-0.5 rounded">${toolName}</span>
+                            ${tc.id ? `<span class="text-xs text-gray-500 ml-2">(id: ${escapeHtml(String(tc.id))})</span>` : ''}
+                            <div class="mt-1 p-1 bg-blue-50 rounded border border-blue-200">
+                                <strong class="text-gray-600">Arguments:</strong>
+                                <pre class="payload-json m-0">${highlightJson(tc.args || {})}</pre>
+                            </div>
+                        </li>`;
+                    });
+                    payloadContent += '</ul></div>';
+                }
+                
+                if (isTools && event.payload.tool_results && Array.isArray(event.payload.tool_results)) {
+                    payloadContent += '<div class="mb-2"><strong class="text-gray-700">Tool Results:</strong><ul class="mt-1 ml-4 space-y-2">';
+                    event.payload.tool_results.forEach((tr, idx) => {
+                        const toolName = escapeHtml(tr.name || 'unknown');
+                        payloadContent += `<li class="text-sm">
+                            <span class="font-mono bg-emerald-600 text-white px-2 py-0.5 rounded">${toolName}</span>
+                            ${tr.tool_call_id ? `<span class="text-xs text-gray-500 ml-2">(tool_call_id: ${escapeHtml(String(tr.tool_call_id))})</span>` : ''}
+                            <div class="mt-1 p-1 bg-emerald-50 rounded border border-emerald-200">
+                                <strong class="text-gray-600">Result:</strong>
+                                <pre class="payload-json m-0">${highlightJson(tr.content || tr)}</pre>
+                            </div>
+                        </li>`;
+                    });
+                    payloadContent += '</ul></div>';
+                }
+                
+                if (event.payload.input_messages && Array.isArray(event.payload.input_messages)) {
+                    payloadContent += '<div class="mb-2"><strong class="text-gray-700">Input Messages:</strong><ul class="mt-1 ml-4 space-y-1">';
+                    event.payload.input_messages.forEach((msg, idx) => {
+                        const role = msg.role || 'unknown';
+                        const roleColor = role === 'system' ? 'purple' : (role === 'user' ? 'blue' : (role === 'assistant' ? 'green' : 'gray'));
+                        payloadContent += `<li class="text-sm">
+                            <span class="font-mono bg-${roleColor}-100 px-2 py-0.5 rounded text-${roleColor}-700">${escapeHtml(role)}</span>
+                            <div class="mt-0.5 p-1 bg-white rounded border border-gray-200">
+                                ${escapeHtml(String(msg.content))}
+                            </div>
+                        </li>`;
+                    });
+                    payloadContent += '</ul></div>';
+                }
+                
+                if (event.payload.result_messages && Array.isArray(event.payload.result_messages)) {
+                    payloadContent += '<div class="mb-2"><strong class="text-gray-700">Result Messages:</strong><ul class="mt-1 ml-4 space-y-1">';
+                    event.payload.result_messages.forEach((msg, idx) => {
+                        payloadContent += `<li class="text-sm">
+                            <span class="font-mono bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(String(msg.type || 'message'))}</span>
+                            <div class="mt-0.5 p-1 bg-white rounded border border-gray-200">
+                                ${escapeHtml(String(msg.content || msg))}
+                            </div>
+                        </li>`;
+                    });
+                    payloadContent += '</ul></div>';
+                }
+                
+                if (event.payload.error || event.payload.error_message) {
+                    payloadContent += `<div class="mb-2"><strong class="text-red-700">Error:</strong><div class="p-2 bg-red-100 rounded border border-red-300 mt-1 text-red-800 font-mono">${escapeHtml(String(event.payload.error || event.payload.error_message))}</div></div>`;
+                }
+                
+                // Add remaining payload fields
+                const otherFields = Object.entries(event.payload).filter(([key]) => 
+                    !['content', 'tool_calls', 'tool_results', 'input_messages', 'result_messages', 'error', 'error_message'].includes(key)
+                );
+                
+                if (otherFields.length > 0) {
+                    payloadContent += '<div class="mb-2"><strong class="text-gray-700">Payload:</strong><div class="mt-1 p-2 bg-white rounded border border-gray-200">';
+                    payloadContent += '<pre class="payload-json">' + highlightJson(Object.fromEntries(otherFields)) + '</pre>';
+                    payloadContent += '</div></div>';
+                }
+                
+                if (payloadContent) {
+                    payloadHtml = `<div class="mt-2">${payloadContent}</div>`;
+                }
             }
             
             entry.innerHTML = `
@@ -217,11 +317,11 @@
                     <div>
                         <div class="flex items-center space-x-2 mb-1">
                             <span class="text-xs font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
-                                ${escapeHtml(event.component || 'unknown')}
+                                ${escapeHtml(componentTitle)}
                             </span>
                             <span class="text-xs text-gray-500">[${timestamp}]</span>
                         </div>
-                        <div class="text-gray-800 font-medium">${escapeHtml(event.message || 'No message')}</div>
+                        <div class="text-gray-800 font-medium">${messagePrefix}${escapeHtml(event.message || 'No message')}</div>
                     </div>
                     ${isError ? '<span class="text-red-500 text-xs font-bold px-2 py-1 rounded bg-red-100">ERROR</span>' : ''}
                 </div>
@@ -268,6 +368,12 @@
         }
 
         function connectToTraceStream() {
+            // Don't reconnect if we're explicitly disconnected (reconnect button hasn't been pressed)
+            if (!isConnecting) {
+                console.log('Not reconnecting - connection intentionally closed');
+                return;
+            }
+            
             connectionStatus.textContent = 'Connecting...';
             connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-700';
             
@@ -278,8 +384,11 @@
                 const es = new EventSource(url);
                 
                 es.onopen = () => {
+                    console.log('SSE connection established');
                     connectionStatus.textContent = 'Connected';
                     connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700';
+                    // Reset delay on successful connection
+                    reconnectDelay = 5000;
                 };
                 
                 // Handle 'trace' events (named events from the SSE stream)
@@ -307,10 +416,14 @@
                     connectionStatus.textContent = 'Disconnected';
                     connectionStatus.className = 'text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700';
                     
-                    // Retry after 3 seconds
+                    // Schedule reconnect with backoff (max 30 seconds)
+                    const nextDelay = Math.min(reconnectDelay * 2, 30000);
+                    console.log(`Retrying connection in ${reconnectDelay}ms...`);
+                    
                     setTimeout(() => {
+                        reconnectDelay = nextDelay;
                         connectToTraceStream();
-                    }, 3000);
+                    }, reconnectDelay);
                 };
                 
                 eventSource = es;
@@ -323,14 +436,20 @@
 
         // Button handlers
         clearBtn.addEventListener('click', () => {
+            isConnecting = false; // Stop reconnecting
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
             traceWindow.innerHTML = '<div class="text-gray-500 italic text-center py-8">Console cleared. Waiting for new events...</div>';
             eventCount = 0;
             errorCount = 0;
             uniqueComponents.clear();
             allEvents = [];
+            reconnectDelay = 5000; // Reset delay
             updateStats();
         });
-
+        
         exportBtn.addEventListener('click', () => {
             const exportData = {
                 generated: new Date().toISOString(),
@@ -350,8 +469,9 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         });
-
+        
         // Initialize
+        isConnecting = true;
         connectToTraceStream();
     </script>
 </body>

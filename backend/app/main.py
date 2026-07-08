@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional, TypedDict, cast, Annotated
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, BaseMessage, AnyMessage
 from langchain_core.tools import tool, ToolException
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph, MessagesState
@@ -587,7 +587,7 @@ def tools_node(state: AgentState, config: RunnableConfig) -> dict:
         if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
             tool_calls = last_msg.tool_calls
 
-    # Trace tool execution
+    # Trace tool execution START
     if tool_calls:
         trace_broadcaster.broadcast("tools", "Tool execution started", {
             "thread_id": thread_id,
@@ -601,9 +601,28 @@ def tools_node(state: AgentState, config: RunnableConfig) -> dict:
     # Run tool node
     result = tool_node.invoke({"messages": messages}, config=config)
 
+    # Trace tool execution END - include tool responses
+    tool_results = []
+    if "messages" in result:
+        for msg in result["messages"]:
+            if isinstance(msg, ToolMessage):
+                tool_results.append({
+                    "tool_call_id": msg.tool_call_id,
+                    "content": msg.content,
+                    "name": msg.name if hasattr(msg, 'name') else None,
+                })
+    
     trace_broadcaster.broadcast("tools", "Tool execution completed", {
         "thread_id": thread_id,
         "result_type": type(result).__name__,
+        "tool_results": tool_results,
+        "result_messages": [
+            {
+                "type": type(m).__name__,
+                "content": m.content if isinstance(m, BaseMessage) else str(m),
+            }
+            for m in result.get("messages", [])
+        ],
     })
 
     return result
@@ -633,13 +652,34 @@ def build_agent_graph() -> StateGraph:
         trace_broadcaster.broadcast("agent", "Agent processing message", {
             "thread_id": thread_id,
             "message_count": len(messages),
+            "input_messages": [
+                {
+                    "role": type(m).__name__.lower().replace("message", ""),
+                    "content": m.content if isinstance(m, BaseMessage) else str(m),
+                }
+                for m in langchain_messages
+            ],
         })
         
         response = llm_with_tools.invoke(langchain_messages, config=config)
         
+        # Extract tool calls for tracing
+        tool_calls_info = []
+        if hasattr(response, 'tool_calls') and response.tool_calls:
+            tool_calls_info = [
+                {
+                    "name": tc.get("name", "unknown"),
+                    "args": tc.get("args", {}),
+                    "id": tc.get("id", "unknown"),
+                }
+                for tc in response.tool_calls
+            ]
+        
         trace_broadcaster.broadcast("agent", "LLM response received", {
             "thread_id": thread_id,
-            "has_tool_calls": bool(getattr(response, 'tool_calls', None)),
+            "has_tool_calls": bool(tool_calls_info),
+            "content": response.content if hasattr(response, 'content') else str(response),
+            "tool_calls": tool_calls_info,
         })
         
         return {"messages": [response]}
