@@ -44,7 +44,8 @@ Send a refund request.
 ```bash
 curl -X POST http://localhost:8050/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "My email address is diana.p@email.com and I want to return the water bottle from my most recent order"}'
+  -d '{"message": "My email address is diana.p@email.com and I want to return \
+  the water bottle from my most recent order"}'
 ```
 
 ### GET /admin/trace
